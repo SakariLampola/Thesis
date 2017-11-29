@@ -10,21 +10,28 @@ import cv2
 import ImageObjectDetection as iod
 
 cap = cv2.VideoCapture("videos/CarsOnHighway001.mp4")
-
+i_frame = 0;
 while(cap.isOpened()):
     ret, frame = cap.read()
-    detected_objects = iod.detect_objects(frame, 0.2)
-    for detected_object in detected_objects:
-        detected_object.print_attributes()
-    cv2.imshow('frame', frame)
+    if ret:
+        print("Frame ",i_frame)
+        i_frame = i_frame + 1;
+        detected_objects = iod.detect_objects(frame, 0.2)
+        for detected_object in detected_objects:
+            # display the prediction
+            label = "{}: {:.2f}%".format(detected_object.name, \
+                     detected_object.confidence * 100)
+            print("[INFO] {}".format(label))
+            cv2.rectangle(frame, (detected_object.x_min, detected_object.y_min), \
+                          (detected_object.x_max, detected_object.y_max), 255, 2)
+            y = detected_object.y_min - 15 if detected_object.y_min - 15 > 15 \
+                else detected_object.y_min + 15
+            cv2.putText(frame, label, (detected_object.x_min, y), \
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, 255, 2)        
+        cv2.imshow('frame', frame)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
 cap.release()
 cv2.destroyAllWindows()
-
-image = cv2.imread("images/example_01.jpg")
-detected_objects = iod.detect_objects(image, 0.2)
-for detected_object in detected_objects:
-    detected_object.print_attributes()
     
