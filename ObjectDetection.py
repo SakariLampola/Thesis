@@ -8,7 +8,7 @@ Created on Wed Nov 29 12:39:50 2017
 
 import numpy as np
 import cv2
-import ImageObjectClasses as ioc
+import ImageClasses as ioc
 
 # load the serialized model from disk
 NET = cv2.dnn.readNetFromCaffe("MobileNetSSD_deploy.prototxt.txt", \

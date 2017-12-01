@@ -31,25 +31,19 @@ class ImageObject:
         self.y_max = y_max
         self.confidence = confidence
         self.identity = -1
+        self.x_loc = (x_min + x_max) / 2.0
+        self.y_loc = (y_min + y_max) / 2.0
+        self.x_size = (x_max - x_min)
+        self.y_size = (y_max - y_min)
 
-    def bounding_box(self):
+    def update(self, x_min, x_max, y_min, y_max, confidence):
         """
-        Returns the bounding box of an object: xmin, xmax, ymin, ymax
+        Update location and size based on new measurement
         """
-        return self.x_min, self.x_max, self.y_min, self.y_max
-
-    def center(self):
-        """
-        Returns the center coordinates of an object: x, y
-        """
-        return (self.x_max-self.x_min)/2, (self.y_max-self.y_min)/2
-
-    def print_attributes(self):
-        """
-        Prints the object attributes
-        """
-        print(self.name, self.x_min, self.x_max, self.y_min, self.y_max, \
-              self.confidence)
+        self.x_loc = (x_min + x_max) / 2.0
+        self.y_loc = (y_min + y_max) / 2.0
+        self.x_size = (x_max - x_min)
+        self.y_size = (y_max - y_min)
 
 class Aeroplane(ImageObject):
     """
@@ -468,3 +462,17 @@ class TVMonitor(ImageObject):
 
     velocity_max = 10.0 # same as Person
     acceleration_max = 3.0 # same as Person
+
+class ImageWorld:
+    """
+    Updatable list of objects with internal state and ability to forecast
+    """
+    def __init__(self):
+        self.objects = [] # In the beginning, the world is empty
+
+    def update(self, time, object_measurement):
+        """
+        New object measurements are taken into consideration. Previously
+        observed objects are matched into the new measurements.
+        """
+        self.objects = object_measurement
