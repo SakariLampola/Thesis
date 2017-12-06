@@ -18,6 +18,10 @@ def analyze_video(videofile):
     """
     Analyzes a video frame by frame, detecting objects with locations
     """
+    # open log files
+    log_file = open("log.txt", "w")
+    trace_file = open("trace.txt", "w")
+    trace_file.write("time,zx,zy,x,y,vx,vy,ax,ay,zxs,zys,xs,ys,vsx,vsy,asx,asy\n")
     # create an empty world
     world = ic.ImageWorld()
     time = 0.0
@@ -29,46 +33,56 @@ def analyze_video(videofile):
     # loop every frame in history
     while video.isOpened():
         ret, frame = video.read()
-        frame_copy = frame
         if ret:
-            time = time + time_step
-            print("Time {0:<.2f}".format(time))
+            frame_copy = frame.copy()
+            log_file.write("----------------------------------------------\n")
+            log_file.write("Time {0:<.2f}\n".format(time))
+            log_file.write("Measurements:\n")
+
             # make a measurement by detecting objects
-            detected_objects = od.detect_objects(frame, 0.0)
+            detected_objects = od.detect_objects(frame, 0.2)
+            
             # display measurements
             for detected_object in detected_objects:
-                print("---{0:s} {1:6.2f} {2:4d} {3:4d} {4:4d} {5:4d}".format(
-                    detected_object.name, detected_object.confidence,
-                    detected_object.x_min, detected_object.x_max,
-                    detected_object.y_min, detected_object.y_max))
-                label = "{}: {:.2f}%".format(detected_object.name, \
+                x_min, x_max, y_min, y_max = detected_object.bounding_box()
+                log_file.write("---{0:s} {1:6.2f} {2:4d} {3:4d} {4:4d} {5:4d}\n".format(
+                    ic.CLASS_NAMES[detected_object.idx], detected_object.confidence,
+                    x_min, x_max, y_min, y_max))
+                label = "{}: {:.2f}%".format(ic.CLASS_NAMES[detected_object.idx], \
                          detected_object.confidence * 100)
-                cv2.rectangle(frame, (detected_object.x_min, detected_object.y_min), \
-                              (detected_object.x_max, detected_object.y_max), 255, 2)
-                ytext = detected_object.y_min - 15 if detected_object.y_min - 15 > 15 \
-                    else detected_object.y_min + 15
-                cv2.putText(frame, label, (detected_object.x_min, ytext), \
+                cv2.rectangle(frame, (x_min, y_min), (x_max, y_max), 255, 2)
+                ytext = y_min - 15 if y_min - 15 > 15 else y_min + 15
+                cv2.putText(frame, label, (x_min, ytext), \
                             cv2.FONT_HERSHEY_SIMPLEX, 0.5, 255, 2)
             cv2.imshow('Measurements', frame)
+
             # update the world model
-            world.update(time, detected_objects)
+            world.update(time, detected_objects, log_file, trace_file)
+
             # display the world with filtered objects
-            for detected_object in detected_objects:
-                label = "{}: {:.2f}%".format(detected_object.name, \
-                         detected_object.confidence * 100)
-                cv2.rectangle(frame_copy, (detected_object.x_min, detected_object.y_min), \
-                              (detected_object.x_max, detected_object.y_max), 255, 2)
-                ytext = detected_object.y_min - 15 if detected_object.y_min - 15 > 15 \
-                    else detected_object.y_min + 15
-                cv2.putText(frame_copy, label, (detected_object.x_min, ytext), \
+            log_file.write("World:\n")
+            for world_object in world.world_objects:
+                x_min, x_max, y_min, y_max = world_object.bounding_box()
+                log_file.write("---{0:d} {1:s} {2:6.2f} {3:4d} {4:4d} {5:4d} {6:4d}\n".format(
+                    world_object.id, world_object.name, world_object.confidence,
+                    x_min, x_max, y_min, y_max))
+                label = "{0:d} {1:s}: {2:.2f}%".format(world_object.id, world_object.name, \
+                         world_object.confidence * 100)
+                cv2.rectangle(frame_copy, (x_min, y_min), (x_max, y_max), 255, 2)
+                ytext = y_min - 15 if y_min - 15 > 15 else y_min + 15
+                cv2.putText(frame_copy, label, (x_min, ytext), \
                             cv2.FONT_HERSHEY_SIMPLEX, 0.5, 255, 2)
             cv2.imshow('Model', frame_copy)
             i_frame = i_frame + 1
+            time = time + time_step
+
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
     video.release()
     cv2.destroyAllWindows()
+    log_file.close()
+    trace_file.close()
 
 if __name__ == "__main__":
     # parse the video file

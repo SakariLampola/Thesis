@@ -51,45 +51,6 @@ def detect_objects(image, confidence_level):
             box = detections[0, 0, i, 3:7] * np.array([width, height, width, height])
             (x_min, y_min, x_max, y_max) = box.astype("int")
 
-            if idx == 1:
-                objects.append(ioc.Aeroplane(x_min, x_max, y_min, y_max, confidence))
-            elif idx == 2:
-                objects.append(ioc.Bicycle(x_min, x_max, y_min, y_max, confidence))
-            elif idx == 3:
-                objects.append(ioc.Bird(x_min, x_max, y_min, y_max, confidence))
-            elif idx == 4:
-                objects.append(ioc.Boat(x_min, x_max, y_min, y_max, confidence))
-            elif idx == 5:
-                objects.append(ioc.Bottle(x_min, x_max, y_min, y_max, confidence))
-            elif idx == 6:
-                objects.append(ioc.Bus(x_min, x_max, y_min, y_max, confidence))
-            elif idx == 7:
-                objects.append(ioc.Car(x_min, x_max, y_min, y_max, confidence))
-            elif idx == 8:
-                objects.append(ioc.Cat(x_min, x_max, y_min, y_max, confidence))
-            elif idx == 9:
-                objects.append(ioc.Chair(x_min, x_max, y_min, y_max, confidence))
-            elif idx == 10:
-                objects.append(ioc.Cow(x_min, x_max, y_min, y_max, confidence))
-            elif idx == 11:
-                objects.append(ioc.DiningTable(x_min, x_max, y_min, y_max, confidence))
-            elif idx == 12:
-                objects.append(ioc.Dog(x_min, x_max, y_min, y_max, confidence))
-            elif idx == 13:
-                objects.append(ioc.Horse(x_min, x_max, y_min, y_max, confidence))
-            elif idx == 14:
-                objects.append(ioc.Motorbike(x_min, x_max, y_min, y_max, confidence))
-            elif idx == 15:
-                objects.append(ioc.Person(x_min, x_max, y_min, y_max, confidence))
-            elif idx == 16:
-                objects.append(ioc.PottedPlant(x_min, x_max, y_min, y_max, confidence))
-            elif idx == 17:
-                objects.append(ioc.Sheep(x_min, x_max, y_min, y_max, confidence))
-            elif idx == 18:
-                objects.append(ioc.Sofa(x_min, x_max, y_min, y_max, confidence))
-            elif idx == 19:
-                objects.append(ioc.Train(x_min, x_max, y_min, y_max, confidence))
-            elif idx == 20:
-                objects.append(ioc.TVMonitor(x_min, x_max, y_min, y_max, confidence))
-
+            objects.append(ioc.Measurement(idx, x_min, x_max, y_min, y_max, confidence))
+            
     return objects

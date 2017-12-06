@@ -22,3 +22,10 @@ Notes:
 
   After analyzing the video, the window should be closed by pressing 'q'.
   This will release the resources properly.
+
+Output:
+
+  2 windows: measurements and model (filtered)
+  log.txt: log for all objects
+  trace.txt: detailed log for one object (matlab import)
+  
