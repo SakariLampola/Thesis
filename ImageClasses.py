@@ -12,22 +12,6 @@ Created on Wed Nov 29 09:08:16 2017
 from math import inf, nan, sqrt
 import numpy as np
 
-def kalman_filter(mean_1, sigma_1, z, a, c, r, q):
-    """
-    Kalman filter algorithm
-    """
-    mean_b = np.dot(a, mean_1)
-    sigma_b = np.dot(np.dot(a, sigma_1), a.T) + r
-    k1 = np.dot(sigma_b, c.T)
-    k2 = np.linalg.inv(np.dot(np.dot(c, sigma_1), c.T) + q)
-    k = np.dot(k1, k2)
-    mean = mean_b + np.dot(k, z - np.dot(c, mean_b))
-    s1 = np.dot(k, c)
-    n1, n2 = np.shape(s1)
-    s1 = np.eye(n1) - s1
-    sigma = np.dot(s1, sigma_b)
-    return mean, sigma
-
 LOC_R = np.zeros((6, 6)) # Covariance matrix for location state noise
 LOC_R[0, 0] = 1.0
 LOC_R[1, 1] = 1.0
@@ -61,12 +45,28 @@ SIZE_SIGMA_BETA = 1.0 # Initial (size) velocity covariance
 SIZE_SIGMA_GAMMA = 1.0 # Initial (size) acceleration covariance
 
 SIMILARITY_DISTANCE = 100 # Max distance for similarity interpretation
-RETENTION_TIME = 0.5 # How long objects are maintained without new measurements
+RETENTION_TIME = 2 # How long objects are maintained without new measurements
 
 CLASS_NAMES = ["background", "aeroplane", "bicycle", "bird", "boat",
 	"bottle", "bus", "car", "cat", "chair", "cow", "diningtable",
 	"dog", "horse", "motorbike", "person", "pottedplant", "sheep",
 	"sofa", "train", "tvmonitor"]
+
+def kalman_filter(mean_1, sigma_1, z, a, c, r, q):
+    """
+    Kalman filter algorithm
+    """
+    mean_b = np.dot(a, mean_1)
+    sigma_b = np.dot(np.dot(a, sigma_1), a.T) + r
+    k1 = np.dot(sigma_b, c.T)
+    k2 = np.linalg.inv(np.dot(np.dot(c, sigma_1), c.T) + q)
+    k = np.dot(k1, k2)
+    mean = mean_b + np.dot(k, z - np.dot(c, mean_b))
+    s1 = np.dot(k, c)
+    n1, n2 = np.shape(s1)
+    s1 = np.eye(n1) - s1
+    sigma = np.dot(s1, sigma_b)
+    return mean, sigma
 
 def get_next_id():
     """
@@ -89,20 +89,25 @@ class Measurement:
         self.y_max = y_max
         self.confidence = confidence
 
-    def distance(self, image_object):
+    def distance(self, time, image_object):
         """
-        Calculates Euclidean distance to image object
+        Calculates Euclidean distance (location and size) to image object
         """
-        xd = (self.x_min + self.x_max)/2.0 - image_object.loc_mean[0]
-        yd = (self.y_min + self.y_max)/2.0 - image_object.loc_mean[1]
-        return sqrt(xd*xd+yd*yd)
+        loc, size = image_object.predict(time)
+
+        dx = (self.x_min + self.x_max)/2.0 - loc[0]
+        dy = (self.y_min + self.y_max)/2.0 - loc[1]
+
+        dsx = (self.x_max - self.x_min) - size[0]
+        dsy = (self.y_max - self.y_min) - size[1]
+
+        return sqrt(dx*dx+dy*dy+dsx*dsx+dsy*dsy)
 
     def bounding_box(self):
         """
         Get the bounding box
         """
         return self.x_min, self.x_max, self.y_min, self.y_max
-
 
 class ImageObject:
     """
@@ -155,14 +160,28 @@ class ImageObject:
         y_min = int(self.loc_mean[1] - self.size_mean[1]/2.0)
         y_max = int(self.loc_mean[1] + self.size_mean[1]/2.0)
         return x_min, x_max, y_min, y_max
-    
-    def distance(self, another_object):
+   
+    def predict(self, time):
         """
-        Calculates Euclidean distance to another object
+        Predict object state at future time
         """
-        xd = self.loc_mean[0]-another_object.loc_mean[0]
-        yd = self.loc_mean[1]-another_object.loc_mean[1]
-        return sqrt(xd*xd+yd*yd)
+        delta = time - self.last_update
+
+        loc_a = np.eye((6))
+        loc_a[0, 2] = delta
+        loc_a[1, 3] = delta
+        loc_a[2, 4] = delta
+        loc_a[3, 5] = delta
+        loc_pred = np.dot(loc_a, self.loc_mean)
+
+        size_a = np.eye((6))
+        size_a[0, 2] = delta
+        size_a[1, 3] = delta
+        size_a[2, 4] = delta
+        size_a[3, 5] = delta
+        size_pred = np.dot(size_a, self.size_mean)
+        
+        return loc_pred, size_pred
 
     def update(self, time, bounding_box, confidence, trace_file):
         """
@@ -170,6 +189,8 @@ class ImageObject:
         """
         delta = time - self.last_update
         self.last_update = time
+
+        self.confidence = confidence
 
         x_min = bounding_box[0]
         x_max = bounding_box[1]
@@ -736,7 +757,7 @@ class ImageWorld:
             world_object_index = -1
             for world_object in self.world_objects:
                 world_object_index = world_object_index + 1
-                distance = detected_object.distance(world_object)
+                distance = detected_object.distance(time, world_object)
                 if (detected_object.idx == world_object.class_type): # got to be same type
                     if (distance < SIMILARITY_DISTANCE): # and near each other
                         if detected_object_index in matches: # make sure of the min distance
@@ -753,47 +774,62 @@ class ImageWorld:
             if detected_object_index in matches: # update existing object
                 old_index, old_distance = matches[detected_object_index]
 
-                log_file.write("Existing object {0:d} updated.\n".\
+                log_file.write("Existing object {0:d} updated:\n".\
                                format(self.world_objects[old_index].id))
-                x_min, x_max, y_min, y_max = \
-                    self.world_objects[old_index].bounding_box()
+                print("Existing object {0:d} updated:".\
+                               format(self.world_objects[old_index].id))
+
+                x_min, x_max, y_min, y_max = self.world_objects[old_index].bounding_box()
                 log_file.write("---old: {0:s} {1:6.2f} {2:4d} {3:4d} {4:4d} {5:4d}\n".format(
+                    self.world_objects[old_index].name, \
+                    self.world_objects[old_index].confidence, \
+                    x_min, x_max, y_min, y_max))
+                print("---old: {0:s} {1:6.2f} {2:4d} {3:4d} {4:4d} {5:4d}".format(
                     self.world_objects[old_index].name, \
                     self.world_objects[old_index].confidence, \
                     x_min, x_max, y_min, y_max))
 
                 x_min, x_max, y_min, y_max = detected_object.bounding_box()
-                log_file.write("---new: {0:d} {1:6.2f} {2:4d} {3:4d} {4:4d} {5:4d}\n".format(
-                    detected_object.idx, detected_object.confidence,
+                log_file.write("---new: {0:s} {1:6.2f} {2:4d} {3:4d} {4:4d} {5:4d}\n".format(
+                    CLASS_NAMES[detected_object.idx], detected_object.confidence,
+                    x_min, x_max, y_min, y_max))
+                print("---new: {0:s} {1:6.2f} {2:4d} {3:4d} {4:4d} {5:4d}".format(
+                    CLASS_NAMES[detected_object.idx], detected_object.confidence,
                     x_min, x_max, y_min, y_max))
 
                 self.world_objects[old_index].update(time, \
                                   detected_object.bounding_box(), \
                                   detected_object.confidence, trace_file)
             else: # create a new one
-                log_file.write("New object {0:d} created.\n".format(detected_object.idx))
+                log_file.write("New object created: ".format())
+                print("New object created: ".format())
+
                 x_min, x_max, y_min, y_max = detected_object.bounding_box()
-                log_file.write("---{0:d} {1:6.2f} {2:4d} {3:4d} {4:4d} {5:4d}\n".format(
-                    detected_object.idx, detected_object.confidence,
+
+                log_file.write("{0:s} {1:6.2f} {2:4d} {3:4d} {4:4d} {5:4d}\n".format(
+                    CLASS_NAMES[detected_object.idx], detected_object.confidence,
+                    x_min, x_max, y_min, y_max))
+                print("{0:s} {1:6.2f} {2:4d} {3:4d} {4:4d} {5:4d}".format(
+                    CLASS_NAMES[detected_object.idx], detected_object.confidence,
                     x_min, x_max, y_min, y_max))
 
                 self.insert_object(time, detected_object)
 
         # remove objects without fresh measurements
-        removes = []
-        remove_index = -1
-        for world_object in self.world_objects:
-            remove_index = remove_index + 1
-            if time - world_object.last_update > RETENTION_TIME:
-                removes.append(remove_index)
-        for remove_index in removes:
-            log_file.write("Object {0:d} deleted.\n".\
-                           format(self.world_objects[remove_index].id))
-            x_min, x_max, y_min, y_max = self.world_objects[remove_index].bounding_box()
-            log_file.write("---{0:s} {1:6.2f} {2:4d} {3:4d} {4:4d} {5:4d}\n".format(
-                self.world_objects[remove_index].name, \
-                self.world_objects[remove_index].confidence, \
-                x_min, x_max, y_min, y_max))
-            
-            del self.world_objects[remove_index]
-            
+        found = True
+        while found:
+            found = False
+            for world_object in self.world_objects:
+                if (time - world_object.last_update) > RETENTION_TIME:
+                    log_file.write("Object {0:d} deleted:\n".format(world_object.id))
+                    print("Object {0:d} deleted:".format(world_object.id))
+
+                    x_min, x_max, y_min, y_max = world_object.bounding_box()
+                    log_file.write("---{0:s} {1:6.2f} {2:4d} {3:4d} {4:4d} {5:4d}\n".format(
+                        world_object.name, world_object.confidence, x_min, x_max, y_min, y_max))
+                    print("---{0:s} {1:6.2f} {2:4d} {3:4d} {4:4d} {5:4d}".format(
+                        world_object.name, world_object.confidence, x_min, x_max, y_min, y_max))
+
+                    self.world_objects.remove(world_object)
+                    found = True
+                    break
