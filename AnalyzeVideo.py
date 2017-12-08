@@ -22,7 +22,9 @@ def analyze_video(videofile):
     # open log files
     log_file = open("log.txt", "w")
     trace_file = open("trace.txt", "w")
-    trace_file.write("time,zx,zy,x,y,vx,vy,ax,ay,zxs,zys,xs,ys,vsx,vsy,asx,asy\n")
+    trace_file.write("time,x_min_p,x_max_p,y_min_p,y_max_p,")
+    trace_file.write("x_min_m,x_max_m,y_min_m,y_max_m,")
+    trace_file.write("x_min_c,x_max_c,y_min_c,y_max_c\n")
     # create an empty world
     world = ic.ImageWorld()
     current_time = 0.0
@@ -99,7 +101,7 @@ def analyze_video(videofile):
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
         
-        time.sleep(1.0)
+        time.sleep(0.1)
 
     video.release()
     cv2.destroyAllWindows()
