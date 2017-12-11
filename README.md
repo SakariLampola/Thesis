@@ -25,7 +25,7 @@ Notes:
 
 Output:
 
-  2 windows: measurements and model (filtered)
+  2 windows: detected object and static image objects
   log.txt: log for all objects
-  trace.txt: detailed log for one object (matlab import)
+  trace.txt: detailed log for matlab import
   

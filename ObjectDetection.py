@@ -14,7 +14,7 @@ import ImageClasses as ioc
 NET = cv2.dnn.readNetFromCaffe("MobileNetSSD_deploy.prototxt.txt", \
                                "MobileNetSSD_deploy.caffemodel")
 
-def detect_objects(image, confidence_level):
+def detect_objects(image, time, confidence_level):
     """
     Detect objects
         image: CV2 image
@@ -47,10 +47,11 @@ def detect_objects(image, confidence_level):
             # extract the index of the class label from the `detections`,
             # then compute the (x, y)-coordinates of the bounding box for
             # the object
-            idx = int(detections[0, 0, i, 1])
+            class_type = int(detections[0, 0, i, 1])
             box = detections[0, 0, i, 3:7] * np.array([width, height, width, height])
             (x_min, y_min, x_max, y_max) = box.astype("int")
 
-            objects.append(ioc.Measurement(idx, x_min, x_max, y_min, y_max, confidence))
+            objects.append(ioc.DetectedObject(time, class_type, x_min, x_max, \
+                                              y_min, y_max, confidence))
             
     return objects

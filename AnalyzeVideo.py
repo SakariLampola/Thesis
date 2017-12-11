@@ -9,8 +9,8 @@ Created on Wed Nov 29 13:44:02 2017
 @author: Sakari Lampola
 """
 
-import time
 import argparse
+import time
 import cv2
 import ImageClasses as ic
 import ObjectDetection as od
@@ -19,88 +19,96 @@ def analyze_video(videofile):
     """
     Analyzes a video frame by frame, detecting objects with locations
     """
-    # open log files
+    # Open log and trace files
     log_file = open("log.txt", "w")
     trace_file = open("trace.txt", "w")
-    trace_file.write("time,x_min_p,x_max_p,y_min_p,y_max_p,")
-    trace_file.write("x_min_m,x_max_m,y_min_m,y_max_m,")
-    trace_file.write("x_min_c,x_max_c,y_min_c,y_max_c\n")
-    # create an empty world
+    trace_file.write("time,id,x_min_p,x_max_p,y_min_p,y_max_p,")
+    trace_file.write("x_min_m,x_max_m,y_min_m,y_max_m\n")
+
+    # Create an empty world
     world = ic.ImageWorld()
-    current_time = 0.0
-    # open the video
+
+    # Open the video and initialize follow-up vaiables
     video = cv2.VideoCapture(videofile)
     fps = video.get(cv2.CAP_PROP_FPS)
     time_step = 1.0 / fps
+    current_time = 0.0
     i_frame = 1
-    # loop every frame in history
+
+    # Loop every frame in the video
     while video.isOpened():
         ret, frame = video.read()
         if ret:
-            frame_copy = frame.copy()
+            frame_copy = frame.copy() # Make a copy to present image world model
 
             log_file.write("----------------------------------------------\n")
             log_file.write("Time {0:<.2f}\n".format(current_time))
-            log_file.write("Measurements:\n")
+            log_file.write("Object detections:\n")
 
             print("----------------------------------------------")
             print("Time {0:<.2f}".format(current_time))
-            print("Measurements:")
+            print("Object detections:")
 
-            # make a measurement by detecting objects
-            detected_objects = od.detect_objects(frame, 0.2)
-            
-            # display measurements
+            # Detect objects in the current frame
+            detected_objects = od.detect_objects(frame, current_time, 0.2)
+
+            # display detected objects
             for detected_object in detected_objects:
-                x_min, x_max, y_min, y_max = detected_object.bounding_box()
 
                 log_file.write("---{0:s} {1:6.2f} {2:4d} {3:4d} {4:4d} {5:4d}\n".format(
-                    ic.CLASS_NAMES[detected_object.idx], detected_object.confidence,
-                    x_min, x_max, y_min, y_max))
+                    ic.CLASS_NAMES[detected_object.class_type], detected_object.confidence,
+                    detected_object.x_min, detected_object.x_max, \
+                    detected_object.y_min, detected_object.y_max))
 
                 print("---{0:s} {1:6.2f} {2:4d} {3:4d} {4:4d} {5:4d}".format(
-                    ic.CLASS_NAMES[detected_object.idx], detected_object.confidence,
-                    x_min, x_max, y_min, y_max))
+                    ic.CLASS_NAMES[detected_object.class_type], detected_object.confidence, \
+                    detected_object.x_min, detected_object.x_max, \
+                    detected_object.y_min, detected_object.y_max))
 
-                label = "{}: {:.2f}%".format(ic.CLASS_NAMES[detected_object.idx], \
+                label = "{}: {:.2f}%".format(ic.CLASS_NAMES[detected_object.class_type], \
                          detected_object.confidence * 100)
-                cv2.rectangle(frame, (x_min, y_min), (x_max, y_max), 255, 2)
-                ytext = y_min - 15 if y_min - 15 > 15 else y_min + 15
-                cv2.putText(frame, label, (x_min, ytext), \
+                cv2.rectangle(frame, (detected_object.x_min, detected_object.y_min), \
+                              (detected_object.x_max, detected_object.y_max), 255, 2)
+                ytext = detected_object.y_min - 15 if detected_object.y_min - 15 > 15 \
+                    else detected_object.y_min + 15
+                cv2.putText(frame, label, (detected_object.x_min, ytext), \
                             cv2.FONT_HERSHEY_SIMPLEX, 0.5, 255, 2)
-            cv2.imshow('Measurements', frame)
+            cv2.imshow('Object detections', frame)
 
             # update the world model
             world.update(current_time, detected_objects, log_file, trace_file)
 
             # display the world with filtered objects
-            log_file.write("World:\n")
-            print("World:")
+            log_file.write("Image objects:\n")
+            print("Image objects:")
 
-            for world_object in world.world_objects:
-                x_min, x_max, y_min, y_max = world_object.bounding_box()
+            for image_object in world.image_objects:
 
                 log_file.write("---{0:d} {1:s} {2:6.2f} {3:4d} {4:4d} {5:4d} {6:4d}\n".format(
-                    world_object.id, world_object.name, world_object.confidence,
-                    x_min, x_max, y_min, y_max))
+                    image_object.id, image_object.name, image_object.confidence,
+                    image_object.x_min, image_object.x_max, \
+                    image_object.y_min, image_object.y_max))
 
                 print("---{0:d} {1:s} {2:6.2f} {3:4d} {4:4d} {5:4d} {6:4d}".format(
-                    world_object.id, world_object.name, world_object.confidence,
-                    x_min, x_max, y_min, y_max))
+                    image_object.id, image_object.name, image_object.confidence,
+                    image_object.x_min, image_object.x_max, \
+                    image_object.y_min, image_object.y_max))
 
-                label = "{0:d} {1:s}: {2:.2f}%".format(world_object.id, world_object.name, \
-                         world_object.confidence * 100)
-                cv2.rectangle(frame_copy, (x_min, y_min), (x_max, y_max), 255, 2)
-                ytext = y_min - 15 if y_min - 15 > 15 else y_min + 15
-                cv2.putText(frame_copy, label, (x_min, ytext), \
+                label = "{0:d} {1:s}: {2:.2f}%".format(image_object.id, image_object.name, \
+                         image_object.confidence * 100)
+                cv2.rectangle(frame_copy, (image_object.x_min, image_object.y_min), \
+                              (image_object.x_max, image_object.y_max), 255, 2)
+                ytext = image_object.y_min - 15 if image_object.y_min - 15 > 15 \
+                    else image_object.y_min + 15
+                cv2.putText(frame_copy, label, (image_object.x_min, ytext), \
                             cv2.FONT_HERSHEY_SIMPLEX, 0.5, 255, 2)
-            cv2.imshow('Model', frame_copy)
+            cv2.imshow('Image objects', frame_copy)
             i_frame = i_frame + 1
             current_time = current_time + time_step
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
-        
+
         time.sleep(0.1)
 
     video.release()
