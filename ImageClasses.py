@@ -10,15 +10,27 @@ Created on Wed Nov 29 09:08:16 2017
 """
 
 from math import inf, nan, sqrt
+import numpy as np
 
 SIMILARITY_DISTANCE = 150 # Max distance for similarity interpretation
-RETENTION_TIME = 0.3 # How long image objects are maintained without new detections
+RETENTION_TIME = 0.1 # How long image objects are maintained without new detections
 CONFIDENFE_LEVEL = 0.4 # How confident we must be to create a new object
 
 CLASS_NAMES = ["background", "aeroplane", "bicycle", "bird", "boat",
                "bottle", "bus", "car", "cat", "chair", "cow", "diningtable",
                "dog", "horse", "motorbike", "person", "pottedplant", "sheep",
                "sofa", "train", "tvmonitor"]
+
+LOC_ALFA = 1.0 # Bounding box location state variance
+LOC_BETA = 1.0 # Bounding box velocity state variance
+LOC_GAMMA = 1.0 # Bounding box acceleration state variance
+
+LOC_R = np.zeros((3, 3)) # Covariance matrix for state
+LOC_R[0, 0] = 1.0
+LOC_R[1, 1] = 1.0
+LOC_R[2, 2] = 1.0
+
+LOC_Q = 10.0 # Variance for location measurement
 
 def get_next_id():
     """
@@ -49,10 +61,10 @@ class DetectedObject:
         """
         Calculates Euclidean distance (4 corners) to an image object
         """
-        dx_min = (self.x_min - image_object.x_min)**2
-        dx_max = (self.x_max - image_object.x_max)**2
-        dy_min = (self.y_min - image_object.y_min)**2
-        dy_max = (self.y_max - image_object.y_max)**2
+        dx_min = (self.x_min - image_object.x_min[0])**2
+        dx_max = (self.x_max - image_object.x_max[0])**2
+        dy_min = (self.y_min - image_object.y_min[0])**2
+        dy_max = (self.y_max - image_object.y_max[0])**2
 
         return sqrt(dx_min + dx_max + dy_min + dy_max)
 
@@ -72,34 +84,93 @@ class ImageObject:
         Initialization
         """
         self.id = get_next_id()
-        self.last_update = detected_object.time
-        self.x_min = detected_object.x_min
-        self.x_max = detected_object.x_max
-        self.y_min = detected_object.y_min
-        self.y_max = detected_object.y_max
+        self.last_predicted = detected_object.time
+        self.last_corrected = detected_object.time
         self.confidence = detected_object.confidence
-        self.detected_objects = [] # list of detections corresponding to this image object
-        self.detected_objects.append(detected_object)
+
+        self.x_min = np.array([detected_object.x_min, 0.0, 0.0]) # State
+        self.x_min_sigma = np.zeros((3, 3)) # Covariance
+        self.x_min_sigma[0, 0] = LOC_ALFA # Location
+        self.x_min_sigma[1, 1] = LOC_BETA # Velocity
+        self.x_min_sigma[2, 2] = LOC_GAMMA # Acceleration
+
+        self.x_max = np.array([detected_object.x_max, 0.0, 0.0]) # State
+        self.x_max_sigma = np.zeros((3, 3)) # Covariance
+        self.x_max_sigma[0, 0] = LOC_ALFA # Location
+        self.x_max_sigma[1, 1] = LOC_BETA # Velocity
+        self.x_max_sigma[2, 2] = LOC_GAMMA # Acceleration
+
+        self.y_min = np.array([detected_object.y_min, 0.0, 0.0]) # State
+        self.y_min_sigma = np.zeros((3, 3)) # Covariance
+        self.y_min_sigma[0, 0] = LOC_ALFA # Location
+        self.y_min_sigma[1, 1] = LOC_BETA # Velocity
+        self.y_min_sigma[2, 2] = LOC_GAMMA # Acceleration
+
+        self.y_max = np.array([detected_object.y_max, 0.0, 0.0]) # State
+        self.y_max_sigma = np.zeros((3, 3)) # Covariance
+        self.y_max_sigma[0, 0] = LOC_ALFA # Location
+        self.y_max_sigma[1, 1] = LOC_BETA # Velocity
+        self.y_max_sigma[2, 2] = LOC_GAMMA # Acceleration
 
     def predict(self, time):
         """
-        Predict object coordinates at future time
+        Predict bounding box coordinates
         """
-        self.x_min = self.detected_objects[-1].x_min
-        self.x_max = self.detected_objects[-1].x_max
-        self.y_min = self.detected_objects[-1].y_min
-        self.y_max = self.detected_objects[-1].y_max
+        delta = time - self.last_predicted
+        self.last_predicted = time
+        
+        loc_a = np.eye((3))
+        loc_a[0, 1] = delta
+        loc_a[1, 2] = delta
+        
+        self.x_min = np.dot(loc_a, self.x_min)
+        self.x_min_sigma = np.dot(np.dot(loc_a, self.x_min_sigma), loc_a.T) + LOC_R        
+        
+        self.x_max = np.dot(loc_a, self.x_max)
+        self.x_max_sigma = np.dot(np.dot(loc_a, self.x_max_sigma), loc_a.T) + LOC_R        
 
-    def update(self, detected_object):
+        self.y_min = np.dot(loc_a, self.y_min)
+        self.y_min_sigma = np.dot(np.dot(loc_a, self.y_min_sigma), loc_a.T) + LOC_R        
+        
+        self.y_max = np.dot(loc_a, self.y_max)
+        self.y_max_sigma = np.dot(np.dot(loc_a, self.y_max_sigma), loc_a.T) + LOC_R        
+
+    def correct(self, detected_object):
         """
-        Update object state based on detected object
+        Correct bounding box coordinates based on detected object
         """
-        self.detected_objects.append(detected_object)
-        self.last_update = detected_object.time
-        self.x_min = detected_object.x_min
-        self.x_max = detected_object.x_max
-        self.y_min = detected_object.y_min
-        self.y_max = detected_object.y_max
+        self.last_corrected = detected_object.time
+        self.confidence = detected_object.confidence
+
+        loc_c = np.array([1.0, 0.0, 0.0])
+        
+        d = 1.0/(self.x_min_sigma[0, 0] + LOC_Q)
+        k = d*np.dot(self.x_min_sigma, loc_c.T)
+        loc_z = np.array([detected_object.x_min, 0.0, 0.0]) 
+        self.x_min = self.x_min + np.dot(k, loc_z - np.dot(loc_c, self.x_min))
+        s1 = np.array([[1.0-k[0], 0.0, 0.0],[-k[1], 0.0, 0.0],[-k[2], 0.0, 0.0]])
+        self.x_min_sigma = np.dot(s1, self.x_min_sigma)        
+
+        d = 1.0/(self.x_max_sigma[0, 0] + LOC_Q)
+        k = d*np.dot(self.x_max_sigma, loc_c.T)
+        loc_z = np.array([detected_object.x_max, 0.0, 0.0]) 
+        self.x_max = self.x_max + np.dot(k, loc_z - np.dot(loc_c, self.x_max))
+        s1 = np.array([[1.0-k[0], 0.0, 0.0],[-k[1], 0.0, 0.0],[-k[2], 0.0, 0.0]])
+        self.x_max_sigma = np.dot(s1, self.x_max_sigma)        
+
+        d = 1.0/(self.y_min_sigma[0, 0] + LOC_Q)
+        k = d*np.dot(self.y_min_sigma, loc_c.T)
+        loc_z = np.array([detected_object.y_min, 0.0, 0.0]) 
+        self.y_min = self.y_min + np.dot(k, loc_z - np.dot(loc_c, self.y_min))
+        s1 = np.array([[1.0-k[0], 0.0, 0.0],[-k[1], 0.0, 0.0],[-k[2], 0.0, 0.0]])
+        self.y_min_sigma = np.dot(s1, self.y_min_sigma)        
+
+        d = 1.0/(self.y_max_sigma[0, 0] + LOC_Q)
+        k = d*np.dot(self.y_max_sigma, loc_c.T)
+        loc_z = np.array([detected_object.y_max, 0.0, 0.0]) 
+        self.y_max = self.y_max + np.dot(k, loc_z - np.dot(loc_c, self.y_max))
+        s1 = np.array([[1.0-k[0], 0.0, 0.0],[-k[1], 0.0, 0.0],[-k[2], 0.0, 0.0]])
+        self.y_max_sigma = np.dot(s1, self.y_max_sigma)        
 
 class Aeroplane(ImageObject):
     """
@@ -385,7 +456,7 @@ class ImageWorld:
         """
         # Predict new coordinates for each image object
         for image_object in self.image_objects:
-         image_object.predict(detection_time)
+            image_object.predict(detection_time)
 
         # Find matching pairs which are probably the same object in two frames
         matches = dict()
@@ -404,45 +475,63 @@ class ImageWorld:
         # What to do with detections?
         for detected_object in detected_objects:
             if detected_object in matches: # Update existing world object
+
                 image_object, distance = matches[detected_object]
 
                 log_file.write("Existing image object {0:d} updated:\n".format(image_object.id))
                 print("Existing image object {0:d} updated:".format(image_object.id))
 
-                image_object.confidence = detected_object.confidence
-
-                log_file.write("---predicted: {0:s} {1:6.2f} {2:4d} {3:4d} {4:4d} {5:4d}\n".format(
+                log_file.write("---predicted: {0:s} {1:6.2f} {2:6.2f} {3:6.2f} {4:6.2f} {5:6.2f}\n".format(
                     image_object.name, image_object.confidence, \
-                    image_object.x_min, image_object.x_max, \
-                    image_object.y_min, image_object.y_max))
-                print("---predicted: {0:s} {1:6.2f} {2:4d} {3:4d} {4:4d} {5:4d}".format(
+                    image_object.x_min[0], image_object.x_max[0], \
+                    image_object.y_min[0], image_object.y_max[0]))
+                print("---predicted: {0:s} {1:6.2f} {2:6.2f} {3:6.2f} {4:6.2f} {5:6.2f}".format(
                     image_object.name, image_object.confidence, \
-                    image_object.x_min, image_object.x_max, \
-                    image_object.y_min, image_object.y_max))
+                    image_object.x_min[0], image_object.x_max[0], \
+                    image_object.y_min[0], image_object.y_max[0]))
 
-                log_file.write("---measured:  {0:s} {1:6.2f} {2:4d} {3:4d} {4:4d} {5:4d}\n".format( \
+                x_min_p = image_object.x_min[0]
+                x_max_p = image_object.x_max[0]
+                y_min_p = image_object.y_min[0]
+                y_max_p = image_object.y_max[0]
+
+                log_file.write("---measured:  {0:s} {1:6.2f} {2:6.2f} {3:6.2f} {4:6.2f} {5:6.2f}\n".format( \
                     CLASS_NAMES[detected_object.class_type], detected_object.confidence, \
-                    detected_object.x_min, detected_object.x_max, \
-                    detected_object.y_min, detected_object.y_max))
-                print("---measured:  {0:s} {1:6.2f} {2:4d} {3:4d} {4:4d} {5:4d}".format( \
+                    float(detected_object.x_min), float(detected_object.x_max), \
+                    float(detected_object.y_min), float(detected_object.y_max)))
+                print("---measured:  {0:s} {1:6.2f} {2:6.2f} {3:6.2f} {4:6.2f} {5:6.2f}".format( \
                     CLASS_NAMES[detected_object.class_type], detected_object.confidence, \
-                    detected_object.x_min, detected_object.x_max, \
-                    detected_object.y_min, detected_object.y_max))
+                    float(detected_object.x_min), float(detected_object.x_max), \
+                    float(detected_object.y_min), float(detected_object.y_max)))
+
+                image_object.correct(detected_object)
+
+                log_file.write("---corrected: {0:s} {1:6.2f} {2:6.2f} {3:6.2f} {4:6.2f} {5:6.2f}\n".format(
+                    image_object.name, image_object.confidence, \
+                    image_object.x_min[0], image_object.x_max[0], \
+                    image_object.y_min[0], image_object.y_max[0]))
+                print("---corrected: {0:s} {1:6.2f} {2:6.2f} {3:6.2f} {4:6.2f} {5:6.2f}".format(
+                    image_object.name, image_object.confidence, \
+                    image_object.x_min[0], image_object.x_max[0], \
+                    image_object.y_min[0], image_object.y_max[0]))
 
                 fmt = ("{0:.2f},{1:d},{2:.2f},{3:.2f},{4:.2f},{5:.2f},"
-                       "{6:.2f},{7:.2f},{8:.2f},{9:.2f}\n")
+                       "{6:.2f},{7:.2f},{8:.2f},{9:.2f},{10:.2f},{11:.2f},{12:.2f},{13:.2f},{14:.2f}\n")
                 trace_file.write(fmt.format(detection_time, \
                                             image_object.id, \
-                                            image_object.x_min, \
-                                            image_object.x_max, \
-                                            image_object.y_min, \
-                                            image_object.y_max, \
+                                            x_min_p, \
+                                            x_max_p, \
+                                            y_min_p, \
+                                            y_max_p, \
                                             detected_object.x_min, \
                                             detected_object.x_max, \
                                             detected_object.y_min, \
-                                            detected_object.y_max))
-
-                image_object.update(detected_object)
+                                            detected_object.y_max, \
+                                            image_object.x_min[0], \
+                                            image_object.x_max[0], \
+                                            image_object.y_min[0], \
+                                            image_object.y_max[0], \
+                                            distance))
 
             else: # Create a new one
                 if detected_object.confidence > CONFIDENFE_LEVEL:
@@ -465,16 +554,16 @@ class ImageWorld:
         while found:
             found = False
             for image_object in self.image_objects:
-                if (detection_time - image_object.last_update) > RETENTION_TIME:
+                if (detection_time - image_object.last_corrected) > RETENTION_TIME:
                     log_file.write("Image object {0:d} deleted:\n".format(image_object.id))
                     print("Image object {0:d} deleted:".format(image_object.id))
 
-                    log_file.write("---{0:s} {1:6.2f} {2:4d} {3:4d} {4:4d} {5:4d}\n".format(
-                        image_object.name, image_object.confidence, image_object.x_min,
-                        image_object.x_max, image_object.y_min, image_object.y_max))
-                    print("---{0:s} {1:6.2f} {2:4d} {3:4d} {4:4d} {5:4d}".format(
-                        image_object.name, image_object.confidence, image_object.x_min, \
-                        image_object.x_max, image_object.y_min, image_object.y_max))
+                    log_file.write("---{0:s} {1:6.2f} {2:6.2f} {3:6.2f} {4:6.2f} {5:6.2f}\n".format(
+                        image_object.name, image_object.confidence, image_object.x_min[0],
+                        image_object.x_max[0], image_object.y_min[0], image_object.y_max[0]))
+                    print("---{0:s} {1:6.2f} {2:6.2f} {3:6.2f} {4:6.2f} {5:6.2f}".format(
+                        image_object.name, image_object.confidence, image_object.x_min[0], \
+                        image_object.x_max[0], image_object.y_min[0], image_object.y_max[0]))
 
                     self.image_objects.remove(image_object)
                     found = True
