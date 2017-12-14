@@ -57,6 +57,7 @@ def analyze_video(videofile):
             print("----------------------------------------------")
             print("Time {0:<.2f}".format(current_time))
             print("Detected objects:")
+            time_label = "Time {0:<.2f}".format(current_time)
 
             # Detect objects in the current frame
             detected_objects = od.detect_objects(frame, current_time, ic.CONFIDENFE_LEVEL)
@@ -85,6 +86,8 @@ def analyze_video(videofile):
                 cv2.putText(frame, label, (detected_object.x_min, ytext), \
                             cv2.FONT_HERSHEY_SIMPLEX, 0.5, 255, 2)
 
+            cv2.putText(frame, time_label, (10,20), \
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, 255, 2)
             cv2.imshow('Detected objects', frame)
 
             # update the world model
@@ -117,6 +120,8 @@ def analyze_video(videofile):
                 cv2.putText(frame_copy, label, (int(image_object.x_min), ytext), \
                             cv2.FONT_HERSHEY_SIMPLEX, 0.5, 255, 2)
 
+            cv2.putText(frame_copy, time_label, (10,20), \
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, 255, 2)
             cv2.imshow('Image objects', frame_copy)
             i_frame = i_frame + 1
             current_time = current_time + time_step

@@ -9,9 +9,9 @@ Created on Wed Nov 29 09:08:16 2017
 @author: Sakari Lampola
 """
 
-from math import inf, nan, sqrt
+from math import inf, nan
 
-SIMILARITY_DISTANCE = 100 # Max distance for similarity interpretation
+SIMILARITY_DISTANCE = 20 # Max distance for similarity interpretation
 RETENTION_TIME = 0.0 # How long image objects are maintained without new detections
 CONFIDENFE_LEVEL = 0.0 # How confident we must be to create a new object
 
@@ -44,6 +44,7 @@ class DetectedObject:
         self.y_min = y_min
         self.y_max = y_max
         self.confidence = confidence
+        self.matched = False # By default, not matched with any image object
 
     def distance(self, time, image_object):
         """
@@ -405,28 +406,77 @@ class ImageWorld:
         is found, a new image object is created. Matched image objects are
         updated. Finally, image objects not updated recently are removed.
         """
+
+        log_file.write("Image object predicted locations:\n")
+        print("Image object predicted locations:")
         # Predict new coordinates for each image object
         for image_object in self.image_objects:
+
             image_object.predict(detection_time)
 
+            log_file.write("---{0:d} {1:s} {2:6.2f} {3:6.2f} {4:6.2f} {5:6.2f} {6:6.2f}\n".format(
+                image_object.id, image_object.name, image_object.confidence,
+                image_object.x_min_predicted, image_object.x_max_predicted, \
+                image_object.y_min_predicted, image_object.y_max_predicted))
+            print("---{0:d} {1:s} {2:6.2f} {3:6.2f} {4:6.2f} {5:6.2f} {6:6.2f}".format(
+                image_object.id, image_object.name, image_object.confidence,
+                image_object.x_min_predicted, image_object.x_max_predicted, \
+                image_object.y_min_predicted, image_object.y_max_predicted))
+
         # Find matching pairs which are probably the same object in two frames
+        log_file.write("Searching image objects for detected objects:\n")
+        print("Searching image objects for detected objects:")
         matches = dict()
         for detected_object in detected_objects:
-            for image_object in self.image_objects:
-                if detected_object.class_type == image_object.class_type: # Must be same type
-                    distance = detected_object.distance(detection_time, image_object)
-                    if distance < SIMILARITY_DISTANCE: # ... and near each other
-                        if detected_object in matches: # Make sure of the min distance
-                            old_index, old_distance = matches[detected_object]
-                            if distance < old_distance:
-                                matches[detected_object] = (image_object, distance)
-                        else:
-                            matches[detected_object] = (image_object, distance)
 
-        # What to do with detected matches?
-        for detected_object in detected_objects:
-            if detected_object in matches: # Match found for an image object
-                image_object, distance = matches[detected_object]
+            log_file.write("---{0:s} {1:6.2f} {2:4d} {3:4d} {4:4d} {5:4d}\n".format(
+                CLASS_NAMES[detected_object.class_type], \
+                detected_object.confidence,
+                detected_object.x_min, detected_object.x_max, \
+                detected_object.y_min, detected_object.y_max))
+            print("---{0:s} {1:6.2f} {2:4d} {3:4d} {4:4d} {5:4d}".format(
+                CLASS_NAMES[detected_object.class_type], \
+                detected_object.confidence, \
+                detected_object.x_min, detected_object.x_max, \
+                detected_object.y_min, detected_object.y_max))
+
+            for image_object in self.image_objects:
+
+                if detected_object.class_type == image_object.class_type: # Must be same type
+
+                    distance = detected_object.distance(detection_time, image_object)
+
+                    log_file.write("   ---   {0:d} {1:s} {2:6.2f} {3:6.2f} {4:6.2f} {5:6.2f} {6:6.2f} {7:6.2f}\n".format( \
+                                   image_object.id, image_object.name, image_object.confidence, \
+                                   image_object.x_min, image_object.x_max, \
+                                   image_object.y_min, image_object.y_max, distance))
+                    print("   --- {0:d} {1:s} {2:6.2f} {3:6.2f} {4:6.2f} {5:6.2f} {6:6.2f} {7:6.2f}".format(
+                        image_object.id, image_object.name, image_object.confidence, \
+                        image_object.x_min, image_object.x_max, \
+                        image_object.y_min, image_object.y_max, distance))
+                    
+                    if distance < SIMILARITY_DISTANCE: # ... and near each other
+
+                        if image_object in matches: # Make sure of the min distance
+                            old_object, old_distance = matches[image_object]
+                            if distance < old_distance:
+                                matches[image_object] = (detected_object, distance)
+                                detected_object.matched = True
+                                old_object.matched = False
+                                log_file.write("      --- Matched (updated)!\n")
+                                print("      --- Matched (updated)!")
+                        else:
+                            matches[image_object] = (detected_object, distance)
+                            detected_object.matched = True
+                            log_file.write("      --- Matched!\n")
+                            print("      --- Matched!")
+
+        # Matched image objects have to be updated and unmatched removed
+        for image_object in self.image_objects:
+
+            if image_object in matches: # Update coordinates
+
+                detected_object, distance = matches[image_object]
 
                 log_file.write("Existing image object {0:d} updated:\n".format(image_object.id))
                 print("Existing image object {0:d} updated:".format(image_object.id))
@@ -491,13 +541,31 @@ class ImageWorld:
                                             distance, \
                                             len(image_object.track)))
 
-            else: # Create a new image object
-                if detected_object.confidence > CONFIDENFE_LEVEL:
-                    self.create_image_object(detected_object)
+            else:
 
+                log_file.write("Image object {0:d} deleted:\n".format(image_object.id))
+                print("Image object {0:d} deleted:".format(image_object.id))
+
+                log_file.write("---{0:s} {1:6.2f} {2:6.2f} {3:6.2f} {4:6.2f} {5:6.2f}\n".format(
+                    image_object.name, image_object.confidence, image_object.x_min,
+                    image_object.x_max, image_object.y_min, image_object.y_max))
+                print("---{0:s} {1:6.2f} {2:6.2f} {3:6.2f} {4:6.2f} {5:6.2f}".format(
+                    image_object.name, image_object.confidence, image_object.x_min, \
+                    image_object.x_max, image_object.y_min, image_object.y_max))
+
+                self.image_objects.remove(image_object)
+            
+
+        # New image objects are created based on unmatched detected objects
+        for detected_object in detected_objects:
+            if detected_object.matched == False:
+                if detected_object.confidence > CONFIDENFE_LEVEL:
+
+                    self.create_image_object(detected_object)
+    
                     log_file.write("New image object {0:d} created: ".format(get_next_id.counter))
                     print("New image object {0:d} created: ".format(get_next_id.counter))
-
+    
                     log_file.write("{0:s} {1:6.2f} {2:4d} {3:4d} {4:4d} {5:4d}\n".format(
                         CLASS_NAMES[detected_object.class_type], detected_object.confidence,
                         detected_object.x_min, detected_object.x_max, \
@@ -506,23 +574,3 @@ class ImageWorld:
                         CLASS_NAMES[detected_object.class_type], detected_object.confidence,
                         detected_object.x_min, detected_object.x_max, \
                         detected_object.y_min, detected_object.y_max))
-
-        # remove objects without fresh measurements
-        found = True
-        while found:
-            found = False
-            for image_object in self.image_objects:
-                if (detection_time - image_object.last_corrected) > RETENTION_TIME:
-                    log_file.write("Image object {0:d} deleted:\n".format(image_object.id))
-                    print("Image object {0:d} deleted:".format(image_object.id))
-
-                    log_file.write("---{0:s} {1:6.2f} {2:6.2f} {3:6.2f} {4:6.2f} {5:6.2f}\n".format(
-                        image_object.name, image_object.confidence, image_object.x_min,
-                        image_object.x_max, image_object.y_min, image_object.y_max))
-                    print("---{0:s} {1:6.2f} {2:6.2f} {3:6.2f} {4:6.2f} {5:6.2f}".format(
-                        image_object.name, image_object.confidence, image_object.x_min, \
-                        image_object.x_max, image_object.y_min, image_object.y_max))
-
-                    self.image_objects.remove(image_object)
-                    found = True
-                    break
