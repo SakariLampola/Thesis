@@ -10,8 +10,11 @@ Created on Wed Nov 29 09:08:16 2017
 """
 
 from math import inf, nan
+import random as rnd
+import numpy as np
+from scipy import interpolate
 
-SIMILARITY_DISTANCE = 20 # Max distance for similarity interpretation
+SIMILARITY_DISTANCE = 30 # Max distance for similarity interpretation
 RETENTION_TIME = 0.0 # How long image objects are maintained without new detections
 CONFIDENFE_LEVEL = 0.0 # How confident we must be to create a new object
 
@@ -91,6 +94,8 @@ class ImageObject:
         self.x_max_predicted = nan
         self.y_min_predicted = nan
         self.y_max_predicted = nan
+        
+        self.color = (rnd.randint(0,255),rnd.randint(0,255),rnd.randint(0,255))
 
     def predict(self, time):
         """
@@ -472,6 +477,7 @@ class ImageWorld:
                             print("      --- Matched!")
 
         # Matched image objects have to be updated and unmatched removed
+        removes = []
         for image_object in self.image_objects:
 
             if image_object in matches: # Update coordinates
@@ -553,8 +559,11 @@ class ImageWorld:
                     image_object.name, image_object.confidence, image_object.x_min, \
                     image_object.x_max, image_object.y_min, image_object.y_max))
 
-                self.image_objects.remove(image_object)
-            
+                removes.append(image_object)
+        
+        # Remove image objects
+        for remove in removes:
+            self.image_objects.remove(remove)
 
         # New image objects are created based on unmatched detected objects
         for detected_object in detected_objects:

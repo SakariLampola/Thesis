@@ -10,7 +10,8 @@ Created on Wed Nov 29 13:44:02 2017
 """
 
 import argparse
-#import time
+import numpy as np
+import time
 import cv2
 import ImageClasses as ic
 import ObjectDetection as od
@@ -46,9 +47,9 @@ def analyze_video(videofile):
 
     # Loop every frame in the video
     while video.isOpened():
-        ret, frame = video.read()
+        ret, frame_detected_objects = video.read()
         if ret:
-            frame_copy = frame.copy() # Make a copy to present image objects
+            frame_image_objects = frame_detected_objects.copy() # Make a copy to present image objects
 
             log_file.write("----------------------------------------------\n")
             log_file.write("Time {0:<.2f}\n".format(current_time))
@@ -57,10 +58,10 @@ def analyze_video(videofile):
             print("----------------------------------------------")
             print("Time {0:<.2f}".format(current_time))
             print("Detected objects:")
-            time_label = "Time {0:<.2f}".format(current_time)
 
             # Detect objects in the current frame
-            detected_objects = od.detect_objects(frame, current_time, ic.CONFIDENFE_LEVEL)
+            detected_objects = od.detect_objects(frame_detected_objects, \
+                                                 current_time, ic.CONFIDENFE_LEVEL)
 
             # Display detected objects
             for detected_object in detected_objects:
@@ -79,16 +80,19 @@ def analyze_video(videofile):
 
                 label = "{}: {:.2f}%".format(ic.CLASS_NAMES[detected_object.class_type], \
                          detected_object.confidence * 100)
-                cv2.rectangle(frame, (detected_object.x_min, detected_object.y_min), \
-                              (detected_object.x_max, detected_object.y_max), 255, 2)
+                cv2.rectangle(frame_detected_objects, (detected_object.x_min, 
+                                                       detected_object.y_min), \
+                                                      (detected_object.x_max, \
+                                                       detected_object.y_max), 255, 2)
+                
                 ytext = detected_object.y_min - 15 if detected_object.y_min - 15 > 15 \
                     else detected_object.y_min + 15
-                cv2.putText(frame, label, (detected_object.x_min, ytext), \
+                cv2.putText(frame_detected_objects, label, (detected_object.x_min, ytext), \
                             cv2.FONT_HERSHEY_SIMPLEX, 0.5, 255, 2)
 
-            cv2.putText(frame, time_label, (10,20), \
+            time_label_detected_objects = "Time {0:<.2f} detected objects".format(current_time)
+            cv2.putText(frame_detected_objects, time_label_detected_objects, (10,20), \
                         cv2.FONT_HERSHEY_SIMPLEX, 0.5, 255, 2)
-            cv2.imshow('Detected objects', frame)
 
             # update the world model
             world.update(current_time, detected_objects, log_file, trace_file)
@@ -111,25 +115,39 @@ def analyze_video(videofile):
 
                 label = "{0:d} {1:s}: {2:.2f}%".format(image_object.id, image_object.name, \
                          image_object.confidence * 100)
-                cv2.rectangle(frame_copy, (int(image_object.x_min), \
+                cv2.rectangle(frame_image_objects, (int(image_object.x_min), \
                                            int(image_object.y_min)), \
                               (int(image_object.x_max), \
-                               int(image_object.y_max)), 255, 2)
+                               int(image_object.y_max)), image_object.color, 2)
+
                 ytext = int(image_object.y_min) - 15 if int(image_object.y_min) - 15 > 15 \
                     else int(image_object.y_min) + 15
-                cv2.putText(frame_copy, label, (int(image_object.x_min), ytext), \
+                cv2.putText(frame_image_objects, label, (int(image_object.x_min), ytext), \
                             cv2.FONT_HERSHEY_SIMPLEX, 0.5, 255, 2)
 
-            cv2.putText(frame_copy, time_label, (10,20), \
+            time_label_image_objects = "Time {0:<.2f} image objects".format(current_time)
+            cv2.putText(frame_image_objects, time_label_image_objects, (10,20), \
                         cv2.FONT_HERSHEY_SIMPLEX, 0.5, 255, 2)
-            cv2.imshow('Image objects', frame_copy)
+            
+            frame_detected_objects = cv2.resize(frame_detected_objects, (0, 0), None, .75, .75)
+            frame_image_objects = cv2.resize(frame_image_objects, (0, 0), None, .75, .75)
+            frame_current = np.concatenate((frame_detected_objects, frame_image_objects), axis=1)
+            
+            if i_frame == 1:
+                frame_previous = frame_current.copy()
+
+            frame_final = np.concatenate((frame_current, frame_previous), axis=0)
+            cv2.imshow(videofile, frame_final)
+            
+            frame_previous = frame_current.copy()
+
             i_frame = i_frame + 1
             current_time = current_time + time_step
 
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
-#        time.sleep(0.1)
-#        cv2.waitKey(0)
+#        if cv2.waitKey(1) & 0xFF == ord('q'):
+#            break
+#        time.sleep(1.0)
+        cv2.waitKey(0)
 
     video.release()
     cv2.destroyAllWindows()
