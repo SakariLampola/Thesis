@@ -11,7 +11,7 @@ Created on Wed Nov 29 13:44:02 2017
 
 import argparse
 import numpy as np
-import time
+#import time
 import cv2
 import ImageClasses as ic
 import ObjectDetection as od
@@ -25,7 +25,7 @@ def analyze_video(videofile):
     trace_file = open("trace.txt", "w")
     trace_file.write("time,id,x_min_p,x_max_p,y_min_p,y_max_p,")
     trace_file.write("x_min_m,x_max_m,y_min_m,y_max_m,")
-    trace_file.write("x_min_c,x_max_c,y_min_c,y_max_c,distance,count\n")
+    trace_file.write("x_min_c,x_max_c,y_min_c,y_max_c,distance\n")
 
     # Create an empty world
     world = ic.ImageWorld()
@@ -55,10 +55,6 @@ def analyze_video(videofile):
             log_file.write("Time {0:<.2f}\n".format(current_time))
             log_file.write("Detected objects:\n")
 
-            print("----------------------------------------------")
-            print("Time {0:<.2f}".format(current_time))
-            print("Detected objects:")
-
             # Detect objects in the current frame
             detected_objects = od.detect_objects(frame_detected_objects, \
                                                  current_time, ic.CONFIDENFE_LEVEL)
@@ -72,14 +68,8 @@ def analyze_video(videofile):
                     detected_object.x_min, detected_object.x_max, \
                     detected_object.y_min, detected_object.y_max))
 
-                print("---{0:s} {1:6.2f} {2:4d} {3:4d} {4:4d} {5:4d}".format(
-                    ic.CLASS_NAMES[detected_object.class_type], \
-                    detected_object.confidence, \
-                    detected_object.x_min, detected_object.x_max, \
-                    detected_object.y_min, detected_object.y_max))
-
-                label = "{}: {:.2f}%".format(ic.CLASS_NAMES[detected_object.class_type], \
-                         detected_object.confidence * 100)
+                label = "{}: {:.2f}".format(ic.CLASS_NAMES[detected_object.class_type], \
+                         detected_object.confidence)
                 cv2.rectangle(frame_detected_objects, (detected_object.x_min, 
                                                        detected_object.y_min), \
                                                       (detected_object.x_max, \
@@ -88,7 +78,7 @@ def analyze_video(videofile):
                 ytext = detected_object.y_min - 15 if detected_object.y_min - 15 > 15 \
                     else detected_object.y_min + 15
                 cv2.putText(frame_detected_objects, label, (detected_object.x_min, ytext), \
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, 255, 2)
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255) , 2)
 
             time_label_detected_objects = "Time {0:<.2f} detected objects".format(current_time)
             cv2.putText(frame_detected_objects, time_label_detected_objects, (10,20), \
@@ -99,31 +89,25 @@ def analyze_video(videofile):
 
             # display the world with updated image objects
             log_file.write("Image objects:\n")
-            print("Image objects:")
 
             for image_object in world.image_objects:
 
                 log_file.write("---{0:d} {1:s} {2:6.2f} {3:6.2f} {4:6.2f} {5:6.2f} {6:6.2f}\n".format(
                     image_object.id, image_object.name, image_object.confidence,
-                    image_object.x_min, image_object.x_max, \
-                    image_object.y_min, image_object.y_max))
+                    image_object.mu[0], image_object.mu[3], \
+                    image_object.mu[6], image_object.mu[9]))
 
-                print("---{0:d} {1:s} {2:6.2f} {3:6.2f} {4:6.2f} {5:6.2f} {6:6.2f}".format(
-                    image_object.id, image_object.name, image_object.confidence,
-                    image_object.x_min, image_object.x_max, \
-                    image_object.y_min, image_object.y_max))
+                label = "{0:d} {1:s}: {2:.2f}".format(image_object.id, image_object.name, \
+                         image_object.confidence)
+                cv2.rectangle(frame_image_objects, (int(image_object.mu[0]), \
+                                           int(image_object.mu[6])), \
+                              (int(image_object.mu[3]), \
+                               int(image_object.mu[9])), image_object.color, 2)
 
-                label = "{0:d} {1:s}: {2:.2f}%".format(image_object.id, image_object.name, \
-                         image_object.confidence * 100)
-                cv2.rectangle(frame_image_objects, (int(image_object.x_min), \
-                                           int(image_object.y_min)), \
-                              (int(image_object.x_max), \
-                               int(image_object.y_max)), image_object.color, 2)
-
-                ytext = int(image_object.y_min) - 15 if int(image_object.y_min) - 15 > 15 \
-                    else int(image_object.y_min) + 15
-                cv2.putText(frame_image_objects, label, (int(image_object.x_min), ytext), \
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, 255, 2)
+                ytext = int(image_object.mu[6]) - 15 if int(image_object.mu[6]) - 15 > 15 \
+                    else int(image_object.mu[6]) + 15
+                cv2.putText(frame_image_objects, label, (int(image_object.mu[0]), ytext), \
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
 
             time_label_image_objects = "Time {0:<.2f} image objects".format(current_time)
             cv2.putText(frame_image_objects, time_label_image_objects, (10,20), \
