@@ -130,10 +130,10 @@ def analyze_video(videofile):
             i_frame = i_frame + 1
             current_time = current_time + time_step
 
-#        if cv2.waitKey(1) & 0xFF == ord('q'):
-#            break
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
 #        time.sleep(1.0)
-        cv2.waitKey(0)
+#        cv2.waitKey(0)
 
     video.release()
     cv2.destroyAllWindows()
