@@ -18,10 +18,12 @@ Object detection network:
   located in two files: MobileNetSSD_deploy.caffemodel and 
   MobileNetSSD_deploy.prototxt.txt. 
   
-Notes:
+Commands:
 
-  After analyzing the video, the window should be closed by pressing 'q'.
-  This will release the resources properly.
+  n = next frame
+  q = quit
+  c = continuous till end
+  s = step mode (from continuous mode)
 
 Output:
 

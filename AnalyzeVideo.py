@@ -47,6 +47,7 @@ def analyze_video(videofile):
     world = ic.ImageWorld(width, height)
 
     # Loop every frame in the video
+    mode_step = True
     while video.isOpened():
         ret, frame_detected_objects = video.read()
         if ret:
@@ -130,8 +131,23 @@ def analyze_video(videofile):
             i_frame = i_frame + 1
             current_time = current_time + time_step
 
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
+        if mode_step:
+            not_found = True
+            while not_found: # Discard everything except n, q, c
+                key_pushed = cv2.waitKey(0) & 0xFF
+                if key_pushed in [ord('n'), ord('q'), ord('c')]:
+                    not_found = False
+            if key_pushed == ord('q'):
+                break
+            if key_pushed == ord('c'):
+                mode_step = False
+        else:
+            key_pushed = cv2.waitKey(1) & 0xFF
+            if key_pushed == ord('q'):
+                break
+            if key_pushed == ord('s'):
+                mode_step = True
+       
 #        time.sleep(1.0)
 #        cv2.waitKey(0)
 

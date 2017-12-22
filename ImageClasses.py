@@ -553,9 +553,9 @@ class ImageWorld:
                     image_object.x_min, image_object.x_max, \
                     image_object.y_min, image_object.y_max))
     
-                fmt = ("{0:.2f},{1:d},{2:.2f},{3:.2f},{4:.2f},{5:.2f},"
-                       "{6:.2f},{7:.2f},{8:.2f},{9:.2f},{10:.2f},{11:.2f},"
-                       "{12:.2f},{13:.2f},{14:.2f}\n")
+                fmt = ("{0:.3f},{1:d},{2:.3f},{3:.3f},{4:.3f},{5:.3f},"
+                       "{6:.3f},{7:.3f},{8:.3f},{9:.3f},{10:.3f},{11:.3f},"
+                       "{12:.3f},{13:.3f},{14:.3f}\n")
     
                 trace_file.write(fmt.format(detection_time, \
                                             image_object.id, \
