@@ -101,7 +101,7 @@ class DetectedObject:
 
     def distance(self, image_object):
         """
-        Calculates Euclidean distance (4 corners) to a predicted image object
+        Calculates distance (4 corners) to a predicted image object
         """
         dx_min = abs(self.x_min - image_object.x_min)
         dx_max = abs(self.x_max - image_object.x_max)
