@@ -1,3 +1,4 @@
+- object appearance
 - linear extrapolation (https://stackoverflow.com/questions/2745329/how-to-make-scipy-interpolate-give-an-extrapolated-result-beyond-the-input-range)
 - image object life span debugging + improvement
 - probabilistic matching (mean+variance) 
