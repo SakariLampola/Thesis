@@ -25,7 +25,9 @@ def analyze_video(videofile):
     trace_file = open("trace.txt", "w")
     trace_file.write("time,id,x_min_p,x_max_p,y_min_p,y_max_p,")
     trace_file.write("x_min_m,x_max_m,y_min_m,y_max_m,")
-    trace_file.write("x_min_c,x_max_c,y_min_c,y_max_c,distance\n")
+    trace_file.write("x_min_c,x_max_c,y_min_c,y_max_c,distance,")
+    trace_file.write("do_c1,do_c2,do_c3,do_c4,do_c5,do_c6,do_c7,do_c8,")
+    trace_file.write("io_c1,io_c2,io_c3,io_c4,io_c5,io_c6,io_c7,io_c8\n")
 
     # Open the video and initialize follow-up variables
     video = cv2.VideoCapture(videofile)
@@ -64,12 +66,16 @@ def analyze_video(videofile):
             # Display detected objects
             for detected_object in detected_objects:
 
-                log_file.write("---{0:d} {1:s} {2:6.2f} {3:4d} {4:4d} {5:4d} {6:4d}\n".format( \
+                log_file.write("---{0:d} {1:s} {2:6.2f} {3:4d} {4:4d} {5:4d} {6:4d} {7:.2f} {8:.2f} {9:.2f} {10:.2f} {11:.2f} {12:.2f} {13:.2f} {14:.2f}\n".format( \
                     detected_object.id, \
                     ic.CLASS_NAMES[detected_object.class_type], \
                     detected_object.confidence, \
                     detected_object.x_min, detected_object.x_max, \
-                    detected_object.y_min, detected_object.y_max))
+                    detected_object.y_min, detected_object.y_max, \
+                    float(detected_object.histogram[0]), float(detected_object.histogram[1]), \
+                    float(detected_object.histogram[2]), float(detected_object.histogram[3]), \
+                    float(detected_object.histogram[4]), float(detected_object.histogram[5]), \
+                    float(detected_object.histogram[6]), float(detected_object.histogram[7])))
 
                 label = "{0:d} {1:s}: {2:.2f}".format(detected_object.id, \
                          ic.CLASS_NAMES[detected_object.class_type], \
@@ -95,10 +101,14 @@ def analyze_video(videofile):
 
             for image_object in world.image_objects:
 
-                log_file.write("---{0:d} {1:s} {2:6.2f} {3:7.2f} {4:7.2f} {5:7.2f} {6:7.2f}\n".format(
+                log_file.write("---{0:d} {1:s} {2:6.2f} {3:7.2f} {4:7.2f} {5:7.2f} {6:7.2f} {7:.2f} {8:.2f} {9:.2f} {10:.2f} {11:.2f} {12:.2f} {13:.2f}\n".format(
                     image_object.id, image_object.name, image_object.confidence,
                     image_object.x_min, image_object.x_max, \
-                    image_object.y_min, image_object.y_max))
+                    image_object.y_min, image_object.y_max, \
+                    float(image_object.histogram[0]), float(image_object.histogram[1]), \
+                    float(image_object.histogram[2]), float(image_object.histogram[3]), \
+                    float(image_object.histogram[4]), float(image_object.histogram[5]), \
+                    float(image_object.histogram[6]), float(image_object.histogram[7])))
 
                 label = "{0:d} {1:s}: {2:.2f}".format(image_object.id, image_object.name, \
                          image_object.confidence)

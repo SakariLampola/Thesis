@@ -85,7 +85,8 @@ class DetectedObject:
     """
     Raw object detection information
     """
-    def __init__(self, time, class_type, x_min, x_max, y_min, y_max, confidence):
+    def __init__(self, time, class_type, x_min, x_max, y_min, y_max, confidence, \
+                 histogram):
         """
         Initialization
         """
@@ -96,6 +97,7 @@ class DetectedObject:
         self.x_max = x_max
         self.y_min = y_min
         self.y_max = y_max
+        self.histogram = histogram
         self.confidence = confidence
         self.matched = False
 
@@ -143,6 +145,8 @@ class ImageObject:
         self.x_max = detected_object.x_max
         self.y_min = detected_object.y_min
         self.y_max = detected_object.y_max
+        
+        self.histogram = detected_object.histogram
 
 #        self.mu = np.array([detected_object.x_min, 0.0, 0.0,
 #                            detected_object.x_max, 0.0, 0.0,
@@ -486,10 +490,14 @@ class ImageWorld:
         log_file.write("Image objects ({0:d}), predicted new locations:\n".format(len(self.image_objects)))
         for image_object in self.image_objects:
             image_object.predict(detection_time)
-            log_file.write("---{0:d} {1:s} {2:6.2f} {3:7.2f} {4:7.2f} {5:7.2f} {6:7.2f}\n".format(
+            log_file.write("---{0:d} {1:s} {2:6.2f} {3:7.2f} {4:7.2f} {5:7.2f} {6:7.2f} {7:.2f} {8:.2f} {9:.2f} {10:.2f} {11:.2f} {12:.2f} {13:.2f}\n".format(
                 image_object.id, image_object.name, image_object.confidence,
                 image_object.x_min, image_object.x_max, \
-                image_object.y_min, image_object.y_max))
+                image_object.y_min, image_object.y_max, \
+                float(image_object.histogram[0]), float(image_object.histogram[1]), \
+                float(image_object.histogram[2]), float(image_object.histogram[3]), \
+                float(image_object.histogram[4]), float(image_object.histogram[5]), \
+                float(image_object.histogram[6]), float(image_object.histogram[7])))
 
         # Calculate cost matric for Hungarian algorithm (assignment problem)
         log_file.write("Cost matrix for Hungarian algorithm:\n")
@@ -534,28 +542,42 @@ class ImageWorld:
                 y_min_predicted = image_object.y_min
                 y_max_predicted = image_object.y_max
     
-                log_file.write("---predicted: {0:s} {1:6.2f} {2:6.2f} {3:6.2f} {4:6.2f} {5:6.2f}\n".format(
+                log_file.write("---predicted: {0:s} {1:6.2f} {2:6.2f} {3:6.2f} {4:6.2f} {5:6.2f} {6:.2f} {7:.2f} {8:.2f} {9:.2f} {10:.2f} {11:.2f} {12:.2f} {13:.2f}\n".format(
                     image_object.name, image_object.confidence, \
                     image_object.x_min, image_object.x_max, \
-                    image_object.y_min, image_object.y_max))
+                    image_object.y_min, image_object.y_max,
+                    float(image_object.histogram[0]), float(image_object.histogram[1]), \
+                    float(image_object.histogram[2]), float(image_object.histogram[3]), \
+                    float(image_object.histogram[4]), float(image_object.histogram[5]), \
+                    float(image_object.histogram[6]), float(image_object.histogram[7])))
     
-                log_file.write("---measured:  {0:s} {1:6.2f} {2:6.2f} {3:6.2f} {4:6.2f} {5:6.2f} {6:6.2f}\n".format( \
+                log_file.write("---measured:  {0:s} {1:6.2f} {2:6.2f} {3:6.2f} {4:6.2f} {5:6.2f} {6:.2f} {7:.2f} {8:.2f} {9:.2f} {10:.2f} {11:.2f} {12:.2f} {13:.2f} {14:.2f}\n".format( \
                     CLASS_NAMES[detected_object.class_type], detected_object.confidence, \
                     float(detected_object.x_min), float(detected_object.x_max), \
                     float(detected_object.y_min), float(detected_object.y_max), \
+                    float(detected_object.histogram[0]), float(detected_object.histogram[1]), \
+                    float(detected_object.histogram[2]), float(detected_object.histogram[3]), \
+                    float(detected_object.histogram[4]), float(detected_object.histogram[5]), \
+                    float(detected_object.histogram[6]), float(detected_object.histogram[7]), \
                     distance))
                 
                 image_object.correct(detected_object)
                 detected_object.matched = True
     
-                log_file.write("---corrected: {0:s} {1:6.2f} {2:6.2f} {3:6.2f} {4:6.2f} {5:6.2f}\n".format(
+                log_file.write("---corrected: {0:s} {1:6.2f} {2:6.2f} {3:6.2f} {4:6.2f} {5:6.2f} {6:.2f} {7:.2f} {8:.2f} {9:.2f} {10:.2f} {11:.2f} {12:.2f} {13:.2f}\n".format(
                     image_object.name, image_object.confidence, \
                     image_object.x_min, image_object.x_max, \
-                    image_object.y_min, image_object.y_max))
+                    image_object.y_min, image_object.y_max,
+                    float(image_object.histogram[0]), float(image_object.histogram[1]), \
+                    float(image_object.histogram[2]), float(image_object.histogram[3]), \
+                    float(image_object.histogram[4]), float(image_object.histogram[5]), \
+                    float(image_object.histogram[6]), float(image_object.histogram[7])))
     
                 fmt = ("{0:.3f},{1:d},{2:.3f},{3:.3f},{4:.3f},{5:.3f},"
                        "{6:.3f},{7:.3f},{8:.3f},{9:.3f},{10:.3f},{11:.3f},"
-                       "{12:.3f},{13:.3f},{14:.3f}\n")
+                       "{12:.3f},{13:.3f},{14:.3f},"
+                       "{15:.2f},{16:.2f},{17:.2f},{18:.2f},{19:.2f},{20:.2f},{21:.2f},{22:.2f},"
+                       "{23:.2f},{24:.2f},{25:.2f},{26:.2f},{27:.2f},{28:.2f},{29:.2f},{30:.2f}\n")
     
                 trace_file.write(fmt.format(detection_time, \
                                             image_object.id, \
@@ -571,7 +593,23 @@ class ImageWorld:
                                             image_object.x_max, \
                                             image_object.y_min, \
                                             image_object.y_max, \
-                                            distance))
+                                            distance, \
+                                            float(detected_object.histogram[0]), \
+                                            float(detected_object.histogram[1]), \
+                                            float(detected_object.histogram[2]), \
+                                            float(detected_object.histogram[3]), \
+                                            float(detected_object.histogram[4]), \
+                                            float(detected_object.histogram[5]), \
+                                            float(detected_object.histogram[6]), \
+                                            float(detected_object.histogram[7]), \
+                                            float(image_object.histogram[0]), \
+                                            float(image_object.histogram[1]), \
+                                            float(image_object.histogram[2]), \
+                                            float(image_object.histogram[3]), \
+                                            float(image_object.histogram[4]), \
+                                            float(image_object.histogram[5]), \
+                                            float(image_object.histogram[6]), \
+                                            float(image_object.histogram[7])))
                 match_index += 1
             
         # Any image object not matched is removed

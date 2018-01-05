@@ -4,2283 +4,2283 @@ Frame height = 720
 ----------------------------------------------
 Time 0.00, frame 1
 Detected objects (1):
----1 sofa   1.00  292 1052   29  691
+---1 sofa   1.00  292 1052   29  691 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (0), predicted new locations:
 Cost matrix for Hungarian algorithm:
 Optimal assignment:
 Image object 1 created: sofa   1.00  292 1052   29  691
 Image objects (1):
----1 sofa   1.00  292.00 1052.00   29.00  691.00
+---1 sofa   1.00  292.00 1052.00   29.00  691.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 0.04, frame 2
 Detected objects (1):
----2 sofa   1.00  290 1051   30  693
+---2 sofa   1.00  290 1051   30  693 0.34 0.04 0.40 0.00 0.02 0.12 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  292.00 1052.00   29.00  691.00
+---1 sofa   1.00  292.00 1052.00   29.00  691.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 2 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 292.00 1052.00  29.00 691.00
----measured:  sofa   1.00 290.00 1051.00  30.00 693.00   0.00
----corrected: sofa   1.00 290.00 1051.00  30.00 693.00
+---predicted: sofa   1.00 292.00 1052.00  29.00 691.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 290.00 1051.00  30.00 693.00 0.34 0.04 0.40 0.00 0.02 0.12 0.04 0.04 0.00
+---corrected: sofa   1.00 290.00 1051.00  30.00 693.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  290.00 1051.00   30.00  693.00
+---1 sofa   1.00  290.00 1051.00   30.00  693.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 0.08, frame 3
 Detected objects (1):
----3 sofa   1.00  291 1051   31  696
+---3 sofa   1.00  291 1051   31  696 0.34 0.04 0.40 0.00 0.02 0.11 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  290.00 1051.00   30.00  693.00
+---1 sofa   1.00  290.00 1051.00   30.00  693.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 3 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 290.00 1051.00  30.00 693.00
----measured:  sofa   1.00 291.00 1051.00  31.00 696.00   0.00
----corrected: sofa   1.00 291.00 1051.00  31.00 696.00
+---predicted: sofa   1.00 290.00 1051.00  30.00 693.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 291.00 1051.00  31.00 696.00 0.34 0.04 0.40 0.00 0.02 0.11 0.04 0.04 0.00
+---corrected: sofa   1.00 291.00 1051.00  31.00 696.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  291.00 1051.00   31.00  696.00
+---1 sofa   1.00  291.00 1051.00   31.00  696.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 0.12, frame 4
 Detected objects (1):
----4 sofa   1.00  292 1051   31  697
+---4 sofa   1.00  292 1051   31  697 0.34 0.04 0.40 0.00 0.02 0.11 0.04 0.05
 Image objects (1), predicted new locations:
----1 sofa   1.00  291.00 1051.00   31.00  696.00
+---1 sofa   1.00  291.00 1051.00   31.00  696.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 4 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 291.00 1051.00  31.00 696.00
----measured:  sofa   1.00 292.00 1051.00  31.00 697.00   0.00
----corrected: sofa   1.00 292.00 1051.00  31.00 697.00
+---predicted: sofa   1.00 291.00 1051.00  31.00 696.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 292.00 1051.00  31.00 697.00 0.34 0.04 0.40 0.00 0.02 0.11 0.04 0.05 0.00
+---corrected: sofa   1.00 292.00 1051.00  31.00 697.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  292.00 1051.00   31.00  697.00
+---1 sofa   1.00  292.00 1051.00   31.00  697.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 0.16, frame 5
 Detected objects (1):
----5 sofa   1.00  293 1050   29  695
+---5 sofa   1.00  293 1050   29  695 0.34 0.04 0.40 0.00 0.02 0.11 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  292.00 1051.00   31.00  697.00
+---1 sofa   1.00  292.00 1051.00   31.00  697.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 5 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 292.00 1051.00  31.00 697.00
----measured:  sofa   1.00 293.00 1050.00  29.00 695.00   0.00
----corrected: sofa   1.00 293.00 1050.00  29.00 695.00
+---predicted: sofa   1.00 292.00 1051.00  31.00 697.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 293.00 1050.00  29.00 695.00 0.34 0.04 0.40 0.00 0.02 0.11 0.04 0.04 0.00
+---corrected: sofa   1.00 293.00 1050.00  29.00 695.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  293.00 1050.00   29.00  695.00
+---1 sofa   1.00  293.00 1050.00   29.00  695.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 0.20, frame 6
 Detected objects (1):
----6 sofa   1.00  291 1052   30  696
+---6 sofa   1.00  291 1052   30  696 0.34 0.04 0.40 0.00 0.02 0.11 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  293.00 1050.00   29.00  695.00
+---1 sofa   1.00  293.00 1050.00   29.00  695.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 6 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 293.00 1050.00  29.00 695.00
----measured:  sofa   1.00 291.00 1052.00  30.00 696.00   0.00
----corrected: sofa   1.00 291.00 1052.00  30.00 696.00
+---predicted: sofa   1.00 293.00 1050.00  29.00 695.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 291.00 1052.00  30.00 696.00 0.34 0.04 0.40 0.00 0.02 0.11 0.04 0.04 0.00
+---corrected: sofa   1.00 291.00 1052.00  30.00 696.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  291.00 1052.00   30.00  696.00
+---1 sofa   1.00  291.00 1052.00   30.00  696.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 0.24, frame 7
 Detected objects (1):
----7 sofa   1.00  288 1051   30  697
+---7 sofa   1.00  288 1051   30  697 0.34 0.04 0.40 0.00 0.02 0.11 0.04 0.05
 Image objects (1), predicted new locations:
----1 sofa   1.00  291.00 1052.00   30.00  696.00
+---1 sofa   1.00  291.00 1052.00   30.00  696.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 7 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 291.00 1052.00  30.00 696.00
----measured:  sofa   1.00 288.00 1051.00  30.00 697.00   0.00
----corrected: sofa   1.00 288.00 1051.00  30.00 697.00
+---predicted: sofa   1.00 291.00 1052.00  30.00 696.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 288.00 1051.00  30.00 697.00 0.34 0.04 0.40 0.00 0.02 0.11 0.04 0.05 0.00
+---corrected: sofa   1.00 288.00 1051.00  30.00 697.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  288.00 1051.00   30.00  697.00
+---1 sofa   1.00  288.00 1051.00   30.00  697.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 0.28, frame 8
 Detected objects (1):
----8 sofa   1.00  290 1049   29  697
+---8 sofa   1.00  290 1049   29  697 0.34 0.04 0.40 0.00 0.02 0.11 0.04 0.05
 Image objects (1), predicted new locations:
----1 sofa   1.00  288.00 1051.00   30.00  697.00
+---1 sofa   1.00  288.00 1051.00   30.00  697.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 8 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 288.00 1051.00  30.00 697.00
----measured:  sofa   1.00 290.00 1049.00  29.00 697.00   0.00
----corrected: sofa   1.00 290.00 1049.00  29.00 697.00
+---predicted: sofa   1.00 288.00 1051.00  30.00 697.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 290.00 1049.00  29.00 697.00 0.34 0.04 0.40 0.00 0.02 0.11 0.04 0.05 0.00
+---corrected: sofa   1.00 290.00 1049.00  29.00 697.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  290.00 1049.00   29.00  697.00
+---1 sofa   1.00  290.00 1049.00   29.00  697.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 0.32, frame 9
 Detected objects (1):
----9 sofa   1.00  287 1053   29  698
+---9 sofa   1.00  287 1053   29  698 0.34 0.04 0.41 0.00 0.02 0.11 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  290.00 1049.00   29.00  697.00
+---1 sofa   1.00  290.00 1049.00   29.00  697.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 9 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 290.00 1049.00  29.00 697.00
----measured:  sofa   1.00 287.00 1053.00  29.00 698.00   0.00
----corrected: sofa   1.00 287.00 1053.00  29.00 698.00
+---predicted: sofa   1.00 290.00 1049.00  29.00 697.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 287.00 1053.00  29.00 698.00 0.34 0.04 0.41 0.00 0.02 0.11 0.04 0.04 0.00
+---corrected: sofa   1.00 287.00 1053.00  29.00 698.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  287.00 1053.00   29.00  698.00
+---1 sofa   1.00  287.00 1053.00   29.00  698.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 0.36, frame 10
 Detected objects (1):
----10 sofa   1.00  288 1052   29  699
+---10 sofa   1.00  288 1052   29  699 0.34 0.04 0.40 0.00 0.02 0.11 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  287.00 1053.00   29.00  698.00
+---1 sofa   1.00  287.00 1053.00   29.00  698.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 10 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 287.00 1053.00  29.00 698.00
----measured:  sofa   1.00 288.00 1052.00  29.00 699.00   0.00
----corrected: sofa   1.00 288.00 1052.00  29.00 699.00
+---predicted: sofa   1.00 287.00 1053.00  29.00 698.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 288.00 1052.00  29.00 699.00 0.34 0.04 0.40 0.00 0.02 0.11 0.04 0.04 0.00
+---corrected: sofa   1.00 288.00 1052.00  29.00 699.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  288.00 1052.00   29.00  699.00
+---1 sofa   1.00  288.00 1052.00   29.00  699.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 0.40, frame 11
 Detected objects (1):
----11 sofa   1.00  286 1051   30  697
+---11 sofa   1.00  286 1051   30  697 0.35 0.04 0.40 0.00 0.02 0.11 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  288.00 1052.00   29.00  699.00
+---1 sofa   1.00  288.00 1052.00   29.00  699.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 11 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 288.00 1052.00  29.00 699.00
----measured:  sofa   1.00 286.00 1051.00  30.00 697.00   0.00
----corrected: sofa   1.00 286.00 1051.00  30.00 697.00
+---predicted: sofa   1.00 288.00 1052.00  29.00 699.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 286.00 1051.00  30.00 697.00 0.35 0.04 0.40 0.00 0.02 0.11 0.04 0.04 0.00
+---corrected: sofa   1.00 286.00 1051.00  30.00 697.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  286.00 1051.00   30.00  697.00
+---1 sofa   1.00  286.00 1051.00   30.00  697.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 0.44, frame 12
 Detected objects (1):
----12 sofa   1.00  286 1048   31  700
+---12 sofa   1.00  286 1048   31  700 0.35 0.04 0.40 0.00 0.01 0.11 0.04 0.05
 Image objects (1), predicted new locations:
----1 sofa   1.00  286.00 1051.00   30.00  697.00
+---1 sofa   1.00  286.00 1051.00   30.00  697.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 12 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 286.00 1051.00  30.00 697.00
----measured:  sofa   1.00 286.00 1048.00  31.00 700.00   0.00
----corrected: sofa   1.00 286.00 1048.00  31.00 700.00
+---predicted: sofa   1.00 286.00 1051.00  30.00 697.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 286.00 1048.00  31.00 700.00 0.35 0.04 0.40 0.00 0.01 0.11 0.04 0.05 0.00
+---corrected: sofa   1.00 286.00 1048.00  31.00 700.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  286.00 1048.00   31.00  700.00
+---1 sofa   1.00  286.00 1048.00   31.00  700.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 0.48, frame 13
 Detected objects (1):
----13 sofa   1.00  283 1051   30  705
+---13 sofa   1.00  283 1051   30  705 0.34 0.04 0.41 0.00 0.02 0.11 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  286.00 1048.00   31.00  700.00
+---1 sofa   1.00  286.00 1048.00   31.00  700.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 13 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 286.00 1048.00  31.00 700.00
----measured:  sofa   1.00 283.00 1051.00  30.00 705.00   0.00
----corrected: sofa   1.00 283.00 1051.00  30.00 705.00
+---predicted: sofa   1.00 286.00 1048.00  31.00 700.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 283.00 1051.00  30.00 705.00 0.34 0.04 0.41 0.00 0.02 0.11 0.04 0.04 0.00
+---corrected: sofa   1.00 283.00 1051.00  30.00 705.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  283.00 1051.00   30.00  705.00
+---1 sofa   1.00  283.00 1051.00   30.00  705.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 0.52, frame 14
 Detected objects (1):
----14 sofa   1.00  283 1053   31  698
+---14 sofa   1.00  283 1053   31  698 0.35 0.04 0.40 0.00 0.01 0.11 0.04 0.05
 Image objects (1), predicted new locations:
----1 sofa   1.00  283.00 1051.00   30.00  705.00
+---1 sofa   1.00  283.00 1051.00   30.00  705.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 14 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 283.00 1051.00  30.00 705.00
----measured:  sofa   1.00 283.00 1053.00  31.00 698.00   0.00
----corrected: sofa   1.00 283.00 1053.00  31.00 698.00
+---predicted: sofa   1.00 283.00 1051.00  30.00 705.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 283.00 1053.00  31.00 698.00 0.35 0.04 0.40 0.00 0.01 0.11 0.04 0.05 0.00
+---corrected: sofa   1.00 283.00 1053.00  31.00 698.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  283.00 1053.00   31.00  698.00
+---1 sofa   1.00  283.00 1053.00   31.00  698.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 0.56, frame 15
 Detected objects (1):
----15 sofa   1.00  278 1052   31  703
+---15 sofa   1.00  278 1052   31  703 0.34 0.04 0.41 0.00 0.02 0.11 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  283.00 1053.00   31.00  698.00
+---1 sofa   1.00  283.00 1053.00   31.00  698.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 15 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 283.00 1053.00  31.00 698.00
----measured:  sofa   1.00 278.00 1052.00  31.00 703.00   0.00
----corrected: sofa   1.00 278.00 1052.00  31.00 703.00
+---predicted: sofa   1.00 283.00 1053.00  31.00 698.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 278.00 1052.00  31.00 703.00 0.34 0.04 0.41 0.00 0.02 0.11 0.04 0.04 0.00
+---corrected: sofa   1.00 278.00 1052.00  31.00 703.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  278.00 1052.00   31.00  703.00
+---1 sofa   1.00  278.00 1052.00   31.00  703.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 0.60, frame 16
 Detected objects (1):
----16 sofa   1.00  273 1052   31  703
+---16 sofa   1.00  273 1052   31  703 0.34 0.04 0.41 0.00 0.01 0.11 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  278.00 1052.00   31.00  703.00
+---1 sofa   1.00  278.00 1052.00   31.00  703.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 16 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 278.00 1052.00  31.00 703.00
----measured:  sofa   1.00 273.00 1052.00  31.00 703.00   0.00
----corrected: sofa   1.00 273.00 1052.00  31.00 703.00
+---predicted: sofa   1.00 278.00 1052.00  31.00 703.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 273.00 1052.00  31.00 703.00 0.34 0.04 0.41 0.00 0.01 0.11 0.04 0.04 0.00
+---corrected: sofa   1.00 273.00 1052.00  31.00 703.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  273.00 1052.00   31.00  703.00
+---1 sofa   1.00  273.00 1052.00   31.00  703.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 0.64, frame 17
 Detected objects (1):
----17 sofa   1.00  269 1050   31  702
+---17 sofa   1.00  269 1050   31  702 0.35 0.04 0.41 0.00 0.01 0.11 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  273.00 1052.00   31.00  703.00
+---1 sofa   1.00  273.00 1052.00   31.00  703.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 17 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 273.00 1052.00  31.00 703.00
----measured:  sofa   1.00 269.00 1050.00  31.00 702.00   0.00
----corrected: sofa   1.00 269.00 1050.00  31.00 702.00
+---predicted: sofa   1.00 273.00 1052.00  31.00 703.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 269.00 1050.00  31.00 702.00 0.35 0.04 0.41 0.00 0.01 0.11 0.04 0.04 0.00
+---corrected: sofa   1.00 269.00 1050.00  31.00 702.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  269.00 1050.00   31.00  702.00
+---1 sofa   1.00  269.00 1050.00   31.00  702.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 0.68, frame 18
 Detected objects (1):
----18 sofa   1.00  268 1052   31  705
+---18 sofa   1.00  268 1052   31  705 0.34 0.04 0.41 0.00 0.01 0.11 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  269.00 1050.00   31.00  702.00
+---1 sofa   1.00  269.00 1050.00   31.00  702.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 18 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 269.00 1050.00  31.00 702.00
----measured:  sofa   1.00 268.00 1052.00  31.00 705.00   0.00
----corrected: sofa   1.00 268.00 1052.00  31.00 705.00
+---predicted: sofa   1.00 269.00 1050.00  31.00 702.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 268.00 1052.00  31.00 705.00 0.34 0.04 0.41 0.00 0.01 0.11 0.04 0.04 0.00
+---corrected: sofa   1.00 268.00 1052.00  31.00 705.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  268.00 1052.00   31.00  705.00
+---1 sofa   1.00  268.00 1052.00   31.00  705.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 0.72, frame 19
 Detected objects (1):
----19 sofa   1.00  265 1050   31  704
+---19 sofa   1.00  265 1050   31  704 0.35 0.04 0.41 0.00 0.01 0.11 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  268.00 1052.00   31.00  705.00
+---1 sofa   1.00  268.00 1052.00   31.00  705.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 19 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 268.00 1052.00  31.00 705.00
----measured:  sofa   1.00 265.00 1050.00  31.00 704.00   0.00
----corrected: sofa   1.00 265.00 1050.00  31.00 704.00
+---predicted: sofa   1.00 268.00 1052.00  31.00 705.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 265.00 1050.00  31.00 704.00 0.35 0.04 0.41 0.00 0.01 0.11 0.04 0.04 0.00
+---corrected: sofa   1.00 265.00 1050.00  31.00 704.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  265.00 1050.00   31.00  704.00
+---1 sofa   1.00  265.00 1050.00   31.00  704.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 0.76, frame 20
 Detected objects (1):
----20 sofa   1.00  266 1047   32  707
+---20 sofa   1.00  266 1047   32  707 0.35 0.04 0.41 0.00 0.01 0.11 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  265.00 1050.00   31.00  704.00
+---1 sofa   1.00  265.00 1050.00   31.00  704.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 20 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 265.00 1050.00  31.00 704.00
----measured:  sofa   1.00 266.00 1047.00  32.00 707.00   0.00
----corrected: sofa   1.00 266.00 1047.00  32.00 707.00
+---predicted: sofa   1.00 265.00 1050.00  31.00 704.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 266.00 1047.00  32.00 707.00 0.35 0.04 0.41 0.00 0.01 0.11 0.04 0.04 0.00
+---corrected: sofa   1.00 266.00 1047.00  32.00 707.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  266.00 1047.00   32.00  707.00
+---1 sofa   1.00  266.00 1047.00   32.00  707.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 0.80, frame 21
 Detected objects (1):
----21 sofa   1.00  265 1054   31  700
+---21 sofa   1.00  265 1054   31  700 0.35 0.04 0.41 0.00 0.01 0.11 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  266.00 1047.00   32.00  707.00
+---1 sofa   1.00  266.00 1047.00   32.00  707.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.01 
 Optimal assignment:
 Detected object 21 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 266.00 1047.00  32.00 707.00
----measured:  sofa   1.00 265.00 1054.00  31.00 700.00   0.01
----corrected: sofa   1.00 265.00 1054.00  31.00 700.00
+---predicted: sofa   1.00 266.00 1047.00  32.00 707.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 265.00 1054.00  31.00 700.00 0.35 0.04 0.41 0.00 0.01 0.11 0.04 0.04 0.01
+---corrected: sofa   1.00 265.00 1054.00  31.00 700.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  265.00 1054.00   31.00  700.00
+---1 sofa   1.00  265.00 1054.00   31.00  700.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 0.84, frame 22
 Detected objects (1):
----22 sofa   1.00  262 1051   30  701
+---22 sofa   1.00  262 1051   30  701 0.35 0.04 0.41 0.00 0.01 0.11 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  265.00 1054.00   31.00  700.00
+---1 sofa   1.00  265.00 1054.00   31.00  700.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 22 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 265.00 1054.00  31.00 700.00
----measured:  sofa   1.00 262.00 1051.00  30.00 701.00   0.00
----corrected: sofa   1.00 262.00 1051.00  30.00 701.00
+---predicted: sofa   1.00 265.00 1054.00  31.00 700.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 262.00 1051.00  30.00 701.00 0.35 0.04 0.41 0.00 0.01 0.11 0.04 0.04 0.00
+---corrected: sofa   1.00 262.00 1051.00  30.00 701.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  262.00 1051.00   30.00  701.00
+---1 sofa   1.00  262.00 1051.00   30.00  701.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 0.88, frame 23
 Detected objects (1):
----23 sofa   1.00  260 1050   31  705
+---23 sofa   1.00  260 1050   31  705 0.35 0.04 0.41 0.00 0.02 0.10 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  262.00 1051.00   30.00  701.00
+---1 sofa   1.00  262.00 1051.00   30.00  701.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 23 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 262.00 1051.00  30.00 701.00
----measured:  sofa   1.00 260.00 1050.00  31.00 705.00   0.00
----corrected: sofa   1.00 260.00 1050.00  31.00 705.00
+---predicted: sofa   1.00 262.00 1051.00  30.00 701.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 260.00 1050.00  31.00 705.00 0.35 0.04 0.41 0.00 0.02 0.10 0.04 0.04 0.00
+---corrected: sofa   1.00 260.00 1050.00  31.00 705.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  260.00 1050.00   31.00  705.00
+---1 sofa   1.00  260.00 1050.00   31.00  705.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 0.92, frame 24
 Detected objects (1):
----24 sofa   1.00  258 1051   33  703
+---24 sofa   1.00  258 1051   33  703 0.35 0.04 0.40 0.00 0.01 0.10 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  260.00 1050.00   31.00  705.00
+---1 sofa   1.00  260.00 1050.00   31.00  705.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 24 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 260.00 1050.00  31.00 705.00
----measured:  sofa   1.00 258.00 1051.00  33.00 703.00   0.00
----corrected: sofa   1.00 258.00 1051.00  33.00 703.00
+---predicted: sofa   1.00 260.00 1050.00  31.00 705.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 258.00 1051.00  33.00 703.00 0.35 0.04 0.40 0.00 0.01 0.10 0.04 0.04 0.00
+---corrected: sofa   1.00 258.00 1051.00  33.00 703.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  258.00 1051.00   33.00  703.00
+---1 sofa   1.00  258.00 1051.00   33.00  703.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 0.96, frame 25
 Detected objects (1):
----25 sofa   1.00  249 1055   34  706
+---25 sofa   1.00  249 1055   34  706 0.35 0.04 0.41 0.00 0.02 0.10 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  258.00 1051.00   33.00  703.00
+---1 sofa   1.00  258.00 1051.00   33.00  703.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.01 
 Optimal assignment:
 Detected object 25 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 258.00 1051.00  33.00 703.00
----measured:  sofa   1.00 249.00 1055.00  34.00 706.00   0.01
----corrected: sofa   1.00 249.00 1055.00  34.00 706.00
+---predicted: sofa   1.00 258.00 1051.00  33.00 703.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 249.00 1055.00  34.00 706.00 0.35 0.04 0.41 0.00 0.02 0.10 0.04 0.04 0.01
+---corrected: sofa   1.00 249.00 1055.00  34.00 706.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  249.00 1055.00   34.00  706.00
+---1 sofa   1.00  249.00 1055.00   34.00  706.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 1.00, frame 26
 Detected objects (1):
----26 sofa   1.00  245 1055   32  708
+---26 sofa   1.00  245 1055   32  708 0.35 0.04 0.42 0.00 0.02 0.10 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  249.00 1055.00   34.00  706.00
+---1 sofa   1.00  249.00 1055.00   34.00  706.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 26 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 249.00 1055.00  34.00 706.00
----measured:  sofa   1.00 245.00 1055.00  32.00 708.00   0.00
----corrected: sofa   1.00 245.00 1055.00  32.00 708.00
+---predicted: sofa   1.00 249.00 1055.00  34.00 706.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 245.00 1055.00  32.00 708.00 0.35 0.04 0.42 0.00 0.02 0.10 0.04 0.04 0.00
+---corrected: sofa   1.00 245.00 1055.00  32.00 708.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  245.00 1055.00   32.00  708.00
+---1 sofa   1.00  245.00 1055.00   32.00  708.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 1.04, frame 27
 Detected objects (1):
----27 sofa   1.00  243 1059   33  706
+---27 sofa   1.00  243 1059   33  706 0.35 0.04 0.42 0.00 0.01 0.10 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  245.00 1055.00   32.00  708.00
+---1 sofa   1.00  245.00 1055.00   32.00  708.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 27 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 245.00 1055.00  32.00 708.00
----measured:  sofa   1.00 243.00 1059.00  33.00 706.00   0.00
----corrected: sofa   1.00 243.00 1059.00  33.00 706.00
+---predicted: sofa   1.00 245.00 1055.00  32.00 708.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 243.00 1059.00  33.00 706.00 0.35 0.04 0.42 0.00 0.01 0.10 0.04 0.04 0.00
+---corrected: sofa   1.00 243.00 1059.00  33.00 706.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  243.00 1059.00   33.00  706.00
+---1 sofa   1.00  243.00 1059.00   33.00  706.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 1.08, frame 28
 Detected objects (1):
----28 sofa   1.00  238 1060   35  706
+---28 sofa   1.00  238 1060   35  706 0.35 0.04 0.42 0.00 0.01 0.10 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  243.00 1059.00   33.00  706.00
+---1 sofa   1.00  243.00 1059.00   33.00  706.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 28 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 243.00 1059.00  33.00 706.00
----measured:  sofa   1.00 238.00 1060.00  35.00 706.00   0.00
----corrected: sofa   1.00 238.00 1060.00  35.00 706.00
+---predicted: sofa   1.00 243.00 1059.00  33.00 706.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 238.00 1060.00  35.00 706.00 0.35 0.04 0.42 0.00 0.01 0.10 0.04 0.04 0.00
+---corrected: sofa   1.00 238.00 1060.00  35.00 706.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  238.00 1060.00   35.00  706.00
+---1 sofa   1.00  238.00 1060.00   35.00  706.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 1.12, frame 29
 Detected objects (1):
----29 sofa   1.00  240 1056   35  707
+---29 sofa   1.00  240 1056   35  707 0.35 0.04 0.41 0.00 0.02 0.10 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  238.00 1060.00   35.00  706.00
+---1 sofa   1.00  238.00 1060.00   35.00  706.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 29 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 238.00 1060.00  35.00 706.00
----measured:  sofa   1.00 240.00 1056.00  35.00 707.00   0.00
----corrected: sofa   1.00 240.00 1056.00  35.00 707.00
+---predicted: sofa   1.00 238.00 1060.00  35.00 706.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 240.00 1056.00  35.00 707.00 0.35 0.04 0.41 0.00 0.02 0.10 0.04 0.04 0.00
+---corrected: sofa   1.00 240.00 1056.00  35.00 707.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  240.00 1056.00   35.00  707.00
+---1 sofa   1.00  240.00 1056.00   35.00  707.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 1.16, frame 30
 Detected objects (1):
----30 sofa   1.00  238 1057   35  703
+---30 sofa   1.00  238 1057   35  703 0.35 0.04 0.41 0.00 0.01 0.10 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  240.00 1056.00   35.00  707.00
+---1 sofa   1.00  240.00 1056.00   35.00  707.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 30 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 240.00 1056.00  35.00 707.00
----measured:  sofa   1.00 238.00 1057.00  35.00 703.00   0.00
----corrected: sofa   1.00 238.00 1057.00  35.00 703.00
+---predicted: sofa   1.00 240.00 1056.00  35.00 707.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 238.00 1057.00  35.00 703.00 0.35 0.04 0.41 0.00 0.01 0.10 0.04 0.04 0.00
+---corrected: sofa   1.00 238.00 1057.00  35.00 703.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  238.00 1057.00   35.00  703.00
+---1 sofa   1.00  238.00 1057.00   35.00  703.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 1.20, frame 31
 Detected objects (1):
----31 sofa   1.00  237 1058   37  703
+---31 sofa   1.00  237 1058   37  703 0.36 0.04 0.41 0.00 0.01 0.10 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  238.00 1057.00   35.00  703.00
+---1 sofa   1.00  238.00 1057.00   35.00  703.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 31 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 238.00 1057.00  35.00 703.00
----measured:  sofa   1.00 237.00 1058.00  37.00 703.00   0.00
----corrected: sofa   1.00 237.00 1058.00  37.00 703.00
+---predicted: sofa   1.00 238.00 1057.00  35.00 703.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 237.00 1058.00  37.00 703.00 0.36 0.04 0.41 0.00 0.01 0.10 0.04 0.04 0.00
+---corrected: sofa   1.00 237.00 1058.00  37.00 703.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  237.00 1058.00   37.00  703.00
+---1 sofa   1.00  237.00 1058.00   37.00  703.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 1.24, frame 32
 Detected objects (1):
----32 sofa   1.00  231 1059   37  703
+---32 sofa   1.00  231 1059   37  703 0.35 0.04 0.41 0.00 0.01 0.10 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  237.00 1058.00   37.00  703.00
+---1 sofa   1.00  237.00 1058.00   37.00  703.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 32 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 237.00 1058.00  37.00 703.00
----measured:  sofa   1.00 231.00 1059.00  37.00 703.00   0.00
----corrected: sofa   1.00 231.00 1059.00  37.00 703.00
+---predicted: sofa   1.00 237.00 1058.00  37.00 703.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 231.00 1059.00  37.00 703.00 0.35 0.04 0.41 0.00 0.01 0.10 0.04 0.04 0.00
+---corrected: sofa   1.00 231.00 1059.00  37.00 703.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  231.00 1059.00   37.00  703.00
+---1 sofa   1.00  231.00 1059.00   37.00  703.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 1.28, frame 33
 Detected objects (1):
----33 sofa   1.00  235 1055   38  708
+---33 sofa   1.00  235 1055   38  708 0.36 0.04 0.41 0.00 0.01 0.10 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  231.00 1059.00   37.00  703.00
+---1 sofa   1.00  231.00 1059.00   37.00  703.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 33 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 231.00 1059.00  37.00 703.00
----measured:  sofa   1.00 235.00 1055.00  38.00 708.00   0.00
----corrected: sofa   1.00 235.00 1055.00  38.00 708.00
+---predicted: sofa   1.00 231.00 1059.00  37.00 703.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 235.00 1055.00  38.00 708.00 0.36 0.04 0.41 0.00 0.01 0.10 0.04 0.04 0.00
+---corrected: sofa   1.00 235.00 1055.00  38.00 708.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  235.00 1055.00   38.00  708.00
+---1 sofa   1.00  235.00 1055.00   38.00  708.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 1.32, frame 34
 Detected objects (1):
----34 sofa   1.00  234 1056   38  706
+---34 sofa   1.00  234 1056   38  706 0.36 0.04 0.40 0.00 0.01 0.10 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  235.00 1055.00   38.00  708.00
+---1 sofa   1.00  235.00 1055.00   38.00  708.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 34 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 235.00 1055.00  38.00 708.00
----measured:  sofa   1.00 234.00 1056.00  38.00 706.00   0.00
----corrected: sofa   1.00 234.00 1056.00  38.00 706.00
+---predicted: sofa   1.00 235.00 1055.00  38.00 708.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 234.00 1056.00  38.00 706.00 0.36 0.04 0.40 0.00 0.01 0.10 0.04 0.04 0.00
+---corrected: sofa   1.00 234.00 1056.00  38.00 706.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  234.00 1056.00   38.00  706.00
+---1 sofa   1.00  234.00 1056.00   38.00  706.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 1.36, frame 35
 Detected objects (1):
----35 sofa   1.00  232 1058   38  705
+---35 sofa   1.00  232 1058   38  705 0.36 0.04 0.40 0.00 0.02 0.10 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  234.00 1056.00   38.00  706.00
+---1 sofa   1.00  234.00 1056.00   38.00  706.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 35 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 234.00 1056.00  38.00 706.00
----measured:  sofa   1.00 232.00 1058.00  38.00 705.00   0.00
----corrected: sofa   1.00 232.00 1058.00  38.00 705.00
+---predicted: sofa   1.00 234.00 1056.00  38.00 706.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 232.00 1058.00  38.00 705.00 0.36 0.04 0.40 0.00 0.02 0.10 0.04 0.04 0.00
+---corrected: sofa   1.00 232.00 1058.00  38.00 705.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  232.00 1058.00   38.00  705.00
+---1 sofa   1.00  232.00 1058.00   38.00  705.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 1.40, frame 36
 Detected objects (1):
----36 sofa   1.00  229 1059   41  704
+---36 sofa   1.00  229 1059   41  704 0.37 0.04 0.40 0.00 0.01 0.10 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  232.00 1058.00   38.00  705.00
+---1 sofa   1.00  232.00 1058.00   38.00  705.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 36 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 232.00 1058.00  38.00 705.00
----measured:  sofa   1.00 229.00 1059.00  41.00 704.00   0.00
----corrected: sofa   1.00 229.00 1059.00  41.00 704.00
+---predicted: sofa   1.00 232.00 1058.00  38.00 705.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 229.00 1059.00  41.00 704.00 0.37 0.04 0.40 0.00 0.01 0.10 0.04 0.04 0.00
+---corrected: sofa   1.00 229.00 1059.00  41.00 704.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  229.00 1059.00   41.00  704.00
+---1 sofa   1.00  229.00 1059.00   41.00  704.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 1.44, frame 37
 Detected objects (1):
----37 sofa   1.00  227 1061   40  706
+---37 sofa   1.00  227 1061   40  706 0.36 0.04 0.41 0.00 0.02 0.10 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  229.00 1059.00   41.00  704.00
+---1 sofa   1.00  229.00 1059.00   41.00  704.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 37 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 229.00 1059.00  41.00 704.00
----measured:  sofa   1.00 227.00 1061.00  40.00 706.00   0.00
----corrected: sofa   1.00 227.00 1061.00  40.00 706.00
+---predicted: sofa   1.00 229.00 1059.00  41.00 704.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 227.00 1061.00  40.00 706.00 0.36 0.04 0.41 0.00 0.02 0.10 0.04 0.04 0.00
+---corrected: sofa   1.00 227.00 1061.00  40.00 706.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  227.00 1061.00   40.00  706.00
+---1 sofa   1.00  227.00 1061.00   40.00  706.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 1.48, frame 38
 Detected objects (1):
----38 sofa   1.00  227 1059   39  708
+---38 sofa   1.00  227 1059   39  708 0.37 0.04 0.40 0.00 0.01 0.09 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  227.00 1061.00   40.00  706.00
+---1 sofa   1.00  227.00 1061.00   40.00  706.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 38 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 227.00 1061.00  40.00 706.00
----measured:  sofa   1.00 227.00 1059.00  39.00 708.00   0.00
----corrected: sofa   1.00 227.00 1059.00  39.00 708.00
+---predicted: sofa   1.00 227.00 1061.00  40.00 706.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 227.00 1059.00  39.00 708.00 0.37 0.04 0.40 0.00 0.01 0.09 0.04 0.04 0.00
+---corrected: sofa   1.00 227.00 1059.00  39.00 708.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  227.00 1059.00   39.00  708.00
+---1 sofa   1.00  227.00 1059.00   39.00  708.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 1.52, frame 39
 Detected objects (1):
----39 sofa   1.00  225 1064   43  707
+---39 sofa   1.00  225 1064   43  707 0.37 0.04 0.40 0.00 0.01 0.09 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  227.00 1059.00   39.00  708.00
+---1 sofa   1.00  227.00 1059.00   39.00  708.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 39 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 227.00 1059.00  39.00 708.00
----measured:  sofa   1.00 225.00 1064.00  43.00 707.00   0.00
----corrected: sofa   1.00 225.00 1064.00  43.00 707.00
+---predicted: sofa   1.00 227.00 1059.00  39.00 708.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 225.00 1064.00  43.00 707.00 0.37 0.04 0.40 0.00 0.01 0.09 0.04 0.04 0.00
+---corrected: sofa   1.00 225.00 1064.00  43.00 707.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  225.00 1064.00   43.00  707.00
+---1 sofa   1.00  225.00 1064.00   43.00  707.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 1.56, frame 40
 Detected objects (1):
----40 sofa   1.00  224 1068   45  703
+---40 sofa   1.00  224 1068   45  703 0.37 0.04 0.40 0.00 0.01 0.09 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  225.00 1064.00   43.00  707.00
+---1 sofa   1.00  225.00 1064.00   43.00  707.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 40 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 225.00 1064.00  43.00 707.00
----measured:  sofa   1.00 224.00 1068.00  45.00 703.00   0.00
----corrected: sofa   1.00 224.00 1068.00  45.00 703.00
+---predicted: sofa   1.00 225.00 1064.00  43.00 707.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 224.00 1068.00  45.00 703.00 0.37 0.04 0.40 0.00 0.01 0.09 0.04 0.04 0.00
+---corrected: sofa   1.00 224.00 1068.00  45.00 703.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  224.00 1068.00   45.00  703.00
+---1 sofa   1.00  224.00 1068.00   45.00  703.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 1.60, frame 41
 Detected objects (1):
----41 sofa   1.00  224 1068   43  706
+---41 sofa   1.00  224 1068   43  706 0.37 0.04 0.41 0.00 0.01 0.09 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  224.00 1068.00   45.00  703.00
+---1 sofa   1.00  224.00 1068.00   45.00  703.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 41 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 224.00 1068.00  45.00 703.00
----measured:  sofa   1.00 224.00 1068.00  43.00 706.00   0.00
----corrected: sofa   1.00 224.00 1068.00  43.00 706.00
+---predicted: sofa   1.00 224.00 1068.00  45.00 703.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 224.00 1068.00  43.00 706.00 0.37 0.04 0.41 0.00 0.01 0.09 0.04 0.04 0.00
+---corrected: sofa   1.00 224.00 1068.00  43.00 706.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  224.00 1068.00   43.00  706.00
+---1 sofa   1.00  224.00 1068.00   43.00  706.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 1.64, frame 42
 Detected objects (1):
----42 sofa   1.00  225 1067   41  706
+---42 sofa   1.00  225 1067   41  706 0.37 0.04 0.40 0.00 0.01 0.09 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  224.00 1068.00   43.00  706.00
+---1 sofa   1.00  224.00 1068.00   43.00  706.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 42 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 224.00 1068.00  43.00 706.00
----measured:  sofa   1.00 225.00 1067.00  41.00 706.00   0.00
----corrected: sofa   1.00 225.00 1067.00  41.00 706.00
+---predicted: sofa   1.00 224.00 1068.00  43.00 706.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 225.00 1067.00  41.00 706.00 0.37 0.04 0.40 0.00 0.01 0.09 0.04 0.04 0.00
+---corrected: sofa   1.00 225.00 1067.00  41.00 706.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  225.00 1067.00   41.00  706.00
+---1 sofa   1.00  225.00 1067.00   41.00  706.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 1.68, frame 43
 Detected objects (1):
----43 sofa   1.00  223 1069   42  704
+---43 sofa   1.00  223 1069   42  704 0.37 0.04 0.40 0.00 0.02 0.09 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  225.00 1067.00   41.00  706.00
+---1 sofa   1.00  225.00 1067.00   41.00  706.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 43 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 225.00 1067.00  41.00 706.00
----measured:  sofa   1.00 223.00 1069.00  42.00 704.00   0.00
----corrected: sofa   1.00 223.00 1069.00  42.00 704.00
+---predicted: sofa   1.00 225.00 1067.00  41.00 706.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 223.00 1069.00  42.00 704.00 0.37 0.04 0.40 0.00 0.02 0.09 0.04 0.04 0.00
+---corrected: sofa   1.00 223.00 1069.00  42.00 704.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  223.00 1069.00   42.00  704.00
+---1 sofa   1.00  223.00 1069.00   42.00  704.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 1.72, frame 44
 Detected objects (1):
----44 sofa   1.00  222 1069   41  711
+---44 sofa   1.00  222 1069   41  711 0.37 0.04 0.41 0.00 0.01 0.09 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  223.00 1069.00   42.00  704.00
+---1 sofa   1.00  223.00 1069.00   42.00  704.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 44 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 223.00 1069.00  42.00 704.00
----measured:  sofa   1.00 222.00 1069.00  41.00 711.00   0.00
----corrected: sofa   1.00 222.00 1069.00  41.00 711.00
+---predicted: sofa   1.00 223.00 1069.00  42.00 704.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 222.00 1069.00  41.00 711.00 0.37 0.04 0.41 0.00 0.01 0.09 0.04 0.04 0.00
+---corrected: sofa   1.00 222.00 1069.00  41.00 711.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  222.00 1069.00   41.00  711.00
+---1 sofa   1.00  222.00 1069.00   41.00  711.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 1.76, frame 45
 Detected objects (1):
----45 sofa   1.00  223 1072   42  707
+---45 sofa   1.00  223 1072   42  707 0.37 0.04 0.41 0.00 0.02 0.09 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  222.00 1069.00   41.00  711.00
+---1 sofa   1.00  222.00 1069.00   41.00  711.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 45 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 222.00 1069.00  41.00 711.00
----measured:  sofa   1.00 223.00 1072.00  42.00 707.00   0.00
----corrected: sofa   1.00 223.00 1072.00  42.00 707.00
+---predicted: sofa   1.00 222.00 1069.00  41.00 711.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 223.00 1072.00  42.00 707.00 0.37 0.04 0.41 0.00 0.02 0.09 0.04 0.04 0.00
+---corrected: sofa   1.00 223.00 1072.00  42.00 707.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  223.00 1072.00   42.00  707.00
+---1 sofa   1.00  223.00 1072.00   42.00  707.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 1.80, frame 46
 Detected objects (1):
----46 sofa   1.00  223 1071   43  707
+---46 sofa   1.00  223 1071   43  707 0.38 0.04 0.40 0.00 0.01 0.09 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  223.00 1072.00   42.00  707.00
+---1 sofa   1.00  223.00 1072.00   42.00  707.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 46 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 223.00 1072.00  42.00 707.00
----measured:  sofa   1.00 223.00 1071.00  43.00 707.00   0.00
----corrected: sofa   1.00 223.00 1071.00  43.00 707.00
+---predicted: sofa   1.00 223.00 1072.00  42.00 707.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 223.00 1071.00  43.00 707.00 0.38 0.04 0.40 0.00 0.01 0.09 0.04 0.04 0.00
+---corrected: sofa   1.00 223.00 1071.00  43.00 707.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  223.00 1071.00   43.00  707.00
+---1 sofa   1.00  223.00 1071.00   43.00  707.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 1.84, frame 47
 Detected objects (1):
----47 sofa   1.00  218 1074   42  705
+---47 sofa   1.00  218 1074   42  705 0.37 0.04 0.41 0.00 0.02 0.08 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  223.00 1071.00   43.00  707.00
+---1 sofa   1.00  223.00 1071.00   43.00  707.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 47 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 223.00 1071.00  43.00 707.00
----measured:  sofa   1.00 218.00 1074.00  42.00 705.00   0.00
----corrected: sofa   1.00 218.00 1074.00  42.00 705.00
+---predicted: sofa   1.00 223.00 1071.00  43.00 707.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 218.00 1074.00  42.00 705.00 0.37 0.04 0.41 0.00 0.02 0.08 0.04 0.04 0.00
+---corrected: sofa   1.00 218.00 1074.00  42.00 705.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  218.00 1074.00   42.00  705.00
+---1 sofa   1.00  218.00 1074.00   42.00  705.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 1.88, frame 48
 Detected objects (1):
----48 sofa   1.00  215 1076   42  707
+---48 sofa   1.00  215 1076   42  707 0.37 0.04 0.41 0.00 0.02 0.08 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  218.00 1074.00   42.00  705.00
+---1 sofa   1.00  218.00 1074.00   42.00  705.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 48 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 218.00 1074.00  42.00 705.00
----measured:  sofa   1.00 215.00 1076.00  42.00 707.00   0.00
----corrected: sofa   1.00 215.00 1076.00  42.00 707.00
+---predicted: sofa   1.00 218.00 1074.00  42.00 705.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 215.00 1076.00  42.00 707.00 0.37 0.04 0.41 0.00 0.02 0.08 0.04 0.04 0.00
+---corrected: sofa   1.00 215.00 1076.00  42.00 707.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  215.00 1076.00   42.00  707.00
+---1 sofa   1.00  215.00 1076.00   42.00  707.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 1.92, frame 49
 Detected objects (1):
----49 sofa   1.00  218 1078   43  708
+---49 sofa   1.00  218 1078   43  708 0.38 0.04 0.41 0.00 0.02 0.08 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  215.00 1076.00   42.00  707.00
+---1 sofa   1.00  215.00 1076.00   42.00  707.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 49 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 215.00 1076.00  42.00 707.00
----measured:  sofa   1.00 218.00 1078.00  43.00 708.00   0.00
----corrected: sofa   1.00 218.00 1078.00  43.00 708.00
+---predicted: sofa   1.00 215.00 1076.00  42.00 707.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 218.00 1078.00  43.00 708.00 0.38 0.04 0.41 0.00 0.02 0.08 0.04 0.04 0.00
+---corrected: sofa   1.00 218.00 1078.00  43.00 708.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  218.00 1078.00   43.00  708.00
+---1 sofa   1.00  218.00 1078.00   43.00  708.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 1.96, frame 50
 Detected objects (1):
----50 sofa   1.00  219 1083   36  707
+---50 sofa   1.00  219 1083   36  707 0.37 0.04 0.41 0.00 0.02 0.08 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  218.00 1078.00   43.00  708.00
+---1 sofa   1.00  218.00 1078.00   43.00  708.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 50 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 218.00 1078.00  43.00 708.00
----measured:  sofa   1.00 219.00 1083.00  36.00 707.00   0.00
----corrected: sofa   1.00 219.00 1083.00  36.00 707.00
+---predicted: sofa   1.00 218.00 1078.00  43.00 708.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 219.00 1083.00  36.00 707.00 0.37 0.04 0.41 0.00 0.02 0.08 0.04 0.04 0.00
+---corrected: sofa   1.00 219.00 1083.00  36.00 707.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  219.00 1083.00   36.00  707.00
+---1 sofa   1.00  219.00 1083.00   36.00  707.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 2.00, frame 51
 Detected objects (1):
----51 sofa   1.00  218 1082   36  706
+---51 sofa   1.00  218 1082   36  706 0.37 0.04 0.41 0.00 0.02 0.08 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  219.00 1083.00   36.00  707.00
+---1 sofa   1.00  219.00 1083.00   36.00  707.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 51 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 219.00 1083.00  36.00 707.00
----measured:  sofa   1.00 218.00 1082.00  36.00 706.00   0.00
----corrected: sofa   1.00 218.00 1082.00  36.00 706.00
+---predicted: sofa   1.00 219.00 1083.00  36.00 707.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 218.00 1082.00  36.00 706.00 0.37 0.04 0.41 0.00 0.02 0.08 0.04 0.04 0.00
+---corrected: sofa   1.00 218.00 1082.00  36.00 706.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  218.00 1082.00   36.00  706.00
+---1 sofa   1.00  218.00 1082.00   36.00  706.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 2.04, frame 52
 Detected objects (1):
----52 sofa   1.00  216 1088   36  705
+---52 sofa   1.00  216 1088   36  705 0.37 0.04 0.41 0.00 0.02 0.08 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  218.00 1082.00   36.00  706.00
+---1 sofa   1.00  218.00 1082.00   36.00  706.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 52 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 218.00 1082.00  36.00 706.00
----measured:  sofa   1.00 216.00 1088.00  36.00 705.00   0.00
----corrected: sofa   1.00 216.00 1088.00  36.00 705.00
+---predicted: sofa   1.00 218.00 1082.00  36.00 706.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 216.00 1088.00  36.00 705.00 0.37 0.04 0.41 0.00 0.02 0.08 0.04 0.04 0.00
+---corrected: sofa   1.00 216.00 1088.00  36.00 705.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  216.00 1088.00   36.00  705.00
+---1 sofa   1.00  216.00 1088.00   36.00  705.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 2.08, frame 53
 Detected objects (1):
----53 sofa   1.00  212 1085   44  705
+---53 sofa   1.00  212 1085   44  705 0.38 0.04 0.41 0.00 0.02 0.08 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  216.00 1088.00   36.00  705.00
+---1 sofa   1.00  216.00 1088.00   36.00  705.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 53 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 216.00 1088.00  36.00 705.00
----measured:  sofa   1.00 212.00 1085.00  44.00 705.00   0.00
----corrected: sofa   1.00 212.00 1085.00  44.00 705.00
+---predicted: sofa   1.00 216.00 1088.00  36.00 705.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 212.00 1085.00  44.00 705.00 0.38 0.04 0.41 0.00 0.02 0.08 0.04 0.04 0.00
+---corrected: sofa   1.00 212.00 1085.00  44.00 705.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  212.00 1085.00   44.00  705.00
+---1 sofa   1.00  212.00 1085.00   44.00  705.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 2.12, frame 54
 Detected objects (1):
----54 sofa   1.00  211 1088   47  706
+---54 sofa   1.00  211 1088   47  706 0.38 0.04 0.41 0.00 0.02 0.08 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  212.00 1085.00   44.00  705.00
+---1 sofa   1.00  212.00 1085.00   44.00  705.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 54 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 212.00 1085.00  44.00 705.00
----measured:  sofa   1.00 211.00 1088.00  47.00 706.00   0.00
----corrected: sofa   1.00 211.00 1088.00  47.00 706.00
+---predicted: sofa   1.00 212.00 1085.00  44.00 705.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 211.00 1088.00  47.00 706.00 0.38 0.04 0.41 0.00 0.02 0.08 0.04 0.04 0.00
+---corrected: sofa   1.00 211.00 1088.00  47.00 706.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  211.00 1088.00   47.00  706.00
+---1 sofa   1.00  211.00 1088.00   47.00  706.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 2.16, frame 55
 Detected objects (1):
----55 sofa   1.00  215 1089   48  705
+---55 sofa   1.00  215 1089   48  705 0.38 0.04 0.41 0.00 0.02 0.08 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  211.00 1088.00   47.00  706.00
+---1 sofa   1.00  211.00 1088.00   47.00  706.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 55 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 211.00 1088.00  47.00 706.00
----measured:  sofa   1.00 215.00 1089.00  48.00 705.00   0.00
----corrected: sofa   1.00 215.00 1089.00  48.00 705.00
+---predicted: sofa   1.00 211.00 1088.00  47.00 706.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 215.00 1089.00  48.00 705.00 0.38 0.04 0.41 0.00 0.02 0.08 0.04 0.04 0.00
+---corrected: sofa   1.00 215.00 1089.00  48.00 705.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  215.00 1089.00   48.00  705.00
+---1 sofa   1.00  215.00 1089.00   48.00  705.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 2.20, frame 56
 Detected objects (1):
----56 sofa   1.00  212 1087   48  703
+---56 sofa   1.00  212 1087   48  703 0.38 0.04 0.40 0.00 0.02 0.08 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  215.00 1089.00   48.00  705.00
+---1 sofa   1.00  215.00 1089.00   48.00  705.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 56 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 215.00 1089.00  48.00 705.00
----measured:  sofa   1.00 212.00 1087.00  48.00 703.00   0.00
----corrected: sofa   1.00 212.00 1087.00  48.00 703.00
+---predicted: sofa   1.00 215.00 1089.00  48.00 705.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 212.00 1087.00  48.00 703.00 0.38 0.04 0.40 0.00 0.02 0.08 0.04 0.04 0.00
+---corrected: sofa   1.00 212.00 1087.00  48.00 703.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  212.00 1087.00   48.00  703.00
+---1 sofa   1.00  212.00 1087.00   48.00  703.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 2.24, frame 57
 Detected objects (1):
----57 sofa   1.00  214 1090   45  702
+---57 sofa   1.00  214 1090   45  702 0.38 0.04 0.41 0.00 0.02 0.07 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  212.00 1087.00   48.00  703.00
+---1 sofa   1.00  212.00 1087.00   48.00  703.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 57 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 212.00 1087.00  48.00 703.00
----measured:  sofa   1.00 214.00 1090.00  45.00 702.00   0.00
----corrected: sofa   1.00 214.00 1090.00  45.00 702.00
+---predicted: sofa   1.00 212.00 1087.00  48.00 703.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 214.00 1090.00  45.00 702.00 0.38 0.04 0.41 0.00 0.02 0.07 0.04 0.04 0.00
+---corrected: sofa   1.00 214.00 1090.00  45.00 702.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  214.00 1090.00   45.00  702.00
+---1 sofa   1.00  214.00 1090.00   45.00  702.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 2.28, frame 58
 Detected objects (1):
----58 sofa   1.00  211 1088   48  703
+---58 sofa   1.00  211 1088   48  703 0.38 0.04 0.40 0.00 0.02 0.07 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  214.00 1090.00   45.00  702.00
+---1 sofa   1.00  214.00 1090.00   45.00  702.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 58 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 214.00 1090.00  45.00 702.00
----measured:  sofa   1.00 211.00 1088.00  48.00 703.00   0.00
----corrected: sofa   1.00 211.00 1088.00  48.00 703.00
+---predicted: sofa   1.00 214.00 1090.00  45.00 702.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 211.00 1088.00  48.00 703.00 0.38 0.04 0.40 0.00 0.02 0.07 0.04 0.04 0.00
+---corrected: sofa   1.00 211.00 1088.00  48.00 703.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  211.00 1088.00   48.00  703.00
+---1 sofa   1.00  211.00 1088.00   48.00  703.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 2.32, frame 59
 Detected objects (1):
----59 sofa   1.00  214 1089   46  701
+---59 sofa   1.00  214 1089   46  701 0.38 0.04 0.40 0.00 0.02 0.07 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  211.00 1088.00   48.00  703.00
+---1 sofa   1.00  211.00 1088.00   48.00  703.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 59 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 211.00 1088.00  48.00 703.00
----measured:  sofa   1.00 214.00 1089.00  46.00 701.00   0.00
----corrected: sofa   1.00 214.00 1089.00  46.00 701.00
+---predicted: sofa   1.00 211.00 1088.00  48.00 703.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 214.00 1089.00  46.00 701.00 0.38 0.04 0.40 0.00 0.02 0.07 0.04 0.04 0.00
+---corrected: sofa   1.00 214.00 1089.00  46.00 701.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  214.00 1089.00   46.00  701.00
+---1 sofa   1.00  214.00 1089.00   46.00  701.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 2.36, frame 60
 Detected objects (1):
----60 sofa   1.00  214 1094   46  699
+---60 sofa   1.00  214 1094   46  699 0.38 0.04 0.40 0.00 0.02 0.07 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  214.00 1089.00   46.00  701.00
+---1 sofa   1.00  214.00 1089.00   46.00  701.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 60 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 214.00 1089.00  46.00 701.00
----measured:  sofa   1.00 214.00 1094.00  46.00 699.00   0.00
----corrected: sofa   1.00 214.00 1094.00  46.00 699.00
+---predicted: sofa   1.00 214.00 1089.00  46.00 701.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 214.00 1094.00  46.00 699.00 0.38 0.04 0.40 0.00 0.02 0.07 0.04 0.04 0.00
+---corrected: sofa   1.00 214.00 1094.00  46.00 699.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  214.00 1094.00   46.00  699.00
+---1 sofa   1.00  214.00 1094.00   46.00  699.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 2.40, frame 61
 Detected objects (1):
----61 sofa   1.00  213 1099   45  699
+---61 sofa   1.00  213 1099   45  699 0.39 0.04 0.41 0.00 0.02 0.07 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  214.00 1094.00   46.00  699.00
+---1 sofa   1.00  214.00 1094.00   46.00  699.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 61 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 214.00 1094.00  46.00 699.00
----measured:  sofa   1.00 213.00 1099.00  45.00 699.00   0.00
----corrected: sofa   1.00 213.00 1099.00  45.00 699.00
+---predicted: sofa   1.00 214.00 1094.00  46.00 699.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 213.00 1099.00  45.00 699.00 0.39 0.04 0.41 0.00 0.02 0.07 0.04 0.04 0.00
+---corrected: sofa   1.00 213.00 1099.00  45.00 699.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  213.00 1099.00   45.00  699.00
+---1 sofa   1.00  213.00 1099.00   45.00  699.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 2.44, frame 62
 Detected objects (1):
----62 sofa   1.00  209 1105   46  704
+---62 sofa   1.00  209 1105   46  704 0.38 0.04 0.42 0.00 0.01 0.07 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  213.00 1099.00   45.00  699.00
+---1 sofa   1.00  213.00 1099.00   45.00  699.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.01 
 Optimal assignment:
 Detected object 62 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 213.00 1099.00  45.00 699.00
----measured:  sofa   1.00 209.00 1105.00  46.00 704.00   0.01
----corrected: sofa   1.00 209.00 1105.00  46.00 704.00
+---predicted: sofa   1.00 213.00 1099.00  45.00 699.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 209.00 1105.00  46.00 704.00 0.38 0.04 0.42 0.00 0.01 0.07 0.04 0.04 0.01
+---corrected: sofa   1.00 209.00 1105.00  46.00 704.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  209.00 1105.00   46.00  704.00
+---1 sofa   1.00  209.00 1105.00   46.00  704.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 2.48, frame 63
 Detected objects (1):
----63 sofa   1.00  212 1106   46  704
+---63 sofa   1.00  212 1106   46  704 0.38 0.04 0.42 0.00 0.02 0.07 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  209.00 1105.00   46.00  704.00
+---1 sofa   1.00  209.00 1105.00   46.00  704.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 63 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 209.00 1105.00  46.00 704.00
----measured:  sofa   1.00 212.00 1106.00  46.00 704.00   0.00
----corrected: sofa   1.00 212.00 1106.00  46.00 704.00
+---predicted: sofa   1.00 209.00 1105.00  46.00 704.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 212.00 1106.00  46.00 704.00 0.38 0.04 0.42 0.00 0.02 0.07 0.04 0.04 0.00
+---corrected: sofa   1.00 212.00 1106.00  46.00 704.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  212.00 1106.00   46.00  704.00
+---1 sofa   1.00  212.00 1106.00   46.00  704.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 2.52, frame 64
 Detected objects (1):
----64 sofa   1.00  209 1110   46  705
+---64 sofa   1.00  209 1110   46  705 0.38 0.04 0.42 0.00 0.02 0.07 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  212.00 1106.00   46.00  704.00
+---1 sofa   1.00  212.00 1106.00   46.00  704.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 64 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 212.00 1106.00  46.00 704.00
----measured:  sofa   1.00 209.00 1110.00  46.00 705.00   0.00
----corrected: sofa   1.00 209.00 1110.00  46.00 705.00
+---predicted: sofa   1.00 212.00 1106.00  46.00 704.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 209.00 1110.00  46.00 705.00 0.38 0.04 0.42 0.00 0.02 0.07 0.04 0.04 0.00
+---corrected: sofa   1.00 209.00 1110.00  46.00 705.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  209.00 1110.00   46.00  705.00
+---1 sofa   1.00  209.00 1110.00   46.00  705.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 2.56, frame 65
 Detected objects (1):
----65 sofa   1.00  209 1115   48  707
+---65 sofa   1.00  209 1115   48  707 0.38 0.04 0.42 0.00 0.02 0.07 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  209.00 1110.00   46.00  705.00
+---1 sofa   1.00  209.00 1110.00   46.00  705.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 65 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 209.00 1110.00  46.00 705.00
----measured:  sofa   1.00 209.00 1115.00  48.00 707.00   0.00
----corrected: sofa   1.00 209.00 1115.00  48.00 707.00
+---predicted: sofa   1.00 209.00 1110.00  46.00 705.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 209.00 1115.00  48.00 707.00 0.38 0.04 0.42 0.00 0.02 0.07 0.04 0.04 0.00
+---corrected: sofa   1.00 209.00 1115.00  48.00 707.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  209.00 1115.00   48.00  707.00
+---1 sofa   1.00  209.00 1115.00   48.00  707.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 2.60, frame 66
 Detected objects (1):
----66 sofa   1.00  206 1114   47  701
+---66 sofa   1.00  206 1114   47  701 0.38 0.04 0.42 0.00 0.02 0.07 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  209.00 1115.00   48.00  707.00
+---1 sofa   1.00  209.00 1115.00   48.00  707.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 66 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 209.00 1115.00  48.00 707.00
----measured:  sofa   1.00 206.00 1114.00  47.00 701.00   0.00
----corrected: sofa   1.00 206.00 1114.00  47.00 701.00
+---predicted: sofa   1.00 209.00 1115.00  48.00 707.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 206.00 1114.00  47.00 701.00 0.38 0.04 0.42 0.00 0.02 0.07 0.04 0.04 0.00
+---corrected: sofa   1.00 206.00 1114.00  47.00 701.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  206.00 1114.00   47.00  701.00
+---1 sofa   1.00  206.00 1114.00   47.00  701.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 2.64, frame 67
 Detected objects (1):
----67 sofa   1.00  205 1121   47  695
+---67 sofa   1.00  205 1121   47  695 0.38 0.04 0.42 0.00 0.02 0.06 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  206.00 1114.00   47.00  701.00
+---1 sofa   1.00  206.00 1114.00   47.00  701.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 67 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 206.00 1114.00  47.00 701.00
----measured:  sofa   1.00 205.00 1121.00  47.00 695.00   0.00
----corrected: sofa   1.00 205.00 1121.00  47.00 695.00
+---predicted: sofa   1.00 206.00 1114.00  47.00 701.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 205.00 1121.00  47.00 695.00 0.38 0.04 0.42 0.00 0.02 0.06 0.04 0.04 0.00
+---corrected: sofa   1.00 205.00 1121.00  47.00 695.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  205.00 1121.00   47.00  695.00
+---1 sofa   1.00  205.00 1121.00   47.00  695.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 2.68, frame 68
 Detected objects (1):
----68 sofa   1.00  200 1128   46  702
+---68 sofa   1.00  200 1128   46  702 0.37 0.04 0.43 0.00 0.02 0.06 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  205.00 1121.00   47.00  695.00
+---1 sofa   1.00  205.00 1121.00   47.00  695.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.01 
 Optimal assignment:
 Detected object 68 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 205.00 1121.00  47.00 695.00
----measured:  sofa   1.00 200.00 1128.00  46.00 702.00   0.01
----corrected: sofa   1.00 200.00 1128.00  46.00 702.00
+---predicted: sofa   1.00 205.00 1121.00  47.00 695.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 200.00 1128.00  46.00 702.00 0.37 0.04 0.43 0.00 0.02 0.06 0.04 0.04 0.01
+---corrected: sofa   1.00 200.00 1128.00  46.00 702.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  200.00 1128.00   46.00  702.00
+---1 sofa   1.00  200.00 1128.00   46.00  702.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 2.72, frame 69
 Detected objects (1):
----69 sofa   1.00  199 1131   48  706
+---69 sofa   1.00  199 1131   48  706 0.37 0.04 0.44 0.00 0.02 0.06 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  200.00 1128.00   46.00  702.00
+---1 sofa   1.00  200.00 1128.00   46.00  702.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 69 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 200.00 1128.00  46.00 702.00
----measured:  sofa   1.00 199.00 1131.00  48.00 706.00   0.00
----corrected: sofa   1.00 199.00 1131.00  48.00 706.00
+---predicted: sofa   1.00 200.00 1128.00  46.00 702.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 199.00 1131.00  48.00 706.00 0.37 0.04 0.44 0.00 0.02 0.06 0.04 0.04 0.00
+---corrected: sofa   1.00 199.00 1131.00  48.00 706.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  199.00 1131.00   48.00  706.00
+---1 sofa   1.00  199.00 1131.00   48.00  706.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 2.76, frame 70
 Detected objects (1):
----70 sofa   1.00  195 1132   46  704
+---70 sofa   1.00  195 1132   46  704 0.37 0.04 0.44 0.00 0.02 0.06 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  199.00 1131.00   48.00  706.00
+---1 sofa   1.00  199.00 1131.00   48.00  706.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 70 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 199.00 1131.00  48.00 706.00
----measured:  sofa   1.00 195.00 1132.00  46.00 704.00   0.00
----corrected: sofa   1.00 195.00 1132.00  46.00 704.00
+---predicted: sofa   1.00 199.00 1131.00  48.00 706.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 195.00 1132.00  46.00 704.00 0.37 0.04 0.44 0.00 0.02 0.06 0.04 0.04 0.00
+---corrected: sofa   1.00 195.00 1132.00  46.00 704.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  195.00 1132.00   46.00  704.00
+---1 sofa   1.00  195.00 1132.00   46.00  704.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 2.80, frame 71
 Detected objects (1):
----71 sofa   1.00  197 1135   46  703
+---71 sofa   1.00  197 1135   46  703 0.37 0.04 0.44 0.00 0.02 0.06 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  195.00 1132.00   46.00  704.00
+---1 sofa   1.00  195.00 1132.00   46.00  704.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 71 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 195.00 1132.00  46.00 704.00
----measured:  sofa   1.00 197.00 1135.00  46.00 703.00   0.00
----corrected: sofa   1.00 197.00 1135.00  46.00 703.00
+---predicted: sofa   1.00 195.00 1132.00  46.00 704.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 197.00 1135.00  46.00 703.00 0.37 0.04 0.44 0.00 0.02 0.06 0.04 0.04 0.00
+---corrected: sofa   1.00 197.00 1135.00  46.00 703.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  197.00 1135.00   46.00  703.00
+---1 sofa   1.00  197.00 1135.00   46.00  703.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 2.84, frame 72
 Detected objects (1):
----72 sofa   1.00  196 1136   48  703
+---72 sofa   1.00  196 1136   48  703 0.37 0.04 0.44 0.00 0.02 0.06 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  197.00 1135.00   46.00  703.00
+---1 sofa   1.00  197.00 1135.00   46.00  703.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 72 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 197.00 1135.00  46.00 703.00
----measured:  sofa   1.00 196.00 1136.00  48.00 703.00   0.00
----corrected: sofa   1.00 196.00 1136.00  48.00 703.00
+---predicted: sofa   1.00 197.00 1135.00  46.00 703.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 196.00 1136.00  48.00 703.00 0.37 0.04 0.44 0.00 0.02 0.06 0.04 0.04 0.00
+---corrected: sofa   1.00 196.00 1136.00  48.00 703.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  196.00 1136.00   48.00  703.00
+---1 sofa   1.00  196.00 1136.00   48.00  703.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 2.88, frame 73
 Detected objects (1):
----73 sofa   1.00  196 1137   46  701
+---73 sofa   1.00  196 1137   46  701 0.37 0.04 0.44 0.00 0.02 0.06 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  196.00 1136.00   48.00  703.00
+---1 sofa   1.00  196.00 1136.00   48.00  703.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 73 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 196.00 1136.00  48.00 703.00
----measured:  sofa   1.00 196.00 1137.00  46.00 701.00   0.00
----corrected: sofa   1.00 196.00 1137.00  46.00 701.00
+---predicted: sofa   1.00 196.00 1136.00  48.00 703.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 196.00 1137.00  46.00 701.00 0.37 0.04 0.44 0.00 0.02 0.06 0.04 0.04 0.00
+---corrected: sofa   1.00 196.00 1137.00  46.00 701.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  196.00 1137.00   46.00  701.00
+---1 sofa   1.00  196.00 1137.00   46.00  701.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 2.92, frame 74
 Detected objects (1):
----74 sofa   1.00  195 1138   44  702
+---74 sofa   1.00  195 1138   44  702 0.37 0.04 0.44 0.00 0.02 0.06 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  196.00 1137.00   46.00  701.00
+---1 sofa   1.00  196.00 1137.00   46.00  701.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 74 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 196.00 1137.00  46.00 701.00
----measured:  sofa   1.00 195.00 1138.00  44.00 702.00   0.00
----corrected: sofa   1.00 195.00 1138.00  44.00 702.00
+---predicted: sofa   1.00 196.00 1137.00  46.00 701.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 195.00 1138.00  44.00 702.00 0.37 0.04 0.44 0.00 0.02 0.06 0.04 0.04 0.00
+---corrected: sofa   1.00 195.00 1138.00  44.00 702.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  195.00 1138.00   44.00  702.00
+---1 sofa   1.00  195.00 1138.00   44.00  702.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 2.96, frame 75
 Detected objects (1):
----75 sofa   1.00  194 1140   47  702
+---75 sofa   1.00  194 1140   47  702 0.37 0.04 0.44 0.00 0.02 0.06 0.04 0.03
 Image objects (1), predicted new locations:
----1 sofa   1.00  195.00 1138.00   44.00  702.00
+---1 sofa   1.00  195.00 1138.00   44.00  702.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 75 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 195.00 1138.00  44.00 702.00
----measured:  sofa   1.00 194.00 1140.00  47.00 702.00   0.00
----corrected: sofa   1.00 194.00 1140.00  47.00 702.00
+---predicted: sofa   1.00 195.00 1138.00  44.00 702.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 194.00 1140.00  47.00 702.00 0.37 0.04 0.44 0.00 0.02 0.06 0.04 0.03 0.00
+---corrected: sofa   1.00 194.00 1140.00  47.00 702.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  194.00 1140.00   47.00  702.00
+---1 sofa   1.00  194.00 1140.00   47.00  702.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 3.00, frame 76
 Detected objects (1):
----76 sofa   1.00  193 1141   45  707
+---76 sofa   1.00  193 1141   45  707 0.37 0.04 0.45 0.00 0.02 0.05 0.04 0.03
 Image objects (1), predicted new locations:
----1 sofa   1.00  194.00 1140.00   47.00  702.00
+---1 sofa   1.00  194.00 1140.00   47.00  702.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 76 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 194.00 1140.00  47.00 702.00
----measured:  sofa   1.00 193.00 1141.00  45.00 707.00   0.00
----corrected: sofa   1.00 193.00 1141.00  45.00 707.00
+---predicted: sofa   1.00 194.00 1140.00  47.00 702.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 193.00 1141.00  45.00 707.00 0.37 0.04 0.45 0.00 0.02 0.05 0.04 0.03 0.00
+---corrected: sofa   1.00 193.00 1141.00  45.00 707.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  193.00 1141.00   45.00  707.00
+---1 sofa   1.00  193.00 1141.00   45.00  707.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 3.04, frame 77
 Detected objects (1):
----77 sofa   1.00  194 1142   46  704
+---77 sofa   1.00  194 1142   46  704 0.37 0.04 0.45 0.00 0.02 0.05 0.04 0.03
 Image objects (1), predicted new locations:
----1 sofa   1.00  193.00 1141.00   45.00  707.00
+---1 sofa   1.00  193.00 1141.00   45.00  707.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 77 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 193.00 1141.00  45.00 707.00
----measured:  sofa   1.00 194.00 1142.00  46.00 704.00   0.00
----corrected: sofa   1.00 194.00 1142.00  46.00 704.00
+---predicted: sofa   1.00 193.00 1141.00  45.00 707.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 194.00 1142.00  46.00 704.00 0.37 0.04 0.45 0.00 0.02 0.05 0.04 0.03 0.00
+---corrected: sofa   1.00 194.00 1142.00  46.00 704.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  194.00 1142.00   46.00  704.00
+---1 sofa   1.00  194.00 1142.00   46.00  704.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 3.08, frame 78
 Detected objects (1):
----78 sofa   1.00  198 1142   47  698
+---78 sofa   1.00  198 1142   47  698 0.37 0.04 0.44 0.00 0.02 0.05 0.04 0.03
 Image objects (1), predicted new locations:
----1 sofa   1.00  194.00 1142.00   46.00  704.00
+---1 sofa   1.00  194.00 1142.00   46.00  704.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 78 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 194.00 1142.00  46.00 704.00
----measured:  sofa   1.00 198.00 1142.00  47.00 698.00   0.00
----corrected: sofa   1.00 198.00 1142.00  47.00 698.00
+---predicted: sofa   1.00 194.00 1142.00  46.00 704.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 198.00 1142.00  47.00 698.00 0.37 0.04 0.44 0.00 0.02 0.05 0.04 0.03 0.00
+---corrected: sofa   1.00 198.00 1142.00  47.00 698.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  198.00 1142.00   47.00  698.00
+---1 sofa   1.00  198.00 1142.00   47.00  698.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 3.12, frame 79
 Detected objects (1):
----79 sofa   1.00  195 1142   47  704
+---79 sofa   1.00  195 1142   47  704 0.37 0.04 0.45 0.00 0.01 0.06 0.04 0.03
 Image objects (1), predicted new locations:
----1 sofa   1.00  198.00 1142.00   47.00  698.00
+---1 sofa   1.00  198.00 1142.00   47.00  698.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 79 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 198.00 1142.00  47.00 698.00
----measured:  sofa   1.00 195.00 1142.00  47.00 704.00   0.00
----corrected: sofa   1.00 195.00 1142.00  47.00 704.00
+---predicted: sofa   1.00 198.00 1142.00  47.00 698.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 195.00 1142.00  47.00 704.00 0.37 0.04 0.45 0.00 0.01 0.06 0.04 0.03 0.00
+---corrected: sofa   1.00 195.00 1142.00  47.00 704.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  195.00 1142.00   47.00  704.00
+---1 sofa   1.00  195.00 1142.00   47.00  704.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 3.16, frame 80
 Detected objects (1):
----80 sofa   1.00  197 1142   48  698
+---80 sofa   1.00  197 1142   48  698 0.38 0.04 0.44 0.00 0.01 0.06 0.04 0.03
 Image objects (1), predicted new locations:
----1 sofa   1.00  195.00 1142.00   47.00  704.00
+---1 sofa   1.00  195.00 1142.00   47.00  704.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 80 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 195.00 1142.00  47.00 704.00
----measured:  sofa   1.00 197.00 1142.00  48.00 698.00   0.00
----corrected: sofa   1.00 197.00 1142.00  48.00 698.00
+---predicted: sofa   1.00 195.00 1142.00  47.00 704.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 197.00 1142.00  48.00 698.00 0.38 0.04 0.44 0.00 0.01 0.06 0.04 0.03 0.00
+---corrected: sofa   1.00 197.00 1142.00  48.00 698.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  197.00 1142.00   48.00  698.00
+---1 sofa   1.00  197.00 1142.00   48.00  698.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 3.20, frame 81
 Detected objects (1):
----81 sofa   1.00  191 1146   43  699
+---81 sofa   1.00  191 1146   43  699 0.37 0.04 0.44 0.00 0.02 0.06 0.04 0.03
 Image objects (1), predicted new locations:
----1 sofa   1.00  197.00 1142.00   48.00  698.00
+---1 sofa   1.00  197.00 1142.00   48.00  698.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 81 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 197.00 1142.00  48.00 698.00
----measured:  sofa   1.00 191.00 1146.00  43.00 699.00   0.00
----corrected: sofa   1.00 191.00 1146.00  43.00 699.00
+---predicted: sofa   1.00 197.00 1142.00  48.00 698.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 191.00 1146.00  43.00 699.00 0.37 0.04 0.44 0.00 0.02 0.06 0.04 0.03 0.00
+---corrected: sofa   1.00 191.00 1146.00  43.00 699.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  191.00 1146.00   43.00  699.00
+---1 sofa   1.00  191.00 1146.00   43.00  699.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 3.24, frame 82
 Detected objects (1):
----82 sofa   1.00  192 1158   29  711
+---82 sofa   1.00  192 1158   29  711 0.36 0.04 0.46 0.00 0.01 0.06 0.04 0.03
 Image objects (1), predicted new locations:
----1 sofa   1.00  191.00 1146.00   43.00  699.00
+---1 sofa   1.00  191.00 1146.00   43.00  699.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.01 
 Optimal assignment:
 Detected object 82 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 191.00 1146.00  43.00 699.00
----measured:  sofa   1.00 192.00 1158.00  29.00 711.00   0.01
----corrected: sofa   1.00 192.00 1158.00  29.00 711.00
+---predicted: sofa   1.00 191.00 1146.00  43.00 699.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 192.00 1158.00  29.00 711.00 0.36 0.04 0.46 0.00 0.01 0.06 0.04 0.03 0.01
+---corrected: sofa   1.00 192.00 1158.00  29.00 711.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  192.00 1158.00   29.00  711.00
+---1 sofa   1.00  192.00 1158.00   29.00  711.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 3.28, frame 83
 Detected objects (1):
----83 sofa   1.00  182 1177    6  712
+---83 sofa   1.00  182 1177    6  712 0.33 0.04 0.49 0.00 0.01 0.05 0.04 0.03
 Image objects (1), predicted new locations:
----1 sofa   1.00  192.00 1158.00   29.00  711.00
+---1 sofa   1.00  192.00 1158.00   29.00  711.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.02 
 Optimal assignment:
 Detected object 83 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 192.00 1158.00  29.00 711.00
----measured:  sofa   1.00 182.00 1177.00   6.00 712.00   0.02
----corrected: sofa   1.00 182.00 1177.00   6.00 712.00
+---predicted: sofa   1.00 192.00 1158.00  29.00 711.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 182.00 1177.00   6.00 712.00 0.33 0.04 0.49 0.00 0.01 0.05 0.04 0.03 0.02
+---corrected: sofa   1.00 182.00 1177.00   6.00 712.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  182.00 1177.00    6.00  712.00
+---1 sofa   1.00  182.00 1177.00    6.00  712.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 3.32, frame 84
 Detected objects (1):
----84 sofa   1.00  185 1175    4  714
+---84 sofa   1.00  185 1175    4  714 0.33 0.04 0.50 0.00 0.01 0.05 0.04 0.03
 Image objects (1), predicted new locations:
----1 sofa   1.00  182.00 1177.00    6.00  712.00
+---1 sofa   1.00  182.00 1177.00    6.00  712.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 84 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 182.00 1177.00   6.00 712.00
----measured:  sofa   1.00 185.00 1175.00   4.00 714.00   0.00
----corrected: sofa   1.00 185.00 1175.00   4.00 714.00
+---predicted: sofa   1.00 182.00 1177.00   6.00 712.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 185.00 1175.00   4.00 714.00 0.33 0.04 0.50 0.00 0.01 0.05 0.04 0.03 0.00
+---corrected: sofa   1.00 185.00 1175.00   4.00 714.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  185.00 1175.00    4.00  714.00
+---1 sofa   1.00  185.00 1175.00    4.00  714.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 3.36, frame 85
 Detected objects (1):
----85 sofa   1.00  191 1168   46  710
+---85 sofa   1.00  191 1168   46  710 0.36 0.04 0.47 0.00 0.01 0.05 0.03 0.03
 Image objects (1), predicted new locations:
----1 sofa   1.00  185.00 1175.00    4.00  714.00
+---1 sofa   1.00  185.00 1175.00    4.00  714.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.02 
 Optimal assignment:
 Detected object 85 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 185.00 1175.00   4.00 714.00
----measured:  sofa   1.00 191.00 1168.00  46.00 710.00   0.02
----corrected: sofa   1.00 191.00 1168.00  46.00 710.00
+---predicted: sofa   1.00 185.00 1175.00   4.00 714.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 191.00 1168.00  46.00 710.00 0.36 0.04 0.47 0.00 0.01 0.05 0.03 0.03 0.02
+---corrected: sofa   1.00 191.00 1168.00  46.00 710.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  191.00 1168.00   46.00  710.00
+---1 sofa   1.00  191.00 1168.00   46.00  710.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 3.40, frame 86
 Detected objects (1):
----86 sofa   1.00  185 1151   50  699
+---86 sofa   1.00  185 1151   50  699 0.36 0.04 0.45 0.00 0.02 0.06 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  191.00 1168.00   46.00  710.00
+---1 sofa   1.00  191.00 1168.00   46.00  710.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.01 
 Optimal assignment:
 Detected object 86 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 191.00 1168.00  46.00 710.00
----measured:  sofa   1.00 185.00 1151.00  50.00 699.00   0.01
----corrected: sofa   1.00 185.00 1151.00  50.00 699.00
+---predicted: sofa   1.00 191.00 1168.00  46.00 710.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 185.00 1151.00  50.00 699.00 0.36 0.04 0.45 0.00 0.02 0.06 0.04 0.04 0.01
+---corrected: sofa   1.00 185.00 1151.00  50.00 699.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  185.00 1151.00   50.00  699.00
+---1 sofa   1.00  185.00 1151.00   50.00  699.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 3.44, frame 87
 Detected objects (1):
----87 sofa   1.00  195 1139   62  698
+---87 sofa   1.00  195 1139   62  698 0.37 0.04 0.42 0.00 0.02 0.06 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  185.00 1151.00   50.00  699.00
+---1 sofa   1.00  185.00 1151.00   50.00  699.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.01 
 Optimal assignment:
 Detected object 87 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 185.00 1151.00  50.00 699.00
----measured:  sofa   1.00 195.00 1139.00  62.00 698.00   0.01
----corrected: sofa   1.00 195.00 1139.00  62.00 698.00
+---predicted: sofa   1.00 185.00 1151.00  50.00 699.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 195.00 1139.00  62.00 698.00 0.37 0.04 0.42 0.00 0.02 0.06 0.04 0.04 0.01
+---corrected: sofa   1.00 195.00 1139.00  62.00 698.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  195.00 1139.00   62.00  698.00
+---1 sofa   1.00  195.00 1139.00   62.00  698.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 3.48, frame 88
 Detected objects (1):
----88 sofa   1.00  192 1149   63  714
+---88 sofa   1.00  192 1149   63  714 0.36 0.04 0.44 0.00 0.02 0.06 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  195.00 1139.00   62.00  698.00
+---1 sofa   1.00  195.00 1139.00   62.00  698.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.01 
 Optimal assignment:
 Detected object 88 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 195.00 1139.00  62.00 698.00
----measured:  sofa   1.00 192.00 1149.00  63.00 714.00   0.01
----corrected: sofa   1.00 192.00 1149.00  63.00 714.00
+---predicted: sofa   1.00 195.00 1139.00  62.00 698.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 192.00 1149.00  63.00 714.00 0.36 0.04 0.44 0.00 0.02 0.06 0.04 0.04 0.01
+---corrected: sofa   1.00 192.00 1149.00  63.00 714.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  192.00 1149.00   63.00  714.00
+---1 sofa   1.00  192.00 1149.00   63.00  714.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 3.52, frame 89
 Detected objects (1):
----89 sofa   1.00  195 1141   59  699
+---89 sofa   1.00  195 1141   59  699 0.37 0.04 0.43 0.00 0.02 0.06 0.04 0.05
 Image objects (1), predicted new locations:
----1 sofa   1.00  192.00 1149.00   63.00  714.00
+---1 sofa   1.00  192.00 1149.00   63.00  714.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.01 
 Optimal assignment:
 Detected object 89 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 192.00 1149.00  63.00 714.00
----measured:  sofa   1.00 195.00 1141.00  59.00 699.00   0.01
----corrected: sofa   1.00 195.00 1141.00  59.00 699.00
+---predicted: sofa   1.00 192.00 1149.00  63.00 714.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 195.00 1141.00  59.00 699.00 0.37 0.04 0.43 0.00 0.02 0.06 0.04 0.05 0.01
+---corrected: sofa   1.00 195.00 1141.00  59.00 699.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  195.00 1141.00   59.00  699.00
+---1 sofa   1.00  195.00 1141.00   59.00  699.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 3.56, frame 90
 Detected objects (1):
----90 sofa   1.00  196 1143   58  700
+---90 sofa   1.00  196 1143   58  700 0.37 0.04 0.43 0.00 0.02 0.05 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  195.00 1141.00   59.00  699.00
+---1 sofa   1.00  195.00 1141.00   59.00  699.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 90 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 195.00 1141.00  59.00 699.00
----measured:  sofa   1.00 196.00 1143.00  58.00 700.00   0.00
----corrected: sofa   1.00 196.00 1143.00  58.00 700.00
+---predicted: sofa   1.00 195.00 1141.00  59.00 699.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 196.00 1143.00  58.00 700.00 0.37 0.04 0.43 0.00 0.02 0.05 0.04 0.04 0.00
+---corrected: sofa   1.00 196.00 1143.00  58.00 700.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  196.00 1143.00   58.00  700.00
+---1 sofa   1.00  196.00 1143.00   58.00  700.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 3.60, frame 91
 Detected objects (1):
----91 sofa   1.00  192 1153   68  713
+---91 sofa   1.00  192 1153   68  713 0.36 0.04 0.44 0.00 0.02 0.05 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  196.00 1143.00   58.00  700.00
+---1 sofa   1.00  196.00 1143.00   58.00  700.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.01 
 Optimal assignment:
 Detected object 91 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 196.00 1143.00  58.00 700.00
----measured:  sofa   1.00 192.00 1153.00  68.00 713.00   0.01
----corrected: sofa   1.00 192.00 1153.00  68.00 713.00
+---predicted: sofa   1.00 196.00 1143.00  58.00 700.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 192.00 1153.00  68.00 713.00 0.36 0.04 0.44 0.00 0.02 0.05 0.04 0.04 0.01
+---corrected: sofa   1.00 192.00 1153.00  68.00 713.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  192.00 1153.00   68.00  713.00
+---1 sofa   1.00  192.00 1153.00   68.00  713.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 3.64, frame 92
 Detected objects (1):
----92 sofa   1.00  189 1151   53  696
+---92 sofa   1.00  189 1151   53  696 0.36 0.04 0.44 0.00 0.02 0.05 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  192.00 1153.00   68.00  713.00
+---1 sofa   1.00  192.00 1153.00   68.00  713.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.01 
 Optimal assignment:
 Detected object 92 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 192.00 1153.00  68.00 713.00
----measured:  sofa   1.00 189.00 1151.00  53.00 696.00   0.01
----corrected: sofa   1.00 189.00 1151.00  53.00 696.00
+---predicted: sofa   1.00 192.00 1153.00  68.00 713.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 189.00 1151.00  53.00 696.00 0.36 0.04 0.44 0.00 0.02 0.05 0.04 0.04 0.01
+---corrected: sofa   1.00 189.00 1151.00  53.00 696.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  189.00 1151.00   53.00  696.00
+---1 sofa   1.00  189.00 1151.00   53.00  696.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 3.68, frame 93
 Detected objects (1):
----93 sofa   1.00  187 1155   49  702
+---93 sofa   1.00  187 1155   49  702 0.35 0.04 0.45 0.00 0.02 0.05 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  189.00 1151.00   53.00  696.00
+---1 sofa   1.00  189.00 1151.00   53.00  696.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.01 
 Optimal assignment:
 Detected object 93 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 189.00 1151.00  53.00 696.00
----measured:  sofa   1.00 187.00 1155.00  49.00 702.00   0.01
----corrected: sofa   1.00 187.00 1155.00  49.00 702.00
+---predicted: sofa   1.00 189.00 1151.00  53.00 696.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 187.00 1155.00  49.00 702.00 0.35 0.04 0.45 0.00 0.02 0.05 0.04 0.04 0.01
+---corrected: sofa   1.00 187.00 1155.00  49.00 702.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  187.00 1155.00   49.00  702.00
+---1 sofa   1.00  187.00 1155.00   49.00  702.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 3.72, frame 94
 Detected objects (1):
----94 sofa   1.00  180 1163   46  700
+---94 sofa   1.00  180 1163   46  700 0.35 0.04 0.47 0.00 0.02 0.05 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  187.00 1155.00   49.00  702.00
+---1 sofa   1.00  187.00 1155.00   49.00  702.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.01 
 Optimal assignment:
 Detected object 94 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 187.00 1155.00  49.00 702.00
----measured:  sofa   1.00 180.00 1163.00  46.00 700.00   0.01
----corrected: sofa   1.00 180.00 1163.00  46.00 700.00
+---predicted: sofa   1.00 187.00 1155.00  49.00 702.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 180.00 1163.00  46.00 700.00 0.35 0.04 0.47 0.00 0.02 0.05 0.04 0.04 0.01
+---corrected: sofa   1.00 180.00 1163.00  46.00 700.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  180.00 1163.00   46.00  700.00
+---1 sofa   1.00  180.00 1163.00   46.00  700.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 3.76, frame 95
 Detected objects (1):
----95 sofa   1.00  184 1151   50  694
+---95 sofa   1.00  184 1151   50  694 0.36 0.04 0.45 0.00 0.02 0.05 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  180.00 1163.00   46.00  700.00
+---1 sofa   1.00  180.00 1163.00   46.00  700.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.01 
 Optimal assignment:
 Detected object 95 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 180.00 1163.00  46.00 700.00
----measured:  sofa   1.00 184.00 1151.00  50.00 694.00   0.01
----corrected: sofa   1.00 184.00 1151.00  50.00 694.00
+---predicted: sofa   1.00 180.00 1163.00  46.00 700.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 184.00 1151.00  50.00 694.00 0.36 0.04 0.45 0.00 0.02 0.05 0.04 0.04 0.01
+---corrected: sofa   1.00 184.00 1151.00  50.00 694.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  184.00 1151.00   50.00  694.00
+---1 sofa   1.00  184.00 1151.00   50.00  694.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 3.80, frame 96
 Detected objects (1):
----96 sofa   1.00  184 1161   57  699
+---96 sofa   1.00  184 1161   57  699 0.35 0.04 0.46 0.00 0.02 0.05 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  184.00 1151.00   50.00  694.00
+---1 sofa   1.00  184.00 1151.00   50.00  694.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.01 
 Optimal assignment:
 Detected object 96 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 184.00 1151.00  50.00 694.00
----measured:  sofa   1.00 184.00 1161.00  57.00 699.00   0.01
----corrected: sofa   1.00 184.00 1161.00  57.00 699.00
+---predicted: sofa   1.00 184.00 1151.00  50.00 694.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 184.00 1161.00  57.00 699.00 0.35 0.04 0.46 0.00 0.02 0.05 0.04 0.04 0.01
+---corrected: sofa   1.00 184.00 1161.00  57.00 699.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  184.00 1161.00   57.00  699.00
+---1 sofa   1.00  184.00 1161.00   57.00  699.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 3.84, frame 97
 Detected objects (1):
----97 sofa   1.00  183 1172   55  688
+---97 sofa   1.00  183 1172   55  688 0.35 0.04 0.46 0.00 0.02 0.05 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  184.00 1161.00   57.00  699.00
+---1 sofa   1.00  184.00 1161.00   57.00  699.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.01 
 Optimal assignment:
 Detected object 97 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 184.00 1161.00  57.00 699.00
----measured:  sofa   1.00 183.00 1172.00  55.00 688.00   0.01
----corrected: sofa   1.00 183.00 1172.00  55.00 688.00
+---predicted: sofa   1.00 184.00 1161.00  57.00 699.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 183.00 1172.00  55.00 688.00 0.35 0.04 0.46 0.00 0.02 0.05 0.04 0.04 0.01
+---corrected: sofa   1.00 183.00 1172.00  55.00 688.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  183.00 1172.00   55.00  688.00
+---1 sofa   1.00  183.00 1172.00   55.00  688.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 3.88, frame 98
 Detected objects (2):
----98 chair   0.26  224  485  108  333
----99 sofa   1.00  180 1170   53  686
+---98 chair   0.26  224  485  108  333 0.32 0.04 0.24 0.00 0.07 0.07 0.19 0.06
+---99 sofa   1.00  180 1170   53  686 0.35 0.04 0.46 0.00 0.02 0.05 0.04 0.03
 Image objects (1), predicted new locations:
----1 sofa   1.00  183.00 1172.00   55.00  688.00
+---1 sofa   1.00  183.00 1172.00   55.00  688.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.35 
    0.00 
 Optimal assignment:
 Detected object 99 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 183.00 1172.00  55.00 688.00
----measured:  sofa   1.00 180.00 1170.00  53.00 686.00   0.00
----corrected: sofa   1.00 180.00 1170.00  53.00 686.00
+---predicted: sofa   1.00 183.00 1172.00  55.00 688.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 180.00 1170.00  53.00 686.00 0.35 0.04 0.46 0.00 0.02 0.05 0.04 0.03 0.00
+---corrected: sofa   1.00 180.00 1170.00  53.00 686.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image object 2 created: chair   0.26  224  485  108  333
 Image objects (2):
----1 sofa   1.00  180.00 1170.00   53.00  686.00
----2 chair   0.26  224.00  485.00  108.00  333.00
+---1 sofa   1.00  180.00 1170.00   53.00  686.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
+---2 chair   0.26  224.00  485.00  108.00  333.00 0.32 0.04 0.24 0.00 0.07 0.07 0.19
 ----------------------------------------------
 Time 3.92, frame 99
 Detected objects (1):
----100 sofa   1.00  175 1164   51  683
+---100 sofa   1.00  175 1164   51  683 0.35 0.04 0.46 0.00 0.02 0.05 0.04 0.04
 Image objects (2), predicted new locations:
----1 sofa   1.00  180.00 1170.00   53.00  686.00
----2 chair   0.26  224.00  485.00  108.00  333.00
+---1 sofa   1.00  180.00 1170.00   53.00  686.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
+---2 chair   0.26  224.00  485.00  108.00  333.00 0.32 0.04 0.24 0.00 0.07 0.07 0.19
 Cost matrix for Hungarian algorithm:
    0.00    1.15 
 Optimal assignment:
 Detected object 100 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 180.00 1170.00  53.00 686.00
----measured:  sofa   1.00 175.00 1164.00  51.00 683.00   0.00
----corrected: sofa   1.00 175.00 1164.00  51.00 683.00
+---predicted: sofa   1.00 180.00 1170.00  53.00 686.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 175.00 1164.00  51.00 683.00 0.35 0.04 0.46 0.00 0.02 0.05 0.04 0.04 0.00
+---corrected: sofa   1.00 175.00 1164.00  51.00 683.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image object 2 removed:
 ---chair   0.26  224.00  485.00  108.00  333.00
 Image objects (1):
----1 sofa   1.00  175.00 1164.00   51.00  683.00
+---1 sofa   1.00  175.00 1164.00   51.00  683.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 3.96, frame 100
 Detected objects (2):
----101 chair   0.29  232  460  108  341
----102 sofa   1.00  175 1162   53  686
+---101 chair   0.29  232  460  108  341 0.32 0.04 0.24 0.00 0.07 0.10 0.17 0.06
+---102 sofa   1.00  175 1162   53  686 0.35 0.04 0.46 0.00 0.02 0.05 0.04 0.03
 Image objects (1), predicted new locations:
----1 sofa   1.00  175.00 1164.00   51.00  683.00
+---1 sofa   1.00  175.00 1164.00   51.00  683.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.35 
    0.00 
 Optimal assignment:
 Detected object 102 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 175.00 1164.00  51.00 683.00
----measured:  sofa   1.00 175.00 1162.00  53.00 686.00   0.00
----corrected: sofa   1.00 175.00 1162.00  53.00 686.00
+---predicted: sofa   1.00 175.00 1164.00  51.00 683.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 175.00 1162.00  53.00 686.00 0.35 0.04 0.46 0.00 0.02 0.05 0.04 0.03 0.00
+---corrected: sofa   1.00 175.00 1162.00  53.00 686.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image object 3 created: chair   0.29  232  460  108  341
 Image objects (2):
----1 sofa   1.00  175.00 1162.00   53.00  686.00
----3 chair   0.29  232.00  460.00  108.00  341.00
+---1 sofa   1.00  175.00 1162.00   53.00  686.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
+---3 chair   0.29  232.00  460.00  108.00  341.00 0.32 0.04 0.24 0.00 0.07 0.10 0.17
 ----------------------------------------------
 Time 4.00, frame 101
 Detected objects (1):
----103 sofa   1.00  169 1144   60  691
+---103 sofa   1.00  169 1144   60  691 0.36 0.04 0.45 0.00 0.02 0.05 0.04 0.04
 Image objects (2), predicted new locations:
----1 sofa   1.00  175.00 1162.00   53.00  686.00
----3 chair   0.29  232.00  460.00  108.00  341.00
+---1 sofa   1.00  175.00 1162.00   53.00  686.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
+---3 chair   0.29  232.00  460.00  108.00  341.00 0.32 0.04 0.24 0.00 0.07 0.10 0.17
 Cost matrix for Hungarian algorithm:
    0.01    1.25 
 Optimal assignment:
 Detected object 103 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 175.00 1162.00  53.00 686.00
----measured:  sofa   1.00 169.00 1144.00  60.00 691.00   0.01
----corrected: sofa   1.00 169.00 1144.00  60.00 691.00
+---predicted: sofa   1.00 175.00 1162.00  53.00 686.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 169.00 1144.00  60.00 691.00 0.36 0.04 0.45 0.00 0.02 0.05 0.04 0.04 0.01
+---corrected: sofa   1.00 169.00 1144.00  60.00 691.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image object 3 removed:
 ---chair   0.29  232.00  460.00  108.00  341.00
 Image objects (1):
----1 sofa   1.00  169.00 1144.00   60.00  691.00
+---1 sofa   1.00  169.00 1144.00   60.00  691.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 4.04, frame 102
 Detected objects (1):
----104 sofa   1.00  168 1144   58  688
+---104 sofa   1.00  168 1144   58  688 0.36 0.04 0.45 0.00 0.02 0.05 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  169.00 1144.00   60.00  691.00
+---1 sofa   1.00  169.00 1144.00   60.00  691.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 104 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 169.00 1144.00  60.00 691.00
----measured:  sofa   1.00 168.00 1144.00  58.00 688.00   0.00
----corrected: sofa   1.00 168.00 1144.00  58.00 688.00
+---predicted: sofa   1.00 169.00 1144.00  60.00 691.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 168.00 1144.00  58.00 688.00 0.36 0.04 0.45 0.00 0.02 0.05 0.04 0.04 0.00
+---corrected: sofa   1.00 168.00 1144.00  58.00 688.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  168.00 1144.00   58.00  688.00
+---1 sofa   1.00  168.00 1144.00   58.00  688.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 4.08, frame 103
 Detected objects (1):
----105 sofa   1.00  161 1151   51  691
+---105 sofa   1.00  161 1151   51  691 0.35 0.04 0.47 0.00 0.02 0.04 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  168.00 1144.00   58.00  688.00
+---1 sofa   1.00  168.00 1144.00   58.00  688.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.01 
 Optimal assignment:
 Detected object 105 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 168.00 1144.00  58.00 688.00
----measured:  sofa   1.00 161.00 1151.00  51.00 691.00   0.01
----corrected: sofa   1.00 161.00 1151.00  51.00 691.00
+---predicted: sofa   1.00 168.00 1144.00  58.00 688.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 161.00 1151.00  51.00 691.00 0.35 0.04 0.47 0.00 0.02 0.04 0.04 0.04 0.01
+---corrected: sofa   1.00 161.00 1151.00  51.00 691.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  161.00 1151.00   51.00  691.00
+---1 sofa   1.00  161.00 1151.00   51.00  691.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 4.12, frame 104
 Detected objects (1):
----106 sofa   1.00  169 1138   57  688
+---106 sofa   1.00  169 1138   57  688 0.36 0.04 0.45 0.00 0.02 0.05 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  161.00 1151.00   51.00  691.00
+---1 sofa   1.00  161.00 1151.00   51.00  691.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.01 
 Optimal assignment:
 Detected object 106 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 161.00 1151.00  51.00 691.00
----measured:  sofa   1.00 169.00 1138.00  57.00 688.00   0.01
----corrected: sofa   1.00 169.00 1138.00  57.00 688.00
+---predicted: sofa   1.00 161.00 1151.00  51.00 691.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 169.00 1138.00  57.00 688.00 0.36 0.04 0.45 0.00 0.02 0.05 0.04 0.04 0.01
+---corrected: sofa   1.00 169.00 1138.00  57.00 688.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  169.00 1138.00   57.00  688.00
+---1 sofa   1.00  169.00 1138.00   57.00  688.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 4.16, frame 105
 Detected objects (1):
----107 sofa   1.00  163 1139   54  690
+---107 sofa   1.00  163 1139   54  690 0.35 0.04 0.46 0.00 0.02 0.04 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  169.00 1138.00   57.00  688.00
+---1 sofa   1.00  169.00 1138.00   57.00  688.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 107 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 169.00 1138.00  57.00 688.00
----measured:  sofa   1.00 163.00 1139.00  54.00 690.00   0.00
----corrected: sofa   1.00 163.00 1139.00  54.00 690.00
+---predicted: sofa   1.00 169.00 1138.00  57.00 688.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 163.00 1139.00  54.00 690.00 0.35 0.04 0.46 0.00 0.02 0.04 0.04 0.04 0.00
+---corrected: sofa   1.00 163.00 1139.00  54.00 690.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  163.00 1139.00   54.00  690.00
+---1 sofa   1.00  163.00 1139.00   54.00  690.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 4.20, frame 106
 Detected objects (1):
----108 sofa   1.00  172 1150   57  683
+---108 sofa   1.00  172 1150   57  683 0.36 0.04 0.46 0.00 0.02 0.04 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  163.00 1139.00   54.00  690.00
+---1 sofa   1.00  163.00 1139.00   54.00  690.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.01 
 Optimal assignment:
 Detected object 108 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 163.00 1139.00  54.00 690.00
----measured:  sofa   1.00 172.00 1150.00  57.00 683.00   0.01
----corrected: sofa   1.00 172.00 1150.00  57.00 683.00
+---predicted: sofa   1.00 163.00 1139.00  54.00 690.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 172.00 1150.00  57.00 683.00 0.36 0.04 0.46 0.00 0.02 0.04 0.04 0.04 0.01
+---corrected: sofa   1.00 172.00 1150.00  57.00 683.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  172.00 1150.00   57.00  683.00
+---1 sofa   1.00  172.00 1150.00   57.00  683.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 4.24, frame 107
 Detected objects (1):
----109 sofa   1.00  162 1137   58  688
+---109 sofa   1.00  162 1137   58  688 0.36 0.04 0.46 0.00 0.02 0.04 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  172.00 1150.00   57.00  683.00
+---1 sofa   1.00  172.00 1150.00   57.00  683.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.01 
 Optimal assignment:
 Detected object 109 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 172.00 1150.00  57.00 683.00
----measured:  sofa   1.00 162.00 1137.00  58.00 688.00   0.01
----corrected: sofa   1.00 162.00 1137.00  58.00 688.00
+---predicted: sofa   1.00 172.00 1150.00  57.00 683.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 162.00 1137.00  58.00 688.00 0.36 0.04 0.46 0.00 0.02 0.04 0.04 0.04 0.01
+---corrected: sofa   1.00 162.00 1137.00  58.00 688.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  162.00 1137.00   58.00  688.00
+---1 sofa   1.00  162.00 1137.00   58.00  688.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 4.28, frame 108
 Detected objects (1):
----110 sofa   1.00  162 1139   57  690
+---110 sofa   1.00  162 1139   57  690 0.36 0.04 0.46 0.00 0.02 0.04 0.04 0.03
 Image objects (1), predicted new locations:
----1 sofa   1.00  162.00 1137.00   58.00  688.00
+---1 sofa   1.00  162.00 1137.00   58.00  688.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 110 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 162.00 1137.00  58.00 688.00
----measured:  sofa   1.00 162.00 1139.00  57.00 690.00   0.00
----corrected: sofa   1.00 162.00 1139.00  57.00 690.00
+---predicted: sofa   1.00 162.00 1137.00  58.00 688.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 162.00 1139.00  57.00 690.00 0.36 0.04 0.46 0.00 0.02 0.04 0.04 0.03 0.00
+---corrected: sofa   1.00 162.00 1139.00  57.00 690.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  162.00 1139.00   57.00  690.00
+---1 sofa   1.00  162.00 1139.00   57.00  690.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 4.32, frame 109
 Detected objects (2):
----111 chair   0.25  215  494  114  326
----112 sofa   1.00  172 1152   62  680
+---111 chair   0.25  215  494  114  326 0.36 0.04 0.19 0.00 0.08 0.06 0.21 0.06
+---112 sofa   1.00  172 1152   62  680 0.36 0.04 0.45 0.00 0.02 0.04 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  162.00 1139.00   57.00  690.00
+---1 sofa   1.00  162.00 1139.00   57.00  690.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.34 
    0.01 
 Optimal assignment:
 Detected object 112 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 162.00 1139.00  57.00 690.00
----measured:  sofa   1.00 172.00 1152.00  62.00 680.00   0.01
----corrected: sofa   1.00 172.00 1152.00  62.00 680.00
+---predicted: sofa   1.00 162.00 1139.00  57.00 690.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 172.00 1152.00  62.00 680.00 0.36 0.04 0.45 0.00 0.02 0.04 0.04 0.04 0.01
+---corrected: sofa   1.00 172.00 1152.00  62.00 680.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image object 4 created: chair   0.25  215  494  114  326
 Image objects (2):
----1 sofa   1.00  172.00 1152.00   62.00  680.00
----4 chair   0.25  215.00  494.00  114.00  326.00
+---1 sofa   1.00  172.00 1152.00   62.00  680.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
+---4 chair   0.25  215.00  494.00  114.00  326.00 0.36 0.04 0.19 0.00 0.08 0.06 0.21
 ----------------------------------------------
 Time 4.36, frame 110
 Detected objects (1):
----113 sofa   1.00  174 1139   62  683
+---113 sofa   1.00  174 1139   62  683 0.37 0.04 0.45 0.00 0.02 0.04 0.04 0.04
 Image objects (2), predicted new locations:
----1 sofa   1.00  172.00 1152.00   62.00  680.00
----4 chair   0.25  215.00  494.00  114.00  326.00
+---1 sofa   1.00  172.00 1152.00   62.00  680.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
+---4 chair   0.25  215.00  494.00  114.00  326.00 0.36 0.04 0.19 0.00 0.08 0.06 0.21
 Cost matrix for Hungarian algorithm:
    0.01    1.10 
 Optimal assignment:
 Detected object 113 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 172.00 1152.00  62.00 680.00
----measured:  sofa   1.00 174.00 1139.00  62.00 683.00   0.01
----corrected: sofa   1.00 174.00 1139.00  62.00 683.00
+---predicted: sofa   1.00 172.00 1152.00  62.00 680.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 174.00 1139.00  62.00 683.00 0.37 0.04 0.45 0.00 0.02 0.04 0.04 0.04 0.01
+---corrected: sofa   1.00 174.00 1139.00  62.00 683.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image object 4 removed:
 ---chair   0.25  215.00  494.00  114.00  326.00
 Image objects (1):
----1 sofa   1.00  174.00 1139.00   62.00  683.00
+---1 sofa   1.00  174.00 1139.00   62.00  683.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 4.40, frame 111
 Detected objects (1):
----114 sofa   1.00  177 1137   61  682
+---114 sofa   1.00  177 1137   61  682 0.37 0.04 0.45 0.00 0.02 0.04 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  174.00 1139.00   62.00  683.00
+---1 sofa   1.00  174.00 1139.00   62.00  683.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 114 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 174.00 1139.00  62.00 683.00
----measured:  sofa   1.00 177.00 1137.00  61.00 682.00   0.00
----corrected: sofa   1.00 177.00 1137.00  61.00 682.00
+---predicted: sofa   1.00 174.00 1139.00  62.00 683.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 177.00 1137.00  61.00 682.00 0.37 0.04 0.45 0.00 0.02 0.04 0.04 0.04 0.00
+---corrected: sofa   1.00 177.00 1137.00  61.00 682.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  177.00 1137.00   61.00  682.00
+---1 sofa   1.00  177.00 1137.00   61.00  682.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 4.44, frame 112
 Detected objects (2):
----115 chair   0.28  221  493  119  324
----116 sofa   1.00  177 1138   59  681
+---115 chair   0.28  221  493  119  324 0.38 0.04 0.17 0.00 0.06 0.06 0.22 0.07
+---116 sofa   1.00  177 1138   59  681 0.37 0.04 0.45 0.00 0.02 0.04 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  177.00 1137.00   61.00  682.00
+---1 sofa   1.00  177.00 1137.00   61.00  682.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.35 
    0.00 
 Optimal assignment:
 Detected object 116 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 177.00 1137.00  61.00 682.00
----measured:  sofa   1.00 177.00 1138.00  59.00 681.00   0.00
----corrected: sofa   1.00 177.00 1138.00  59.00 681.00
+---predicted: sofa   1.00 177.00 1137.00  61.00 682.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 177.00 1138.00  59.00 681.00 0.37 0.04 0.45 0.00 0.02 0.04 0.04 0.04 0.00
+---corrected: sofa   1.00 177.00 1138.00  59.00 681.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image object 5 created: chair   0.28  221  493  119  324
 Image objects (2):
----1 sofa   1.00  177.00 1138.00   59.00  681.00
----5 chair   0.28  221.00  493.00  119.00  324.00
+---1 sofa   1.00  177.00 1138.00   59.00  681.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
+---5 chair   0.28  221.00  493.00  119.00  324.00 0.38 0.04 0.17 0.00 0.06 0.06 0.22
 ----------------------------------------------
 Time 4.48, frame 113
 Detected objects (1):
----117 sofa   1.00  174 1139   61  681
+---117 sofa   1.00  174 1139   61  681 0.37 0.04 0.45 0.00 0.02 0.04 0.04 0.04
 Image objects (2), predicted new locations:
----1 sofa   1.00  177.00 1138.00   59.00  681.00
----5 chair   0.28  221.00  493.00  119.00  324.00
+---1 sofa   1.00  177.00 1138.00   59.00  681.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
+---5 chair   0.28  221.00  493.00  119.00  324.00 0.38 0.04 0.17 0.00 0.06 0.06 0.22
 Cost matrix for Hungarian algorithm:
    0.00    1.14 
 Optimal assignment:
 Detected object 117 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 177.00 1138.00  59.00 681.00
----measured:  sofa   1.00 174.00 1139.00  61.00 681.00   0.00
----corrected: sofa   1.00 174.00 1139.00  61.00 681.00
+---predicted: sofa   1.00 177.00 1138.00  59.00 681.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 174.00 1139.00  61.00 681.00 0.37 0.04 0.45 0.00 0.02 0.04 0.04 0.04 0.00
+---corrected: sofa   1.00 174.00 1139.00  61.00 681.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image object 5 removed:
 ---chair   0.28  221.00  493.00  119.00  324.00
 Image objects (1):
----1 sofa   1.00  174.00 1139.00   61.00  681.00
+---1 sofa   1.00  174.00 1139.00   61.00  681.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 4.52, frame 114
 Detected objects (1):
----118 sofa   1.00  170 1137   61  678
+---118 sofa   1.00  170 1137   61  678 0.37 0.04 0.45 0.00 0.02 0.04 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  174.00 1139.00   61.00  681.00
+---1 sofa   1.00  174.00 1139.00   61.00  681.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 118 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 174.00 1139.00  61.00 681.00
----measured:  sofa   1.00 170.00 1137.00  61.00 678.00   0.00
----corrected: sofa   1.00 170.00 1137.00  61.00 678.00
+---predicted: sofa   1.00 174.00 1139.00  61.00 681.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 170.00 1137.00  61.00 678.00 0.37 0.04 0.45 0.00 0.02 0.04 0.04 0.04 0.00
+---corrected: sofa   1.00 170.00 1137.00  61.00 678.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  170.00 1137.00   61.00  678.00
+---1 sofa   1.00  170.00 1137.00   61.00  678.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 4.56, frame 115
 Detected objects (1):
----119 sofa   1.00  174 1138   61  677
+---119 sofa   1.00  174 1138   61  677 0.37 0.04 0.45 0.00 0.02 0.04 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  170.00 1137.00   61.00  678.00
+---1 sofa   1.00  170.00 1137.00   61.00  678.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 119 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 170.00 1137.00  61.00 678.00
----measured:  sofa   1.00 174.00 1138.00  61.00 677.00   0.00
----corrected: sofa   1.00 174.00 1138.00  61.00 677.00
+---predicted: sofa   1.00 170.00 1137.00  61.00 678.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 174.00 1138.00  61.00 677.00 0.37 0.04 0.45 0.00 0.02 0.04 0.04 0.04 0.00
+---corrected: sofa   1.00 174.00 1138.00  61.00 677.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  174.00 1138.00   61.00  677.00
+---1 sofa   1.00  174.00 1138.00   61.00  677.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 4.60, frame 116
 Detected objects (1):
----120 sofa   1.00  173 1138   61  678
+---120 sofa   1.00  173 1138   61  678 0.37 0.04 0.45 0.00 0.02 0.04 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  174.00 1138.00   61.00  677.00
+---1 sofa   1.00  174.00 1138.00   61.00  677.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 120 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 174.00 1138.00  61.00 677.00
----measured:  sofa   1.00 173.00 1138.00  61.00 678.00   0.00
----corrected: sofa   1.00 173.00 1138.00  61.00 678.00
+---predicted: sofa   1.00 174.00 1138.00  61.00 677.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 173.00 1138.00  61.00 678.00 0.37 0.04 0.45 0.00 0.02 0.04 0.04 0.04 0.00
+---corrected: sofa   1.00 173.00 1138.00  61.00 678.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  173.00 1138.00   61.00  678.00
+---1 sofa   1.00  173.00 1138.00   61.00  678.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 4.64, frame 117
 Detected objects (1):
----121 sofa   1.00  171 1137   67  675
+---121 sofa   1.00  171 1137   67  675 0.37 0.04 0.44 0.00 0.02 0.04 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  173.00 1138.00   61.00  678.00
+---1 sofa   1.00  173.00 1138.00   61.00  678.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 121 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 173.00 1138.00  61.00 678.00
----measured:  sofa   1.00 171.00 1137.00  67.00 675.00   0.00
----corrected: sofa   1.00 171.00 1137.00  67.00 675.00
+---predicted: sofa   1.00 173.00 1138.00  61.00 678.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 171.00 1137.00  67.00 675.00 0.37 0.04 0.44 0.00 0.02 0.04 0.04 0.04 0.00
+---corrected: sofa   1.00 171.00 1137.00  67.00 675.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  171.00 1137.00   67.00  675.00
+---1 sofa   1.00  171.00 1137.00   67.00  675.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 4.68, frame 118
 Detected objects (1):
----122 sofa   1.00  169 1139   68  674
+---122 sofa   1.00  169 1139   68  674 0.37 0.04 0.44 0.00 0.02 0.04 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  171.00 1137.00   67.00  675.00
+---1 sofa   1.00  171.00 1137.00   67.00  675.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 122 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 171.00 1137.00  67.00 675.00
----measured:  sofa   1.00 169.00 1139.00  68.00 674.00   0.00
----corrected: sofa   1.00 169.00 1139.00  68.00 674.00
+---predicted: sofa   1.00 171.00 1137.00  67.00 675.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 169.00 1139.00  68.00 674.00 0.37 0.04 0.44 0.00 0.02 0.04 0.04 0.04 0.00
+---corrected: sofa   1.00 169.00 1139.00  68.00 674.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  169.00 1139.00   68.00  674.00
+---1 sofa   1.00  169.00 1139.00   68.00  674.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 4.72, frame 119
 Detected objects (1):
----123 sofa   1.00  168 1141   64  674
+---123 sofa   1.00  168 1141   64  674 0.37 0.04 0.45 0.00 0.02 0.04 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  169.00 1139.00   68.00  674.00
+---1 sofa   1.00  169.00 1139.00   68.00  674.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 123 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 169.00 1139.00  68.00 674.00
----measured:  sofa   1.00 168.00 1141.00  64.00 674.00   0.00
----corrected: sofa   1.00 168.00 1141.00  64.00 674.00
+---predicted: sofa   1.00 169.00 1139.00  68.00 674.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 168.00 1141.00  64.00 674.00 0.37 0.04 0.45 0.00 0.02 0.04 0.04 0.04 0.00
+---corrected: sofa   1.00 168.00 1141.00  64.00 674.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  168.00 1141.00   64.00  674.00
+---1 sofa   1.00  168.00 1141.00   64.00  674.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 4.76, frame 120
 Detected objects (1):
----124 sofa   1.00  166 1138   66  674
+---124 sofa   1.00  166 1138   66  674 0.37 0.04 0.45 0.00 0.02 0.04 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  168.00 1141.00   64.00  674.00
+---1 sofa   1.00  168.00 1141.00   64.00  674.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 124 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 168.00 1141.00  64.00 674.00
----measured:  sofa   1.00 166.00 1138.00  66.00 674.00   0.00
----corrected: sofa   1.00 166.00 1138.00  66.00 674.00
+---predicted: sofa   1.00 168.00 1141.00  64.00 674.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 166.00 1138.00  66.00 674.00 0.37 0.04 0.45 0.00 0.02 0.04 0.04 0.04 0.00
+---corrected: sofa   1.00 166.00 1138.00  66.00 674.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  166.00 1138.00   66.00  674.00
+---1 sofa   1.00  166.00 1138.00   66.00  674.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 4.80, frame 121
 Detected objects (1):
----125 sofa   1.00  165 1140   72  673
+---125 sofa   1.00  165 1140   72  673 0.37 0.04 0.44 0.00 0.02 0.04 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  166.00 1138.00   66.00  674.00
+---1 sofa   1.00  166.00 1138.00   66.00  674.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 125 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 166.00 1138.00  66.00 674.00
----measured:  sofa   1.00 165.00 1140.00  72.00 673.00   0.00
----corrected: sofa   1.00 165.00 1140.00  72.00 673.00
+---predicted: sofa   1.00 166.00 1138.00  66.00 674.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 165.00 1140.00  72.00 673.00 0.37 0.04 0.44 0.00 0.02 0.04 0.04 0.04 0.00
+---corrected: sofa   1.00 165.00 1140.00  72.00 673.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  165.00 1140.00   72.00  673.00
+---1 sofa   1.00  165.00 1140.00   72.00  673.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 4.84, frame 122
 Detected objects (1):
----126 sofa   1.00  164 1139   74  672
+---126 sofa   1.00  164 1139   74  672 0.37 0.04 0.44 0.00 0.02 0.04 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  165.00 1140.00   72.00  673.00
+---1 sofa   1.00  165.00 1140.00   72.00  673.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 126 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 165.00 1140.00  72.00 673.00
----measured:  sofa   1.00 164.00 1139.00  74.00 672.00   0.00
----corrected: sofa   1.00 164.00 1139.00  74.00 672.00
+---predicted: sofa   1.00 165.00 1140.00  72.00 673.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 164.00 1139.00  74.00 672.00 0.37 0.04 0.44 0.00 0.02 0.04 0.04 0.04 0.00
+---corrected: sofa   1.00 164.00 1139.00  74.00 672.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  164.00 1139.00   74.00  672.00
+---1 sofa   1.00  164.00 1139.00   74.00  672.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 4.88, frame 123
 Detected objects (1):
----127 sofa   1.00  166 1139   72  671
+---127 sofa   1.00  166 1139   72  671 0.37 0.04 0.44 0.00 0.02 0.04 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  164.00 1139.00   74.00  672.00
+---1 sofa   1.00  164.00 1139.00   74.00  672.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 127 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 164.00 1139.00  74.00 672.00
----measured:  sofa   1.00 166.00 1139.00  72.00 671.00   0.00
----corrected: sofa   1.00 166.00 1139.00  72.00 671.00
+---predicted: sofa   1.00 164.00 1139.00  74.00 672.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 166.00 1139.00  72.00 671.00 0.37 0.04 0.44 0.00 0.02 0.04 0.04 0.04 0.00
+---corrected: sofa   1.00 166.00 1139.00  72.00 671.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  166.00 1139.00   72.00  671.00
+---1 sofa   1.00  166.00 1139.00   72.00  671.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 4.92, frame 124
 Detected objects (1):
----128 sofa   1.00  170 1136   76  673
+---128 sofa   1.00  170 1136   76  673 0.38 0.05 0.44 0.00 0.02 0.04 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  166.00 1139.00   72.00  671.00
+---1 sofa   1.00  166.00 1139.00   72.00  671.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 128 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 166.00 1139.00  72.00 671.00
----measured:  sofa   1.00 170.00 1136.00  76.00 673.00   0.00
----corrected: sofa   1.00 170.00 1136.00  76.00 673.00
+---predicted: sofa   1.00 166.00 1139.00  72.00 671.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 170.00 1136.00  76.00 673.00 0.38 0.05 0.44 0.00 0.02 0.04 0.04 0.04 0.00
+---corrected: sofa   1.00 170.00 1136.00  76.00 673.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  170.00 1136.00   76.00  673.00
+---1 sofa   1.00  170.00 1136.00   76.00  673.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 4.96, frame 125
 Detected objects (1):
----129 sofa   1.00  175 1137   77  673
+---129 sofa   1.00  175 1137   77  673 0.38 0.04 0.44 0.00 0.02 0.04 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  170.00 1136.00   76.00  673.00
+---1 sofa   1.00  170.00 1136.00   76.00  673.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 129 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 170.00 1136.00  76.00 673.00
----measured:  sofa   1.00 175.00 1137.00  77.00 673.00   0.00
----corrected: sofa   1.00 175.00 1137.00  77.00 673.00
+---predicted: sofa   1.00 170.00 1136.00  76.00 673.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 175.00 1137.00  77.00 673.00 0.38 0.04 0.44 0.00 0.02 0.04 0.04 0.04 0.00
+---corrected: sofa   1.00 175.00 1137.00  77.00 673.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  175.00 1137.00   77.00  673.00
+---1 sofa   1.00  175.00 1137.00   77.00  673.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 5.00, frame 126
 Detected objects (1):
----130 sofa   1.00  177 1138   75  672
+---130 sofa   1.00  177 1138   75  672 0.38 0.04 0.44 0.00 0.02 0.04 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  175.00 1137.00   77.00  673.00
+---1 sofa   1.00  175.00 1137.00   77.00  673.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 130 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 175.00 1137.00  77.00 673.00
----measured:  sofa   1.00 177.00 1138.00  75.00 672.00   0.00
----corrected: sofa   1.00 177.00 1138.00  75.00 672.00
+---predicted: sofa   1.00 175.00 1137.00  77.00 673.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 177.00 1138.00  75.00 672.00 0.38 0.04 0.44 0.00 0.02 0.04 0.04 0.04 0.00
+---corrected: sofa   1.00 177.00 1138.00  75.00 672.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  177.00 1138.00   75.00  672.00
+---1 sofa   1.00  177.00 1138.00   75.00  672.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 5.04, frame 127
 Detected objects (1):
----131 sofa   1.00  177 1140   70  672
+---131 sofa   1.00  177 1140   70  672 0.37 0.04 0.44 0.00 0.02 0.04 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  177.00 1138.00   75.00  672.00
+---1 sofa   1.00  177.00 1138.00   75.00  672.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 131 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 177.00 1138.00  75.00 672.00
----measured:  sofa   1.00 177.00 1140.00  70.00 672.00   0.00
----corrected: sofa   1.00 177.00 1140.00  70.00 672.00
+---predicted: sofa   1.00 177.00 1138.00  75.00 672.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 177.00 1140.00  70.00 672.00 0.37 0.04 0.44 0.00 0.02 0.04 0.04 0.04 0.00
+---corrected: sofa   1.00 177.00 1140.00  70.00 672.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  177.00 1140.00   70.00  672.00
+---1 sofa   1.00  177.00 1140.00   70.00  672.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 5.08, frame 128
 Detected objects (2):
----132 chair   0.27  229  492  121  324
----133 sofa   1.00  177 1140   70  671
+---132 chair   0.27  229  492  121  324 0.36 0.03 0.18 0.00 0.07 0.06 0.23 0.06
+---133 sofa   1.00  177 1140   70  671 0.38 0.04 0.44 0.00 0.02 0.04 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  177.00 1140.00   70.00  672.00
+---1 sofa   1.00  177.00 1140.00   70.00  672.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.35 
    0.00 
 Optimal assignment:
 Detected object 133 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 177.00 1140.00  70.00 672.00
----measured:  sofa   1.00 177.00 1140.00  70.00 671.00   0.00
----corrected: sofa   1.00 177.00 1140.00  70.00 671.00
+---predicted: sofa   1.00 177.00 1140.00  70.00 672.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 177.00 1140.00  70.00 671.00 0.38 0.04 0.44 0.00 0.02 0.04 0.04 0.04 0.00
+---corrected: sofa   1.00 177.00 1140.00  70.00 671.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image object 6 created: chair   0.27  229  492  121  324
 Image objects (2):
----1 sofa   1.00  177.00 1140.00   70.00  671.00
----6 chair   0.27  229.00  492.00  121.00  324.00
+---1 sofa   1.00  177.00 1140.00   70.00  671.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
+---6 chair   0.27  229.00  492.00  121.00  324.00 0.36 0.03 0.18 0.00 0.07 0.06 0.23
 ----------------------------------------------
 Time 5.12, frame 129
 Detected objects (1):
----134 sofa   1.00  179 1141   66  672
+---134 sofa   1.00  179 1141   66  672 0.37 0.04 0.45 0.00 0.02 0.04 0.04 0.04
 Image objects (2), predicted new locations:
----1 sofa   1.00  177.00 1140.00   70.00  671.00
----6 chair   0.27  229.00  492.00  121.00  324.00
+---1 sofa   1.00  177.00 1140.00   70.00  671.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
+---6 chair   0.27  229.00  492.00  121.00  324.00 0.36 0.03 0.18 0.00 0.07 0.06 0.23
 Cost matrix for Hungarian algorithm:
    0.00    1.16 
 Optimal assignment:
 Detected object 134 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 177.00 1140.00  70.00 671.00
----measured:  sofa   1.00 179.00 1141.00  66.00 672.00   0.00
----corrected: sofa   1.00 179.00 1141.00  66.00 672.00
+---predicted: sofa   1.00 177.00 1140.00  70.00 671.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 179.00 1141.00  66.00 672.00 0.37 0.04 0.45 0.00 0.02 0.04 0.04 0.04 0.00
+---corrected: sofa   1.00 179.00 1141.00  66.00 672.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image object 6 removed:
 ---chair   0.27  229.00  492.00  121.00  324.00
 Image objects (1):
----1 sofa   1.00  179.00 1141.00   66.00  672.00
+---1 sofa   1.00  179.00 1141.00   66.00  672.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 5.16, frame 130
 Detected objects (1):
----135 sofa   1.00  181 1142   74  670
+---135 sofa   1.00  181 1142   74  670 0.38 0.04 0.44 0.00 0.02 0.04 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  179.00 1141.00   66.00  672.00
+---1 sofa   1.00  179.00 1141.00   66.00  672.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 135 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 179.00 1141.00  66.00 672.00
----measured:  sofa   1.00 181.00 1142.00  74.00 670.00   0.00
----corrected: sofa   1.00 181.00 1142.00  74.00 670.00
+---predicted: sofa   1.00 179.00 1141.00  66.00 672.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 181.00 1142.00  74.00 670.00 0.38 0.04 0.44 0.00 0.02 0.04 0.04 0.04 0.00
+---corrected: sofa   1.00 181.00 1142.00  74.00 670.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  181.00 1142.00   74.00  670.00
+---1 sofa   1.00  181.00 1142.00   74.00  670.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 5.20, frame 131
 Detected objects (1):
----136 sofa   1.00  179 1142   77  671
+---136 sofa   1.00  179 1142   77  671 0.38 0.04 0.44 0.00 0.02 0.04 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  181.00 1142.00   74.00  670.00
+---1 sofa   1.00  181.00 1142.00   74.00  670.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 136 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 181.00 1142.00  74.00 670.00
----measured:  sofa   1.00 179.00 1142.00  77.00 671.00   0.00
----corrected: sofa   1.00 179.00 1142.00  77.00 671.00
+---predicted: sofa   1.00 181.00 1142.00  74.00 670.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 179.00 1142.00  77.00 671.00 0.38 0.04 0.44 0.00 0.02 0.04 0.04 0.04 0.00
+---corrected: sofa   1.00 179.00 1142.00  77.00 671.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  179.00 1142.00   77.00  671.00
+---1 sofa   1.00  179.00 1142.00   77.00  671.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 5.24, frame 132
 Detected objects (1):
----137 sofa   1.00  181 1141   70  670
+---137 sofa   1.00  181 1141   70  670 0.38 0.04 0.44 0.00 0.02 0.04 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  179.00 1142.00   77.00  671.00
+---1 sofa   1.00  179.00 1142.00   77.00  671.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 137 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 179.00 1142.00  77.00 671.00
----measured:  sofa   1.00 181.00 1141.00  70.00 670.00   0.00
----corrected: sofa   1.00 181.00 1141.00  70.00 670.00
+---predicted: sofa   1.00 179.00 1142.00  77.00 671.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 181.00 1141.00  70.00 670.00 0.38 0.04 0.44 0.00 0.02 0.04 0.04 0.04 0.00
+---corrected: sofa   1.00 181.00 1141.00  70.00 670.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  181.00 1141.00   70.00  670.00
+---1 sofa   1.00  181.00 1141.00   70.00  670.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 5.28, frame 133
 Detected objects (1):
----138 sofa   1.00  186 1140   66  670
+---138 sofa   1.00  186 1140   66  670 0.38 0.04 0.44 0.00 0.02 0.04 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  181.00 1141.00   70.00  670.00
+---1 sofa   1.00  181.00 1141.00   70.00  670.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 138 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 181.00 1141.00  70.00 670.00
----measured:  sofa   1.00 186.00 1140.00  66.00 670.00   0.00
----corrected: sofa   1.00 186.00 1140.00  66.00 670.00
+---predicted: sofa   1.00 181.00 1141.00  70.00 670.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 186.00 1140.00  66.00 670.00 0.38 0.04 0.44 0.00 0.02 0.04 0.04 0.04 0.00
+---corrected: sofa   1.00 186.00 1140.00  66.00 670.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  186.00 1140.00   66.00  670.00
+---1 sofa   1.00  186.00 1140.00   66.00  670.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 5.32, frame 134
 Detected objects (2):
----139 chair   0.26  234  483  119  321
----140 sofa   1.00  182 1142   68  671
+---139 chair   0.26  234  483  119  321 0.34 0.04 0.19 0.00 0.07 0.06 0.24 0.07
+---140 sofa   1.00  182 1142   68  671 0.37 0.04 0.45 0.00 0.02 0.04 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  186.00 1140.00   66.00  670.00
+---1 sofa   1.00  186.00 1140.00   66.00  670.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.35 
    0.00 
 Optimal assignment:
 Detected object 140 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 186.00 1140.00  66.00 670.00
----measured:  sofa   1.00 182.00 1142.00  68.00 671.00   0.00
----corrected: sofa   1.00 182.00 1142.00  68.00 671.00
+---predicted: sofa   1.00 186.00 1140.00  66.00 670.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 182.00 1142.00  68.00 671.00 0.37 0.04 0.45 0.00 0.02 0.04 0.04 0.04 0.00
+---corrected: sofa   1.00 182.00 1142.00  68.00 671.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image object 7 created: chair   0.26  234  483  119  321
 Image objects (2):
----1 sofa   1.00  182.00 1142.00   68.00  671.00
----7 chair   0.26  234.00  483.00  119.00  321.00
+---1 sofa   1.00  182.00 1142.00   68.00  671.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
+---7 chair   0.26  234.00  483.00  119.00  321.00 0.34 0.04 0.19 0.00 0.07 0.06 0.24
 ----------------------------------------------
 Time 5.36, frame 135
 Detected objects (1):
----141 sofa   1.00  180 1143   69  670
+---141 sofa   1.00  180 1143   69  670 0.37 0.04 0.45 0.00 0.02 0.04 0.04 0.04
 Image objects (2), predicted new locations:
----1 sofa   1.00  182.00 1142.00   68.00  671.00
----7 chair   0.26  234.00  483.00  119.00  321.00
+---1 sofa   1.00  182.00 1142.00   68.00  671.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
+---7 chair   0.26  234.00  483.00  119.00  321.00 0.34 0.04 0.19 0.00 0.07 0.06 0.24
 Cost matrix for Hungarian algorithm:
    0.00    1.21 
 Optimal assignment:
 Detected object 141 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 182.00 1142.00  68.00 671.00
----measured:  sofa   1.00 180.00 1143.00  69.00 670.00   0.00
----corrected: sofa   1.00 180.00 1143.00  69.00 670.00
+---predicted: sofa   1.00 182.00 1142.00  68.00 671.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 180.00 1143.00  69.00 670.00 0.37 0.04 0.45 0.00 0.02 0.04 0.04 0.04 0.00
+---corrected: sofa   1.00 180.00 1143.00  69.00 670.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image object 7 removed:
 ---chair   0.26  234.00  483.00  119.00  321.00
 Image objects (1):
----1 sofa   1.00  180.00 1143.00   69.00  670.00
+---1 sofa   1.00  180.00 1143.00   69.00  670.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 5.40, frame 136
 Detected objects (1):
----142 sofa   1.00  181 1141   69  670
+---142 sofa   1.00  181 1141   69  670 0.38 0.04 0.45 0.00 0.02 0.04 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  180.00 1143.00   69.00  670.00
+---1 sofa   1.00  180.00 1143.00   69.00  670.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 142 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 180.00 1143.00  69.00 670.00
----measured:  sofa   1.00 181.00 1141.00  69.00 670.00   0.00
----corrected: sofa   1.00 181.00 1141.00  69.00 670.00
+---predicted: sofa   1.00 180.00 1143.00  69.00 670.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 181.00 1141.00  69.00 670.00 0.38 0.04 0.45 0.00 0.02 0.04 0.04 0.04 0.00
+---corrected: sofa   1.00 181.00 1141.00  69.00 670.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  181.00 1141.00   69.00  670.00
+---1 sofa   1.00  181.00 1141.00   69.00  670.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 5.44, frame 137
 Detected objects (2):
----143 chair   0.26  235  480  116  323
----144 sofa   1.00  183 1140   71  670
+---143 chair   0.26  235  480  116  323 0.34 0.04 0.20 0.00 0.07 0.06 0.23 0.07
+---144 sofa   1.00  183 1140   71  670 0.38 0.04 0.44 0.00 0.02 0.04 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  181.00 1141.00   69.00  670.00
+---1 sofa   1.00  181.00 1141.00   69.00  670.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.35 
    0.00 
 Optimal assignment:
 Detected object 144 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 181.00 1141.00  69.00 670.00
----measured:  sofa   1.00 183.00 1140.00  71.00 670.00   0.00
----corrected: sofa   1.00 183.00 1140.00  71.00 670.00
+---predicted: sofa   1.00 181.00 1141.00  69.00 670.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 183.00 1140.00  71.00 670.00 0.38 0.04 0.44 0.00 0.02 0.04 0.04 0.04 0.00
+---corrected: sofa   1.00 183.00 1140.00  71.00 670.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image object 8 created: chair   0.26  235  480  116  323
 Image objects (2):
----1 sofa   1.00  183.00 1140.00   71.00  670.00
----8 chair   0.26  235.00  480.00  116.00  323.00
+---1 sofa   1.00  183.00 1140.00   71.00  670.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
+---8 chair   0.26  235.00  480.00  116.00  323.00 0.34 0.04 0.20 0.00 0.07 0.06 0.23
 ----------------------------------------------
 Time 5.48, frame 138
 Detected objects (1):
----145 sofa   1.00  184 1141   72  670
+---145 sofa   1.00  184 1141   72  670 0.38 0.04 0.44 0.00 0.02 0.04 0.04 0.04
 Image objects (2), predicted new locations:
----1 sofa   1.00  183.00 1140.00   71.00  670.00
----8 chair   0.26  235.00  480.00  116.00  323.00
+---1 sofa   1.00  183.00 1140.00   71.00  670.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
+---8 chair   0.26  235.00  480.00  116.00  323.00 0.34 0.04 0.20 0.00 0.07 0.06 0.23
 Cost matrix for Hungarian algorithm:
    0.00    1.20 
 Optimal assignment:
 Detected object 145 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 183.00 1140.00  71.00 670.00
----measured:  sofa   1.00 184.00 1141.00  72.00 670.00   0.00
----corrected: sofa   1.00 184.00 1141.00  72.00 670.00
+---predicted: sofa   1.00 183.00 1140.00  71.00 670.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 184.00 1141.00  72.00 670.00 0.38 0.04 0.44 0.00 0.02 0.04 0.04 0.04 0.00
+---corrected: sofa   1.00 184.00 1141.00  72.00 670.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image object 8 removed:
 ---chair   0.26  235.00  480.00  116.00  323.00
 Image objects (1):
----1 sofa   1.00  184.00 1141.00   72.00  670.00
+---1 sofa   1.00  184.00 1141.00   72.00  670.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 5.52, frame 139
 Detected objects (1):
----146 sofa   1.00  184 1142   71  670
+---146 sofa   1.00  184 1142   71  670 0.38 0.04 0.45 0.00 0.02 0.04 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  184.00 1141.00   72.00  670.00
+---1 sofa   1.00  184.00 1141.00   72.00  670.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 146 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 184.00 1141.00  72.00 670.00
----measured:  sofa   1.00 184.00 1142.00  71.00 670.00   0.00
----corrected: sofa   1.00 184.00 1142.00  71.00 670.00
+---predicted: sofa   1.00 184.00 1141.00  72.00 670.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 184.00 1142.00  71.00 670.00 0.38 0.04 0.45 0.00 0.02 0.04 0.04 0.04 0.00
+---corrected: sofa   1.00 184.00 1142.00  71.00 670.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  184.00 1142.00   71.00  670.00
+---1 sofa   1.00  184.00 1142.00   71.00  670.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 ----------------------------------------------
 Time 5.56, frame 140
 Detected objects (1):
----147 sofa   1.00  184 1142   73  670
+---147 sofa   1.00  184 1142   73  670 0.38 0.05 0.44 0.00 0.02 0.04 0.04 0.04
 Image objects (1), predicted new locations:
----1 sofa   1.00  184.00 1142.00   71.00  670.00
+---1 sofa   1.00  184.00 1142.00   71.00  670.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04
 Cost matrix for Hungarian algorithm:
    0.00 
 Optimal assignment:
 Detected object 147 matched to image object 1
 Existing image object 1 updated:
----predicted: sofa   1.00 184.00 1142.00  71.00 670.00
----measured:  sofa   1.00 184.00 1142.00  73.00 670.00   0.00
----corrected: sofa   1.00 184.00 1142.00  73.00 670.00
+---predicted: sofa   1.00 184.00 1142.00  71.00 670.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
+---measured:  sofa   1.00 184.00 1142.00  73.00 670.00 0.38 0.05 0.44 0.00 0.02 0.04 0.04 0.04 0.00
+---corrected: sofa   1.00 184.00 1142.00  73.00 670.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04 0.04
 Image objects (1):
----1 sofa   1.00  184.00 1142.00   73.00  670.00
+---1 sofa   1.00  184.00 1142.00   73.00  670.00 0.34 0.04 0.41 0.00 0.02 0.12 0.04

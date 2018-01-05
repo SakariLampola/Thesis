@@ -14,9 +14,27 @@ import ImageClasses as ioc
 NET = cv2.dnn.readNetFromCaffe("MobileNetSSD_deploy.prototxt.txt", \
                                "MobileNetSSD_deploy.caffemodel")
 
+def get_hue_histogram(image, xmin, xmax, ymin, ymax):
+    """
+    get_hue_histogram(image, xmin, xmax, ymin, ymax)
+        image: CV2 image
+        xmin: bounding box horizontal minimum
+        xmax: bounding box horizontal maximum
+        ymin: bounding box vertical minimum
+        ymax: bounding box vertical maximum
+
+    Created on Wed Nov 29 09:08:16 2017
+    @author: Sakari Lampola
+    """
+    image_roi = image[ymin:ymax, xmin:xmax, :]
+    image_roi_hsv = cv2.cvtColor(image_roi, cv2.COLOR_BGR2HSV)
+    hist = cv2.calcHist([image_roi_hsv],[0],None,[8],[0,179])
+    hist = hist / np.sum(hist)
+    return hist
+
 def detect_objects(image, time, confidence_level):
     """
-    Detect objects
+    detect objects
         image: CV2 image
         confidence_level: range = 0...1.0, below the level objects are discarded
 
@@ -51,7 +69,8 @@ def detect_objects(image, time, confidence_level):
             box = detections[0, 0, i, 3:7] * np.array([width, height, width, height])
             (x_min, y_min, x_max, y_max) = box.astype("int")
 
+            histogram = get_hue_histogram(image, x_min, x_max, y_min, y_max)
             objects.append(ioc.DetectedObject(time, class_type, x_min, x_max, \
-                                              y_min, y_max, confidence))
+                                              y_min, y_max, confidence, histogram))
             
     return objects
