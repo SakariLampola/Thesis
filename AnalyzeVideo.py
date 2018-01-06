@@ -34,7 +34,7 @@ def analyze_video(videofile):
 
     width = int(video.get(3))
     height = int(video.get(4))
-    size_ratio = 1000 / width
+    size_ratio = 900 / width
     fps = video.get(cv2.CAP_PROP_FPS)
    
     time_step = 1.0 / fps
