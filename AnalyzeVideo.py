@@ -101,7 +101,7 @@ def analyze_video(videofile):
 
             for image_object in world.image_objects:
 
-                log_file.write("---{0:d} {1:s} {2:6.2f} {3:7.2f} {4:7.2f} {5:7.2f} {6:7.2f} {7:.2f} {8:.2f} {9:.2f} {10:.2f} {11:.2f} {12:.2f} {13:.2f}\n".format(
+                log_file.write("---{0:d} {1:s} {2:6.2f} {3:7.2f} {4:7.2f} {5:7.2f} {6:7.2f} {7:.2f} {8:.2f} {9:.2f} {10:.2f} {11:.2f} {12:.2f} {13:.2f} {14:.2f}\n".format(
                     image_object.id, image_object.name, image_object.confidence,
                     image_object.x_min, image_object.x_max, \
                     image_object.y_min, image_object.y_max, \
