@@ -19,7 +19,7 @@ CLASS_NAMES = ["background", "aeroplane", "bicycle", "bird", "boat",
                "dog", "horse", "motorbike", "person", "pottedplant", "sheep",
                "sofa", "train", "tvmonitor"]
 
-SIMILARITY_DISTANCE = 0.2 # Max distance to size ratio for similarity interpretation
+SIMILARITY_DISTANCE = 1.0 # Max distance to size ratio for similarity interpretation
 RETENTION_TIME = 0.0 # How long image objects are maintained without new detections
 CONFIDENFE_LEVEL = 0.0 # How confident we must be to create a new object
 
