@@ -12,6 +12,7 @@ Created on Wed Nov 29 09:08:16 2017
 from math import inf, nan
 import random as rnd
 import numpy as np
+import SpeechSynthesis as ss
 from scipy.optimize import linear_sum_assignment
 
 CLASS_NAMES = ["background", "aeroplane", "bicycle", "bird", "boat",
@@ -432,6 +433,19 @@ class TVMonitor(ImageObject):
     length_min, length_mean, length_max = 0.04, 0.1, 0.5
     velocity_max, acceleration_max = 10.0, 3.0
 
+class Event:
+    """
+    Event to be translated into language
+    """
+    def __init__(self, text, priority, world):
+        """
+        Initialization
+        """
+        self.text = text
+        self.priority = priority
+        self.world = world
+        self.world.speech_synthesizer.say(text)
+
 class ImageWorld:
     """
     List of image objects with internal state and ability to predict.
@@ -442,8 +456,13 @@ class ImageWorld:
         """
         self.image_objects = [] # In the beginning, the world is empty...
         self.width = width
-        self.height =height
+        self.height = height
+        self.speech_synthesizer = ss.SpeechSynthesizer()
+        self.events = [] # In the beginning, no events
 
+    def add_event(self, text, priority):
+        event = Event(text, priority, self)
+        self.events.append(event)
 
     def create_image_object(self, detected_object):
         """
@@ -451,44 +470,64 @@ class ImageWorld:
         """
         if detected_object.class_type == 1:
             self.image_objects.append(Aeroplane(detected_object, self))
+            self.add_event("aeroplane created",1)
         elif detected_object.class_type == 2:
             self.image_objects.append(Bicycle(detected_object, self))
+            self.add_event("bicycle created",1)
         elif detected_object.class_type == 3:
             self.image_objects.append(Bird(detected_object, self))
+            self.add_event("bird created",1)
         elif detected_object.class_type == 4:
             self.image_objects.append(Boat(detected_object, self))
+            self.add_event("boat created",1)
         elif detected_object.class_type == 5:
             self.image_objects.append(Bottle(detected_object, self))
+            self.add_event("bottle created",1)
         elif detected_object.class_type == 6:
             self.image_objects.append(Bus(detected_object, self))
+            self.add_event("bus created",1)
         elif detected_object.class_type == 7:
             self.image_objects.append(Car(detected_object, self))
+            self.add_event("car created",1)
         elif detected_object.class_type == 8:
             self.image_objects.append(Cat(detected_object, self))
+            self.add_event("cat created",1)
         elif detected_object.class_type == 9:
             self.image_objects.append(Chair(detected_object, self))
+            self.add_event("chair created",1)
         elif detected_object.class_type == 10:
             self.image_objects.append(Cow(detected_object, self))
+            self.add_event("cow created",1)
         elif detected_object.class_type == 11:
             self.image_objects.append(DiningTable(detected_object, self))
+            self.add_event("dining table created",1)
         elif detected_object.class_type == 12:
             self.image_objects.append(Dog(detected_object, self))
+            self.add_event("dog created",1)
         elif detected_object.class_type == 13:
             self.image_objects.append(Horse(detected_object, self))
+            self.add_event("horse created",1)
         elif detected_object.class_type == 14:
             self.image_objects.append(Motorbike(detected_object, self))
+            self.add_event("motorbike created",1)
         elif detected_object.class_type == 15:
             self.image_objects.append(Person(detected_object, self))
+            self.add_event("person created",1)
         elif detected_object.class_type == 16:
             self.image_objects.append(PottedPlant(detected_object, self))
+            self.add_event("potted pland created",1)
         elif detected_object.class_type == 17:
             self.image_objects.append(Sheep(detected_object, self))
+            self.add_event("sheep created",1)
         elif detected_object.class_type == 18:
             self.image_objects.append(Sofa(detected_object, self))
+            self.add_event("sofa created",1)
         elif detected_object.class_type == 19:
             self.image_objects.append(Train(detected_object, self))
+            self.add_event("train created",1)
         elif detected_object.class_type == 20:
             self.image_objects.append(TVMonitor(detected_object, self))
+            self.add_event("tv monitor created",1)
 
     def update(self, detection_time, detected_objects, log_file, trace_file, time_step):
         """
