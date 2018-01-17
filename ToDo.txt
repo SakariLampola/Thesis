@@ -1,6 +1,9 @@
-- object appearance
-- linear extrapolation (https://stackoverflow.com/questions/2745329/how-to-make-scipy-interpolate-give-an-extrapolated-result-beyond-the-input-range)
-- image object life span debugging + improvement
-- probabilistic matching (mean+variance) 
-- improve object identification
-- 3d estimation
+- speech synthesis
+- image object status + life span
+- distance metrics + probabilistic matching
+- remove multiple classifications
+- remove multiple bounding boxes
+- remove background elements
+- remove false detections inside other detections
+- 3d projection
+- 3d state estimation
