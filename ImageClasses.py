@@ -23,37 +23,6 @@ SIMILARITY_DISTANCE = 1.0 # Max distance to size ratio for similarity interpreta
 RETENTION_TIME = 0.0 # How long image objects are maintained without new detections
 CONFIDENFE_LEVEL = 0.0 # How confident we must be to create a new object
 
-#IMAGE_OBJECT_R1 = 1.0 # State equation location variance
-#IMAGE_OBJECT_R2 = 1.0 # State equation velocity variance
-#IMAGE_OBJECT_R3 = 1.0 # State equation acceleration variance
-#IMAGE_OBJECT_R = np.array([[IMAGE_OBJECT_R1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-#                           [0.0, IMAGE_OBJECT_R2, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-#                           [0.0, 0.0, IMAGE_OBJECT_R3, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-#                           [0.0, 0.0, 0.0, IMAGE_OBJECT_R1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-#                           [0.0, 0.0, 0.0, 0.0, IMAGE_OBJECT_R2, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-#                           [0.0, 0.0, 0.0, 0.0, 0.0, IMAGE_OBJECT_R3, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-#                           [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, IMAGE_OBJECT_R1, 0.0, 0.0, 0.0, 0.0, 0.0],
-#                           [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, IMAGE_OBJECT_R2, 0.0, 0.0, 0.0, 0.0],
-#                           [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, IMAGE_OBJECT_R3, 0.0, 0.0, 0.0],
-#                           [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, IMAGE_OBJECT_R1, 0.0, 0.0],
-#                           [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, IMAGE_OBJECT_R2, 0.0],
-#                           [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, IMAGE_OBJECT_R3]])
-#
-#IMAGE_OBJECT_Q1 = 1.0 # Image object measurement variance
-#IMAGE_OBJECT_Q = np.array([[IMAGE_OBJECT_Q1, 0.0, 0.0, 0.0],
-#                           [0.0, IMAGE_OBJECT_Q1, 0.0, 0.0],
-#                           [0.0, 0.0, IMAGE_OBJECT_Q1, 0.0],
-#                           [0.0, 0.0, 0.0, IMAGE_OBJECT_Q1]])
-#
-#IMAGE_OBJECT_SIGMA1 = 1.0 # State equation initial location variance
-#IMAGE_OBJECT_SIGMA2 = 1.0 # State equation initial velocity variance
-#IMAGE_OBJECT_SIGMA3 = 1.0 # State equation initial acceleration variance
-#
-#IMAGE_OBJECT_C = np.array([[1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-#                           [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-#                           [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-#                           [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0]])
-
 def next_id(category):
     """
     Generate a unique id
@@ -86,7 +55,7 @@ class DetectedObject:
     Raw object detection information
     """
     def __init__(self, time, class_type, x_min, x_max, y_min, y_max, confidence, \
-                 histogram):
+                 appearance):
         """
         Initialization
         """
@@ -97,7 +66,7 @@ class DetectedObject:
         self.x_max = x_max
         self.y_min = y_min
         self.y_max = y_max
-        self.histogram = histogram
+        self.appearance = appearance
         self.confidence = confidence
         self.matched = False
 
@@ -120,6 +89,19 @@ class DetectedObject:
 
         return (dx_min + dx_max + dy_min + dy_max) / 4.0 # Average of 4 corners
 
+IMAGE_OBJECT_R1 = 1.0 # Image object state equation location variance
+IMAGE_OBJECT_R2 = 1.0 # Image object state equation velocity variance
+IMAGE_OBJECT_R = np.array([[IMAGE_OBJECT_R1, 0.0],
+                           [0.0, IMAGE_OBJECT_R2]]) # Image object state equation covariance matrix
+
+IMAGE_OBJECT_Q1 = 10.0 # Image object (location) measurement variance
+IMAGE_OBJECT_Q = np.array([IMAGE_OBJECT_Q1])
+
+IMAGE_OBJECT_ALFA = 10.0 # Image object initial location error variance
+IMAGE_OBJECT_BETA = 10000.0 # Image object initial velocity error variance
+
+IMAGE_OBJECT_C = np.array([[1.0, 0.0]]) # Image object measurement matrix
+
 class ImageObject:
     """
     Generic base class for different image objects
@@ -135,69 +117,99 @@ class ImageObject:
         """
         Initialization
         """
-        self.id = next_id('image_object')
         self.image_world = image_world
-        self.confidence = detected_object.confidence
-        self.color = (rnd.randint(0,255),rnd.randint(0,255),rnd.randint(0,255))
-        self.matched = False
+        self.color = (rnd.randint(0,255),rnd.randint(0,255),rnd.randint(0,255)) # ui color
+        self.matched = False # detected object matching
+
+        self.id = next_id('image_object')
+        self.status = 'visible'
 
         self.x_min = detected_object.x_min
         self.x_max = detected_object.x_max
         self.y_min = detected_object.y_min
         self.y_max = detected_object.y_max
-        
-        self.histogram = detected_object.histogram
 
-#        self.mu = np.array([detected_object.x_min, 0.0, 0.0,
-#                            detected_object.x_max, 0.0, 0.0,
-#                            detected_object.y_min, 0.0, 0.0,
-#                            detected_object.y_max, 0.0, 0.0])
-#
-#        self.sigma = np.array([[IMAGE_OBJECT_SIGMA1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-#                               [0.0, IMAGE_OBJECT_SIGMA2, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-#                               [0.0, 0.0, IMAGE_OBJECT_SIGMA3, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-#                               [0.0, 0.0, 0.0, IMAGE_OBJECT_SIGMA1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-#                               [0.0, 0.0, 0.0, 0.0, IMAGE_OBJECT_SIGMA2, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-#                               [0.0, 0.0, 0.0, 0.0, 0.0, IMAGE_OBJECT_SIGMA3, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-#                               [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, IMAGE_OBJECT_SIGMA1, 0.0, 0.0, 0.0, 0.0, 0.0],
-#                               [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, IMAGE_OBJECT_SIGMA2, 0.0, 0.0, 0.0, 0.0],
-#                               [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, IMAGE_OBJECT_SIGMA3, 0.0, 0.0, 0.0],
-#                               [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, IMAGE_OBJECT_SIGMA1, 0.0, 0.0],
-#                               [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, IMAGE_OBJECT_SIGMA2, 0.0],
-#                               [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, IMAGE_OBJECT_SIGMA3]])
+        self.vx_min = 0.0
+        self.vx_max = 0.0
+        self.vy_min = 0.0
+        self.vy_max = 0.0
+        
+        self.sigma_x_min = np.array([[IMAGE_OBJECT_ALFA, 0],[0.0, IMAGE_OBJECT_BETA]])
+        self.sigma_x_max = np.array([[IMAGE_OBJECT_ALFA, 0],[0.0, IMAGE_OBJECT_BETA]])
+        self.sigma_y_min = np.array([[IMAGE_OBJECT_ALFA, 0],[0.0, IMAGE_OBJECT_BETA]])
+        self.sigma_y_max = np.array([[IMAGE_OBJECT_ALFA, 0],[0.0, IMAGE_OBJECT_BETA]])
+        
+        self.confidence = detected_object.confidence
+        self.appearance = detected_object.appearance
     
-    def predict(self, time):
+    def predict(self, delta):
         """
-        Predict bounding box coordinates
+        Predict bounding box coordinates based on Kalman filtering
         """
-#        d = time - self.last_predicted
-#        a = np.eye(12)
-#        a[0,1], a[1,2] = d, d
-#        a[3,4], a[4,5] = d, d
-#        a[6,7], a[7,8] = d, d
-#        a[9,10], a[10,11] = d, d
-#        
-#        self.mu, self.sigma = kalman_filter_predict(self.mu, self.sigma, a, IMAGE_OBJECT_R)
+        a = np.array([[1.0, delta],[0.0, 1.0]]) # state equation matrix
+
+        mu_xmin = a.dot(np.array([[self.x_min],[self.vx_min]]))
+        self.x_min = mu_xmin[0,0]
+        self.vx_min = mu_xmin[1,0]
+        self.sigma_x_min = a.dot(self.sigma_x_min).dot(a.T) + IMAGE_OBJECT_R
+
+        mu_xmax = a.dot(np.array([[self.x_max],[self.vx_max]]))
+        self.x_max = mu_xmax[0,0]
+        self.vx_max = mu_xmax[1,0]
+        self.sigma_x_max = a.dot(self.sigma_x_max).dot(a.T) + IMAGE_OBJECT_R
+
+        mu_ymin = a.dot(np.array([[self.y_min],[self.vy_min]]))
+        self.y_min = mu_ymin[0,0]
+        self.vy_min = mu_ymin[1,0]
+        self.sigma_y_min = a.dot(self.sigma_y_min).dot(a.T) + IMAGE_OBJECT_R
+
+        mu_ymax = a.dot(np.array([[self.y_max],[self.vy_max]]))
+        self.y_max = mu_ymax[0,0]
+        self.vy_max = mu_ymax[1,0]
+        self.sigma_y_max = a.dot(self.sigma_y_max).dot(a.T) + IMAGE_OBJECT_R
 
         self.matched = False # By default, not matched with any detected object
         
-    def correct(self, detected_object):
+    def correct(self, detected_object, delta):
         """
-        Correct bounding box coordinates based on detected object
+        Correct bounding box coordinates based on detected object measurement
         """
         self.confidence = detected_object.confidence
 
-        self.x_min = detected_object.x_min
-        self.x_max = detected_object.x_max
-        self.y_min = detected_object.y_min
-        self.y_max = detected_object.y_max
-        
-#        z = np.array([detected_object.x_min, detected_object.x_max,
-#                      detected_object.y_min, detected_object.y_max])
-#    
-#        self.mu, self.sigma = kalman_filter_correct(self.mu, self.sigma, IMAGE_OBJECT_C,
-#                                                    IMAGE_OBJECT_Q, z)
-        
+        a = np.array([[1.0, delta],[0.0, 1.0]]) # state equation matrix
+
+        k_x_min = self.sigma_x_min.dot(IMAGE_OBJECT_C.T).\
+            dot(np.linalg.inv(IMAGE_OBJECT_C.dot(self.sigma_x_min).dot(IMAGE_OBJECT_C.T) + IMAGE_OBJECT_Q))
+        mu_xmin = a.dot(np.array([[self.x_min],[self.vx_min]]))
+        mu_xmin = mu_xmin + k_x_min.dot(detected_object.x_min - IMAGE_OBJECT_C.dot(mu_xmin))
+        self.x_min = mu_xmin[0,0]
+        self.vx_min = mu_xmin[1,0]
+        self.sigma_x_min = (np.eye(2)-k_x_min.dot(IMAGE_OBJECT_C)).dot(self.sigma_x_min)
+
+        k_x_max = self.sigma_x_max.dot(IMAGE_OBJECT_C.T).\
+            dot(np.linalg.inv(IMAGE_OBJECT_C.dot(self.sigma_x_max).dot(IMAGE_OBJECT_C.T) + IMAGE_OBJECT_Q))
+        mu_xmax = a.dot(np.array([[self.x_max],[self.vx_max]]))
+        mu_xmax = mu_xmax + k_x_max.dot(detected_object.x_max - IMAGE_OBJECT_C.dot(mu_xmax))
+        self.x_max = mu_xmax[0,0]
+        self.vx_max = mu_xmax[1,0]
+        self.sigma_x_max = (np.eye(2)-k_x_max.dot(IMAGE_OBJECT_C)).dot(self.sigma_x_max)
+
+        k_y_min = self.sigma_y_min.dot(IMAGE_OBJECT_C.T).\
+            dot(np.linalg.inv(IMAGE_OBJECT_C.dot(self.sigma_y_min).dot(IMAGE_OBJECT_C.T) + IMAGE_OBJECT_Q))
+        mu_ymin = a.dot(np.array([[self.y_min],[self.vy_min]]))
+        mu_ymin = mu_ymin + k_y_min.dot(detected_object.y_min - IMAGE_OBJECT_C.dot(mu_ymin))
+        self.y_min = mu_ymin[0,0]
+        self.vy_min = mu_ymin[1,0]
+        self.sigma_y_min = (np.eye(2)-k_y_min.dot(IMAGE_OBJECT_C)).dot(self.sigma_y_min)
+
+        k_y_max = self.sigma_y_max.dot(IMAGE_OBJECT_C.T).\
+            dot(np.linalg.inv(IMAGE_OBJECT_C.dot(self.sigma_y_max).dot(IMAGE_OBJECT_C.T) + IMAGE_OBJECT_Q))
+        mu_ymax = a.dot(np.array([[self.y_max],[self.vy_max]]))
+        mu_ymax = mu_ymax + k_y_max.dot(detected_object.y_max - IMAGE_OBJECT_C.dot(mu_ymax))
+        self.y_max = mu_ymax[0,0]
+        self.vy_max = mu_ymax[1,0]
+        self.sigma_y_max = (np.eye(2)-k_y_max.dot(IMAGE_OBJECT_C)).dot(self.sigma_y_max)
+
         self.matched = True
 
 class Aeroplane(ImageObject):
@@ -478,7 +490,7 @@ class ImageWorld:
         elif detected_object.class_type == 20:
             self.image_objects.append(TVMonitor(detected_object, self))
 
-    def update(self, detection_time, detected_objects, log_file, trace_file):
+    def update(self, detection_time, detected_objects, log_file, trace_file, time_step):
         """
         Detected objects are taken into consideration. Previously observed
         image objects are matched into the new detections. If no match
@@ -489,15 +501,15 @@ class ImageWorld:
         # Predict new coordinates for each image object
         log_file.write("Image objects ({0:d}), predicted new locations:\n".format(len(self.image_objects)))
         for image_object in self.image_objects:
-            image_object.predict(detection_time)
+            image_object.predict(time_step)
             log_file.write("---{0:d} {1:s} {2:6.2f} {3:7.2f} {4:7.2f} {5:7.2f} {6:7.2f} {7:.2f} {8:.2f} {9:.2f} {10:.2f} {11:.2f} {12:.2f} {13:.2f}\n".format(
                 image_object.id, image_object.name, image_object.confidence,
                 image_object.x_min, image_object.x_max, \
                 image_object.y_min, image_object.y_max, \
-                float(image_object.histogram[0]), float(image_object.histogram[1]), \
-                float(image_object.histogram[2]), float(image_object.histogram[3]), \
-                float(image_object.histogram[4]), float(image_object.histogram[5]), \
-                float(image_object.histogram[6]), float(image_object.histogram[7])))
+                float(image_object.appearance[0]), float(image_object.appearance[1]), \
+                float(image_object.appearance[2]), float(image_object.appearance[3]), \
+                float(image_object.appearance[4]), float(image_object.appearance[5]), \
+                float(image_object.appearance[6]), float(image_object.appearance[7])))
 
         # Calculate cost matric for Hungarian algorithm (assignment problem)
         log_file.write("Cost matrix for Hungarian algorithm:\n")
@@ -541,43 +553,49 @@ class ImageWorld:
                 x_max_predicted = image_object.x_max
                 y_min_predicted = image_object.y_min
                 y_max_predicted = image_object.y_max
+
+                vx_min_predicted = image_object.vx_min
+                vx_max_predicted = image_object.vx_max
+                vy_min_predicted = image_object.vy_min
+                vy_max_predicted = image_object.vy_max
     
                 log_file.write("---predicted: {0:s} {1:6.2f} {2:6.2f} {3:6.2f} {4:6.2f} {5:6.2f} {6:.2f} {7:.2f} {8:.2f} {9:.2f} {10:.2f} {11:.2f} {12:.2f} {13:.2f}\n".format(
                     image_object.name, image_object.confidence, \
                     image_object.x_min, image_object.x_max, \
                     image_object.y_min, image_object.y_max,
-                    float(image_object.histogram[0]), float(image_object.histogram[1]), \
-                    float(image_object.histogram[2]), float(image_object.histogram[3]), \
-                    float(image_object.histogram[4]), float(image_object.histogram[5]), \
-                    float(image_object.histogram[6]), float(image_object.histogram[7])))
+                    float(image_object.appearance[0]), float(image_object.appearance[1]), \
+                    float(image_object.appearance[2]), float(image_object.appearance[3]), \
+                    float(image_object.appearance[4]), float(image_object.appearance[5]), \
+                    float(image_object.appearance[6]), float(image_object.appearance[7])))
     
                 log_file.write("---measured:  {0:s} {1:6.2f} {2:6.2f} {3:6.2f} {4:6.2f} {5:6.2f} {6:.2f} {7:.2f} {8:.2f} {9:.2f} {10:.2f} {11:.2f} {12:.2f} {13:.2f} {14:.2f}\n".format( \
                     CLASS_NAMES[detected_object.class_type], detected_object.confidence, \
                     float(detected_object.x_min), float(detected_object.x_max), \
                     float(detected_object.y_min), float(detected_object.y_max), \
-                    float(detected_object.histogram[0]), float(detected_object.histogram[1]), \
-                    float(detected_object.histogram[2]), float(detected_object.histogram[3]), \
-                    float(detected_object.histogram[4]), float(detected_object.histogram[5]), \
-                    float(detected_object.histogram[6]), float(detected_object.histogram[7]), \
+                    float(detected_object.appearance[0]), float(detected_object.appearance[1]), \
+                    float(detected_object.appearance[2]), float(detected_object.appearance[3]), \
+                    float(detected_object.appearance[4]), float(detected_object.appearance[5]), \
+                    float(detected_object.appearance[6]), float(detected_object.appearance[7]), \
                     distance))
                 
-                image_object.correct(detected_object)
+                image_object.correct(detected_object, time_step)
                 detected_object.matched = True
     
                 log_file.write("---corrected: {0:s} {1:6.2f} {2:6.2f} {3:6.2f} {4:6.2f} {5:6.2f} {6:.2f} {7:.2f} {8:.2f} {9:.2f} {10:.2f} {11:.2f} {12:.2f} {13:.2f}\n".format(
                     image_object.name, image_object.confidence, \
                     image_object.x_min, image_object.x_max, \
                     image_object.y_min, image_object.y_max,
-                    float(image_object.histogram[0]), float(image_object.histogram[1]), \
-                    float(image_object.histogram[2]), float(image_object.histogram[3]), \
-                    float(image_object.histogram[4]), float(image_object.histogram[5]), \
-                    float(image_object.histogram[6]), float(image_object.histogram[7])))
+                    float(image_object.appearance[0]), float(image_object.appearance[1]), \
+                    float(image_object.appearance[2]), float(image_object.appearance[3]), \
+                    float(image_object.appearance[4]), float(image_object.appearance[5]), \
+                    float(image_object.appearance[6]), float(image_object.appearance[7])))
     
                 fmt = ("{0:.3f},{1:d},{2:.3f},{3:.3f},{4:.3f},{5:.3f},"
                        "{6:.3f},{7:.3f},{8:.3f},{9:.3f},{10:.3f},{11:.3f},"
                        "{12:.3f},{13:.3f},{14:.3f},"
-                       "{15:.2f},{16:.2f},{17:.2f},{18:.2f},{19:.2f},{20:.2f},{21:.2f},{22:.2f},"
-                       "{23:.2f},{24:.2f},{25:.2f},{26:.2f},{27:.2f},{28:.2f},{29:.2f},{30:.2f}\n")
+                       "{15:.3f},{15:.3f},{17:.3f},{18:.3f},{19:.3f},{20:.3f},{21:.3f},{22:.3f},"
+                       "{23:.2f},{24:.2f},{25:.2f},{26:.2f},{27:.2f},{28:.2f},{29:.2f},{30:.2f},"
+                       "{31:.2f},{32:.2f},{33:.2f},{34:.2f},{35:.2f},{36:.2f},{37:.2f},{38:.2f},{39:.2f}\n")
     
                 trace_file.write(fmt.format(detection_time, \
                                             image_object.id, \
@@ -593,23 +611,32 @@ class ImageWorld:
                                             image_object.x_max, \
                                             image_object.y_min, \
                                             image_object.y_max, \
+                                            vx_min_predicted, \
+                                            vx_max_predicted, \
+                                            vy_min_predicted, \
+                                            vy_max_predicted, \
+                                            image_object.vx_min, \
+                                            image_object.vx_max, \
+                                            image_object.vy_min, \
+                                            image_object.vy_max, \
                                             distance, \
-                                            float(detected_object.histogram[0]), \
-                                            float(detected_object.histogram[1]), \
-                                            float(detected_object.histogram[2]), \
-                                            float(detected_object.histogram[3]), \
-                                            float(detected_object.histogram[4]), \
-                                            float(detected_object.histogram[5]), \
-                                            float(detected_object.histogram[6]), \
-                                            float(detected_object.histogram[7]), \
-                                            float(image_object.histogram[0]), \
-                                            float(image_object.histogram[1]), \
-                                            float(image_object.histogram[2]), \
-                                            float(image_object.histogram[3]), \
-                                            float(image_object.histogram[4]), \
-                                            float(image_object.histogram[5]), \
-                                            float(image_object.histogram[6]), \
-                                            float(image_object.histogram[7])))
+                                            float(detected_object.appearance[0]), \
+                                            float(detected_object.appearance[1]), \
+                                            float(detected_object.appearance[2]), \
+                                            float(detected_object.appearance[3]), \
+                                            float(detected_object.appearance[4]), \
+                                            float(detected_object.appearance[5]), \
+                                            float(detected_object.appearance[6]), \
+                                            float(detected_object.appearance[7]), \
+                                            float(image_object.appearance[0]), \
+                                            float(image_object.appearance[1]), \
+                                            float(image_object.appearance[2]), \
+                                            float(image_object.appearance[3]), \
+                                            float(image_object.appearance[4]), \
+                                            float(image_object.appearance[5]), \
+                                            float(image_object.appearance[6]), \
+                                            float(image_object.appearance[7]), \
+                                            image_object.confidence))
                 match_index += 1
             
         # Any image object not matched is removed

@@ -69,8 +69,8 @@ def detect_objects(image, time, confidence_level):
             box = detections[0, 0, i, 3:7] * np.array([width, height, width, height])
             (x_min, y_min, x_max, y_max) = box.astype("int")
 
-            histogram = get_hue_histogram(image, x_min, x_max, y_min, y_max)
+            appearance = get_hue_histogram(image, x_min, x_max, y_min, y_max)
             objects.append(ioc.DetectedObject(time, class_type, x_min, x_max, \
-                                              y_min, y_max, confidence, histogram))
+                                              y_min, y_max, confidence, appearance))
             
     return objects

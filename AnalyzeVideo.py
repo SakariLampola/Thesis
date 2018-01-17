@@ -25,9 +25,11 @@ def analyze_video(videofile):
     trace_file = open("trace.txt", "w")
     trace_file.write("time,id,x_min_p,x_max_p,y_min_p,y_max_p,")
     trace_file.write("x_min_m,x_max_m,y_min_m,y_max_m,")
-    trace_file.write("x_min_c,x_max_c,y_min_c,y_max_c,distance,")
+    trace_file.write("x_min_c,x_max_c,y_min_c,y_max_c,")
+    trace_file.write("vx_min_p,vx_max_p,vy_min_p,vy_max_p,")
+    trace_file.write("vx_min_c,vx_max_c,vy_min_c,vy_max_c,distance,")
     trace_file.write("do_c1,do_c2,do_c3,do_c4,do_c5,do_c6,do_c7,do_c8,")
-    trace_file.write("io_c1,io_c2,io_c3,io_c4,io_c5,io_c6,io_c7,io_c8\n")
+    trace_file.write("io_c1,io_c2,io_c3,io_c4,io_c5,io_c6,io_c7,io_c8,confidence\n")
 
     # Open the video and initialize follow-up variables
     video = cv2.VideoCapture(videofile)
@@ -72,10 +74,10 @@ def analyze_video(videofile):
                     detected_object.confidence, \
                     detected_object.x_min, detected_object.x_max, \
                     detected_object.y_min, detected_object.y_max, \
-                    float(detected_object.histogram[0]), float(detected_object.histogram[1]), \
-                    float(detected_object.histogram[2]), float(detected_object.histogram[3]), \
-                    float(detected_object.histogram[4]), float(detected_object.histogram[5]), \
-                    float(detected_object.histogram[6]), float(detected_object.histogram[7])))
+                    float(detected_object.appearance[0]), float(detected_object.appearance[1]), \
+                    float(detected_object.appearance[2]), float(detected_object.appearance[3]), \
+                    float(detected_object.appearance[4]), float(detected_object.appearance[5]), \
+                    float(detected_object.appearance[6]), float(detected_object.appearance[7])))
 
                 label = "{0:d} {1:s}: {2:.2f}".format(detected_object.id, \
                          ic.CLASS_NAMES[detected_object.class_type], \
@@ -94,7 +96,7 @@ def analyze_video(videofile):
                         cv2.FONT_HERSHEY_SIMPLEX, 0.5, 255, 2)
 
             # update the world model
-            world.update(current_time, detected_objects, log_file, trace_file)
+            world.update(current_time, detected_objects, log_file, trace_file, time_step)
 
             # display the world with updated image objects
             log_file.write("Image objects ({0:d}):\n".format(len(world.image_objects)))
@@ -105,10 +107,10 @@ def analyze_video(videofile):
                     image_object.id, image_object.name, image_object.confidence,
                     image_object.x_min, image_object.x_max, \
                     image_object.y_min, image_object.y_max, \
-                    float(image_object.histogram[0]), float(image_object.histogram[1]), \
-                    float(image_object.histogram[2]), float(image_object.histogram[3]), \
-                    float(image_object.histogram[4]), float(image_object.histogram[5]), \
-                    float(image_object.histogram[6]), float(image_object.histogram[7])))
+                    float(image_object.appearance[0]), float(image_object.appearance[1]), \
+                    float(image_object.appearance[2]), float(image_object.appearance[3]), \
+                    float(image_object.appearance[4]), float(image_object.appearance[5]), \
+                    float(image_object.appearance[6]), float(image_object.appearance[7])))
 
                 label = "{0:d} {1:s}: {2:.2f}".format(image_object.id, image_object.name, \
                          image_object.confidence)
