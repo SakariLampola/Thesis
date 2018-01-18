@@ -57,6 +57,19 @@ def analyze_video(videofile):
         if ret:
             frame_image_objects = frame_detected_objects.copy() # Make a copy to present image objects
 
+            if i_frame == 1: # First frame, display frame and wait for 's'
+                frame_detected_objects_start = cv2.resize(frame_detected_objects, (0, 0), None, size_ratio, size_ratio)
+                frame_image_objects_start = frame_detected_objects_start
+                frame_current = np.concatenate((frame_detected_objects_start, frame_image_objects_start), axis=1)
+                frame_previous = frame_current.copy()
+                frame_final = np.concatenate((frame_previous, frame_current), axis=0)
+                cv2.imshow(videofile, frame_final)
+#                not_found = True
+#                while not_found: # Discard everything except n, q, c
+#                    key_pushed = cv2.waitKey(0) & 0xFF
+#                    if key_pushed in [ord('s')]:
+#                        not_found = False
+
             # Detect objects in the current frame
             detected_objects = od.detect_objects(frame_detected_objects, \
                                                  current_time, ic.CONFIDENFE_LEVEL)
@@ -112,8 +125,8 @@ def analyze_video(videofile):
                     float(image_object.appearance[4]), float(image_object.appearance[5]), \
                     float(image_object.appearance[6]), float(image_object.appearance[7])))
 
-                label = "{0:d} {1:s}: {2:.2f}".format(image_object.id, image_object.name, \
-                         image_object.confidence)
+                label = "{0:d} {1:s}: {2:.2f} {3:s}".format(image_object.id, image_object.name, \
+                         image_object.confidence, image_object.status)
                 cv2.rectangle(frame_image_objects, (int(image_object.x_min), \
                               int(image_object.y_min)), (int(image_object.x_max), \
                               int(image_object.y_max)), image_object.color, 2)

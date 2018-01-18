@@ -22,7 +22,7 @@ CLASS_NAMES = ["background", "aeroplane", "bicycle", "bird", "boat",
 
 SIMILARITY_DISTANCE = 1.0 # Max distance to size ratio for similarity interpretation
 RETENTION_TIME = 0.0 # How long image objects are maintained without new detections
-CONFIDENFE_LEVEL = 0.0 # How confident we must be to create a new object
+CONFIDENFE_LEVEL = 0.80 # How confident we must be to create a new object
 
 def next_id(category):
     """
@@ -437,10 +437,11 @@ class Event:
     """
     Event to be translated into language
     """
-    def __init__(self, text, priority, world):
+    def __init__(self, time, text, priority, world):
         """
         Initialization
         """
+        self.time = time
         self.text = text
         self.priority = priority
         self.world = world
@@ -460,74 +461,76 @@ class ImageWorld:
         self.speech_synthesizer = ss.SpeechSynthesizer()
         self.events = [] # In the beginning, no events
 
-    def add_event(self, text, priority):
-        event = Event(text, priority, self)
+    def add_event(self, time, text, priority):
+        event = Event(time, text, priority, self)
         self.events.append(event)
 
     def create_image_object(self, detected_object):
         """
         Create a new object based on detected object information
         """
+        conf = int(detected_object.confidence*100.0)
+        conf_str = " with confidence " + str(conf)
         if detected_object.class_type == 1:
             self.image_objects.append(Aeroplane(detected_object, self))
-            self.add_event("aeroplane created",1)
+            self.add_event(detected_object.time, "aeroplane observed"+conf_str,1)
         elif detected_object.class_type == 2:
             self.image_objects.append(Bicycle(detected_object, self))
-            self.add_event("bicycle created",1)
+            self.add_event(detected_object.time, "bicycle observed"+conf_str,1)
         elif detected_object.class_type == 3:
             self.image_objects.append(Bird(detected_object, self))
-            self.add_event("bird created",1)
+            self.add_event(detected_object.time, "bird observed"+conf_str,1)
         elif detected_object.class_type == 4:
             self.image_objects.append(Boat(detected_object, self))
-            self.add_event("boat created",1)
+            self.add_event(detected_object.time, "boat observed"+conf_str,1)
         elif detected_object.class_type == 5:
             self.image_objects.append(Bottle(detected_object, self))
-            self.add_event("bottle created",1)
+            self.add_event(detected_object.time, "bottle observed"+conf_str,1)
         elif detected_object.class_type == 6:
             self.image_objects.append(Bus(detected_object, self))
-            self.add_event("bus created",1)
+            self.add_event(detected_object.time, "bus observed"+conf_str,1)
         elif detected_object.class_type == 7:
             self.image_objects.append(Car(detected_object, self))
-            self.add_event("car created",1)
+            self.add_event(detected_object.time, "car observed"+conf_str,1)
         elif detected_object.class_type == 8:
             self.image_objects.append(Cat(detected_object, self))
-            self.add_event("cat created",1)
+            self.add_event(detected_object.time, "cat observed"+conf_str,1)
         elif detected_object.class_type == 9:
             self.image_objects.append(Chair(detected_object, self))
-            self.add_event("chair created",1)
+            self.add_event(detected_object.time, "chair observed"+conf_str,1)
         elif detected_object.class_type == 10:
             self.image_objects.append(Cow(detected_object, self))
-            self.add_event("cow created",1)
+            self.add_event(detected_object.time, "cow observed"+conf_str,1)
         elif detected_object.class_type == 11:
             self.image_objects.append(DiningTable(detected_object, self))
-            self.add_event("dining table created",1)
+            self.add_event(detected_object.time, "dining table observed"+conf_str,1)
         elif detected_object.class_type == 12:
             self.image_objects.append(Dog(detected_object, self))
-            self.add_event("dog created",1)
+            self.add_event(detected_object.time, "dog observed"+conf_str,1)
         elif detected_object.class_type == 13:
             self.image_objects.append(Horse(detected_object, self))
-            self.add_event("horse created",1)
+            self.add_event(detected_object.time, "horse observed"+conf_str,1)
         elif detected_object.class_type == 14:
             self.image_objects.append(Motorbike(detected_object, self))
-            self.add_event("motorbike created",1)
+            self.add_event(detected_object.time, "motorbike observed"+conf_str,1)
         elif detected_object.class_type == 15:
             self.image_objects.append(Person(detected_object, self))
-            self.add_event("person created",1)
+            self.add_event(detected_object.time, "person observed"+conf_str,1)
         elif detected_object.class_type == 16:
             self.image_objects.append(PottedPlant(detected_object, self))
-            self.add_event("potted pland created",1)
+            self.add_event(detected_object.time, "potted pland observed"+conf_str,1)
         elif detected_object.class_type == 17:
             self.image_objects.append(Sheep(detected_object, self))
-            self.add_event("sheep created",1)
+            self.add_event(detected_object.time, "sheep observed"+conf_str,1)
         elif detected_object.class_type == 18:
             self.image_objects.append(Sofa(detected_object, self))
-            self.add_event("sofa created",1)
+            self.add_event(detected_object.time, "sofa observed"+conf_str,1)
         elif detected_object.class_type == 19:
             self.image_objects.append(Train(detected_object, self))
-            self.add_event("train created",1)
+            self.add_event(detected_object.time, "train observed"+conf_str,1)
         elif detected_object.class_type == 20:
             self.image_objects.append(TVMonitor(detected_object, self))
-            self.add_event("tv monitor created",1)
+            self.add_event(detected_object.time, "tv monitor observed"+conf_str,1)
 
     def update(self, detection_time, detected_objects, log_file, trace_file, time_step):
         """
@@ -618,6 +621,7 @@ class ImageWorld:
                     distance))
                 
                 image_object.correct(detected_object, time_step)
+                image_object.status = "visible"
                 detected_object.matched = True
     
                 log_file.write("---corrected: {0:s} {1:6.2f} {2:6.2f} {3:6.2f} {4:6.2f} {5:6.2f} {6:.2f} {7:.2f} {8:.2f} {9:.2f} {10:.2f} {11:.2f} {12:.2f} {13:.2f}\n".format(
@@ -678,21 +682,31 @@ class ImageWorld:
                                             image_object.confidence))
                 match_index += 1
             
-        # Any image object not matched is removed
-        removes = []
+        # Any image object not matched is changed to "hidden" state
         for image_object in self.image_objects:
             if not image_object.matched:
-                log_file.write("Image object {0:d} removed:\n".format(image_object.id))
+                log_file.write("Image object {0:d} status changed to hidden:\n".format(image_object.id))
 
                 log_file.write("---{0:s} {1:6.2f} {2:7.2f} {3:7.2f} {4:7.2f} {5:7.2f}\n".format(
                     image_object.name, image_object.confidence, image_object.x_min,
                     image_object.x_max, image_object.y_min, image_object.y_max))
 
-                removes.append(image_object)
-
-        # Delete removed objects
-        for remove in removes:
-            self.image_objects.remove(remove)
+                image_object.status = "hidden"
+#        # Any image object not matched is removed
+#        removes = []
+#        for image_object in self.image_objects:
+#            if not image_object.matched:
+#                log_file.write("Image object {0:d} removed:\n".format(image_object.id))
+#
+#                log_file.write("---{0:s} {1:6.2f} {2:7.2f} {3:7.2f} {4:7.2f} {5:7.2f}\n".format(
+#                    image_object.name, image_object.confidence, image_object.x_min,
+#                    image_object.x_max, image_object.y_min, image_object.y_max))
+#
+#                removes.append(image_object)
+#
+#        # Delete removed objects
+#        for remove in removes:
+#            self.image_objects.remove(remove)
 
         # If no match for a detected object, create a new image object
         for detected_object in detected_objects:
