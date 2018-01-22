@@ -20,9 +20,11 @@ CLASS_NAMES = ["background", "aeroplane", "bicycle", "bird", "boat",
                "dog", "horse", "motorbike", "person", "pottedplant", "sheep",
                "sofa", "train", "tvmonitor"]
 
-SIMILARITY_DISTANCE = 1.0 # Max distance to size ratio for similarity interpretation
-RETENTION_TIME = 0.0 # How long image objects are maintained without new detections
-CONFIDENFE_LEVEL = 0.80 # How confident we must be to create a new object
+SIMILARITY_DISTANCE = 0.3 # Max distance to size ratio for similarity interpretation
+CONFIDENFE_LEVEL_CREATE = 0.75 # How confident we must be to create a new object
+CONFIDENFE_LEVEL_UPDATE = 0.40 # How confident we must be to update existing object
+BORDER_WIDTH_CREATE = 30 # Image objects are not allowed to born if near image border
+BORDER_WIDTH_REMOVE = 10 # Image objects are removed if near image border
 
 def next_id(category):
     """
@@ -40,16 +42,15 @@ def next_id(category):
 next_id.detected_object_counter = 0
 next_id.image_object_counter = 0
 
-#def kalman_filter_predict(mu, sigma, a, r):
-#    mu_new = a.dot(mu)
-#    sigma_new = a.dot(sigma.dot(a.T))+r
-#    return mu_new, sigma_new
-#
-#def kalman_filter_correct(mu, sigma, c, q, z):
-#    k = sigma.dot(c.T).dot(np.linalg.inv(c.dot(sigma).dot(c.T)+q))
-#    mu_new = mu + k.dot(z - c.dot(mu))
-#    sigma_new = (np.eye(12)-k.dot(c)).dot(sigma)
-#    return mu_new, sigma_new
+def check_bounding_box_location(x_min, x_max, y_min, y_max, image_width, image_height, tolerance):
+    """
+    Returns true if the box is in allowed region
+    """
+    c1 = x_min < tolerance
+    c2 = x_max > (image_width - tolerance)
+    c3 = y_min < tolerance
+    c4 = y_max > (image_height - tolerance)
+    return not(c1 or c2 or c3 or c4)
 
 class DetectedObject:
     """
@@ -87,15 +88,30 @@ class DetectedObject:
         dx_max /= horizontal_size
         dy_min /= vertical_size
         dy_max /= vertical_size
+        
+        d = (dx_min + dx_max + dy_min + dy_max) / 4.0 # Average of 4 corners
 
-        return (dx_min + dx_max + dy_min + dy_max) / 4.0 # Average of 4 corners
+        return d 
+
+    def distance_with_class(self, image_object):
+        """
+        Calculates distance to a predicted image object including class
+        """
+        d = self.distance(image_object)
+
+        # Change of class penalized
+        if self.class_type != image_object.class_type:
+            d += 100.0
+
+        return d 
+
 
 IMAGE_OBJECT_R1 = 1.0 # Image object state equation location variance
 IMAGE_OBJECT_R2 = 1.0 # Image object state equation velocity variance
 IMAGE_OBJECT_R = np.array([[IMAGE_OBJECT_R1, 0.0],
                            [0.0, IMAGE_OBJECT_R2]]) # Image object state equation covariance matrix
 
-IMAGE_OBJECT_Q1 = 10.0 # Image object (location) measurement variance
+IMAGE_OBJECT_Q1 = 100.0 # Image object (location) measurement variance
 IMAGE_OBJECT_Q = np.array([IMAGE_OBJECT_Q1])
 
 IMAGE_OBJECT_ALFA = 10.0 # Image object initial location error variance
@@ -142,6 +158,13 @@ class ImageObject:
         
         self.confidence = detected_object.confidence
         self.appearance = detected_object.appearance
+
+    def is_vanished(self):
+        c1 = (self.x_max <= self.x_min)
+        c2 = (self.y_max <= self.y_min)
+        if c1 or c2:
+            return True
+        return False
     
     def predict(self, delta):
         """
@@ -469,68 +492,78 @@ class ImageWorld:
         """
         Create a new object based on detected object information
         """
+        # If the object is in the border area it will not be created
+        if not check_bounding_box_location(detected_object.x_min, detected_object.x_max, 
+                              detected_object.y_min, detected_object.y_max,
+                              self.width, self.height, BORDER_WIDTH_CREATE):
+            return False
+        # If the confidence is not high enough it will not be created
+        if detected_object.confidence < CONFIDENFE_LEVEL_CREATE:
+            return False
+        # Let's create the image object based on measurement
         conf = int(detected_object.confidence*100.0)
-        conf_str = " with confidence " + str(conf)
+        conf_str = " ,confidence " + str(conf)
         if detected_object.class_type == 1:
             self.image_objects.append(Aeroplane(detected_object, self))
-            self.add_event(detected_object.time, "aeroplane observed"+conf_str,1)
+            self.add_event(detected_object.time, "aeroplane"+conf_str,1)
         elif detected_object.class_type == 2:
             self.image_objects.append(Bicycle(detected_object, self))
-            self.add_event(detected_object.time, "bicycle observed"+conf_str,1)
+            self.add_event(detected_object.time, "bicycle"+conf_str,1)
         elif detected_object.class_type == 3:
             self.image_objects.append(Bird(detected_object, self))
-            self.add_event(detected_object.time, "bird observed"+conf_str,1)
+            self.add_event(detected_object.time, "bird"+conf_str,1)
         elif detected_object.class_type == 4:
             self.image_objects.append(Boat(detected_object, self))
-            self.add_event(detected_object.time, "boat observed"+conf_str,1)
+            self.add_event(detected_object.time, "boat"+conf_str,1)
         elif detected_object.class_type == 5:
             self.image_objects.append(Bottle(detected_object, self))
-            self.add_event(detected_object.time, "bottle observed"+conf_str,1)
+            self.add_event(detected_object.time, "bottle"+conf_str,1)
         elif detected_object.class_type == 6:
             self.image_objects.append(Bus(detected_object, self))
-            self.add_event(detected_object.time, "bus observed"+conf_str,1)
+            self.add_event(detected_object.time, "bus"+conf_str,1)
         elif detected_object.class_type == 7:
             self.image_objects.append(Car(detected_object, self))
-            self.add_event(detected_object.time, "car observed"+conf_str,1)
+            self.add_event(detected_object.time, "car"+conf_str,1)
         elif detected_object.class_type == 8:
             self.image_objects.append(Cat(detected_object, self))
-            self.add_event(detected_object.time, "cat observed"+conf_str,1)
+            self.add_event(detected_object.time, "cat"+conf_str,1)
         elif detected_object.class_type == 9:
             self.image_objects.append(Chair(detected_object, self))
-            self.add_event(detected_object.time, "chair observed"+conf_str,1)
+            self.add_event(detected_object.time, "chair"+conf_str,1)
         elif detected_object.class_type == 10:
             self.image_objects.append(Cow(detected_object, self))
-            self.add_event(detected_object.time, "cow observed"+conf_str,1)
+            self.add_event(detected_object.time, "cow"+conf_str,1)
         elif detected_object.class_type == 11:
             self.image_objects.append(DiningTable(detected_object, self))
-            self.add_event(detected_object.time, "dining table observed"+conf_str,1)
+            self.add_event(detected_object.time, "dining table"+conf_str,1)
         elif detected_object.class_type == 12:
             self.image_objects.append(Dog(detected_object, self))
-            self.add_event(detected_object.time, "dog observed"+conf_str,1)
+            self.add_event(detected_object.time, "dog"+conf_str,1)
         elif detected_object.class_type == 13:
             self.image_objects.append(Horse(detected_object, self))
-            self.add_event(detected_object.time, "horse observed"+conf_str,1)
+            self.add_event(detected_object.time, "horse"+conf_str,1)
         elif detected_object.class_type == 14:
             self.image_objects.append(Motorbike(detected_object, self))
-            self.add_event(detected_object.time, "motorbike observed"+conf_str,1)
+            self.add_event(detected_object.time, "motorbike"+conf_str,1)
         elif detected_object.class_type == 15:
             self.image_objects.append(Person(detected_object, self))
-            self.add_event(detected_object.time, "person observed"+conf_str,1)
+            self.add_event(detected_object.time, "person"+conf_str,1)
         elif detected_object.class_type == 16:
             self.image_objects.append(PottedPlant(detected_object, self))
-            self.add_event(detected_object.time, "potted pland observed"+conf_str,1)
+            self.add_event(detected_object.time, "potted pland"+conf_str,1)
         elif detected_object.class_type == 17:
             self.image_objects.append(Sheep(detected_object, self))
-            self.add_event(detected_object.time, "sheep observed"+conf_str,1)
+            self.add_event(detected_object.time, "sheep"+conf_str,1)
         elif detected_object.class_type == 18:
             self.image_objects.append(Sofa(detected_object, self))
-            self.add_event(detected_object.time, "sofa observed"+conf_str,1)
+            self.add_event(detected_object.time, "sofa"+conf_str,1)
         elif detected_object.class_type == 19:
             self.image_objects.append(Train(detected_object, self))
-            self.add_event(detected_object.time, "train observed"+conf_str,1)
+            self.add_event(detected_object.time, "train"+conf_str,1)
         elif detected_object.class_type == 20:
             self.image_objects.append(TVMonitor(detected_object, self))
-            self.add_event(detected_object.time, "tv monitor observed"+conf_str,1)
+            self.add_event(detected_object.time, "tv monitor"+conf_str,1)
+        return True
 
     def update(self, detection_time, detected_objects, log_file, trace_file, time_step):
         """
@@ -540,11 +573,28 @@ class ImageWorld:
         updated. Image objects not matched are removed.
         """
 
+        # If the detected object location is in border area, the object will be removed
+        removes = []
+        for detected_object in detected_objects:
+            if not check_bounding_box_location(detected_object.x_min, detected_object.x_max, 
+                                  detected_object.y_min, detected_object.y_max,
+                                  self.width, self.height, BORDER_WIDTH_REMOVE):
+                log_file.write("Delected object {0:d} removed due to being in border area:\n".format(detected_object.id))
+                log_file.write("---{0:6.2f} {1:7.2f} {2:7.2f} {3:7.2f} {4:7.2f}\n".format(
+                    detected_object.confidence, detected_object.x_min,
+                    detected_object.x_max, detected_object.y_min, detected_object.y_max))
+
+                removes.append(detected_object)
+
+        # Delete removed objects
+        for remove in removes:
+            detected_objects.remove(remove)
+
         # Predict new coordinates for each image object
         log_file.write("Image objects ({0:d}), predicted new locations:\n".format(len(self.image_objects)))
         for image_object in self.image_objects:
             image_object.predict(time_step)
-            log_file.write("---{0:d} {1:s} {2:6.2f} {3:7.2f} {4:7.2f} {5:7.2f} {6:7.2f} {7:.2f} {8:.2f} {9:.2f} {10:.2f} {11:.2f} {12:.2f} {13:.2f}\n".format(
+            log_file.write("---{0:d} {1:s} {2:6.2f} {3:7.2f} {4:7.2f} {5:7.2f} {6:7.2f} {7:.2f} {8:.2f} {9:.2f} {10:.2f} {11:.2f} {12:.2f} {13:.2f} {14:.2f}\n".format(
                 image_object.id, image_object.name, image_object.confidence,
                 image_object.x_min, image_object.x_max, \
                 image_object.y_min, image_object.y_max, \
@@ -552,26 +602,110 @@ class ImageWorld:
                 float(image_object.appearance[2]), float(image_object.appearance[3]), \
                 float(image_object.appearance[4]), float(image_object.appearance[5]), \
                 float(image_object.appearance[6]), float(image_object.appearance[7])))
+            
+        # If the predicted location is in border area, the object will be removed
+        removes = []
+        for image_object in self.image_objects:
+            if not check_bounding_box_location(image_object.x_min, image_object.x_max, 
+                                  image_object.y_min, image_object.y_max,
+                                  self.width, self.height, BORDER_WIDTH_REMOVE):
+                log_file.write("Image object {0:d} removed due to being in border area:\n".format(image_object.id))
+                log_file.write("---{0:s} {1:6.2f} {2:7.2f} {3:7.2f} {4:7.2f} {5:7.2f}\n".format(
+                    image_object.name, image_object.confidence, image_object.x_min,
+                    image_object.x_max, image_object.y_min, image_object.y_max))
 
-        # Calculate cost matric for Hungarian algorithm (assignment problem)
-        log_file.write("Cost matrix for Hungarian algorithm:\n")
+                removes.append(image_object)
+
+        # Delete removed objects
+        for remove in removes:
+            self.image_objects.remove(remove)
+
+        # Calculate cost matrix for the Hungarian algorithm (assignment problem)
+        log_file.write("Original cost matrix for Hungarian algorithm:\n")
         cost = np.zeros((len(detected_objects), len(self.image_objects)))
         detected_object_index = 0
         for detected_object in detected_objects:
+            log_file.write("{0:6d} ".format(detected_object.id))
             image_object_index = 0
             found = False # Just to decide whether to print a newline into the log
             for image_object in self.image_objects:
                 cost[detected_object_index, image_object_index] = \
-                    detected_object.distance(image_object)
-                log_file.write("{0:7.2f} ".format(cost[detected_object_index, image_object_index]))
+                    detected_object.distance_with_class(image_object)
+                log_file.write("{0:7.2f} ({1:d}) ".format(cost[detected_object_index, image_object_index], image_object.id))
                 image_object_index += 1
                 found = True
             detected_object_index += 1
             if found:
                 log_file.write("\n")
 
+        # Remove rows and columns with no values inside SIMILARITY_DISTANCE
+        count_detected_objects = len(detected_objects)        
+        count_image_objects = len(self.image_objects)
+
+        remove_detected_objects = []
+        for detected_object_index in range(0, count_detected_objects):
+            found = False
+            for image_object_index in range(0, count_image_objects):
+                if cost[detected_object_index, image_object_index] < SIMILARITY_DISTANCE:
+                    found = True
+            if found == False:
+                remove_detected_objects.append(detected_objects[detected_object_index]) 
+        remove_image_objects = []
+        for image_object_index in range(0, count_image_objects):
+            found = False
+            for detected_object_index in range(0, count_detected_objects):
+                if cost[detected_object_index, image_object_index] < SIMILARITY_DISTANCE:
+                    found = True
+            if found == False:
+                remove_image_objects.append(self.image_objects[image_object_index]) 
+
+        detected_objects_to_match = []
+        image_objects_to_match = []
+
+        for detected_object in detected_objects:
+            if detected_object not in remove_detected_objects:
+                detected_objects_to_match.append(detected_object)
+            
+        for image_object in self.image_objects:
+            if image_object not in remove_image_objects:
+                image_objects_to_match.append(image_object)
+
+        # The optimal assignment without far-away objects:
+
+        cost_to_match = np.zeros((len(detected_objects_to_match), \
+                                  len(image_objects_to_match)))
+
+        row_index = -1
+        row_index_original = 0
+        for detected_object in detected_objects:
+            if detected_object not in remove_detected_objects:
+                row_index += 1
+                col_index = -1
+                col_index_original = 0
+                for image_object in self.image_objects:
+                    if image_object not in remove_image_objects:
+                        col_index +=1
+                        cost_to_match[row_index, col_index] = cost[row_index_original, col_index_original]
+                    col_index_original += 1
+            row_index_original += 1
+
+        # Let's print the modified cost matrix
+        log_file.write("Modified cost matrix for Hungarian algorithm:\n")
+        detected_object_index = 0
+        for detected_object in detected_objects_to_match:
+            log_file.write("{0:6d} ".format(detected_object.id))
+            image_object_index = 0
+            found = False # Just to decide whether to print a newline into the log
+            for image_object in image_objects_to_match:
+                log_file.write("{0:7.2f} ({1:d}) ".format(cost_to_match[detected_object_index, image_object_index], image_object.id))
+                image_object_index += 1
+                found = True
+            detected_object_index += 1
+            if found:
+                log_file.write("\n")
+       
         # Find the optimal assigment
-        row_ind, col_ind = linear_sum_assignment(cost)
+        row_ind, col_ind = linear_sum_assignment(cost_to_match)
         
         # Update matched objects
         log_file.write("Optimal assignment:\n")
@@ -579,11 +713,11 @@ class ImageWorld:
         for row in row_ind:
             i1 = row_ind[match_index]
             i2 = col_ind[match_index]
-            detected_object = detected_objects[i1]
-            image_object = self.image_objects[i2]
+            detected_object = detected_objects_to_match[i1]
+            image_object = image_objects_to_match[i2]
             log_file.write("Detected object {0:d} matched to image object {1:d}\n".format(detected_object.id, \
                            image_object.id))
-            distance = cost[i1,i2]
+            distance = cost_to_match[i1,i2]
             if distance > SIMILARITY_DISTANCE:
                 log_file.write("Detected object {0:d} - image object {1:d}, distance too far!\n".format(\
                                detected_object.id, image_object.id))
@@ -682,11 +816,44 @@ class ImageWorld:
                                             image_object.confidence))
                 match_index += 1
             
+
+        # If the corrected location is in border area, the object will be removed
+        removes = []
+        for image_object in self.image_objects:
+            if not check_bounding_box_location(image_object.x_min, image_object.x_max, 
+                                  image_object.y_min, image_object.y_max,
+                                  self.width, self.height, BORDER_WIDTH_REMOVE):
+                log_file.write("Image object {0:d} removed due to being in border area:\n".format(image_object.id))
+                log_file.write("---{0:s} {1:6.2f} {2:7.2f} {3:7.2f} {4:7.2f} {5:7.2f}\n".format(
+                    image_object.name, image_object.confidence, image_object.x_min,
+                    image_object.x_max, image_object.y_min, image_object.y_max))
+
+                removes.append(image_object)
+
+        # Delete removed objects
+        for remove in removes:
+            self.image_objects.remove(remove)
+
+        # Remove vanished image objects
+        removes = []
+        for image_object in self.image_objects:
+            if image_object.is_vanished():
+                log_file.write("Image object {0:d} removed due to being vanished:\n".format(image_object.id))
+                log_file.write("---{0:s} {1:6.2f} {2:7.2f} {3:7.2f} {4:7.2f} {5:7.2f}\n".format(
+                    image_object.name, image_object.confidence, image_object.x_min,
+                    image_object.x_max, image_object.y_min, image_object.y_max))
+
+                removes.append(image_object)
+
+        # Delete removed objects
+        for remove in removes:
+            self.image_objects.remove(remove)
+
+
         # Any image object not matched is changed to "hidden" state
         for image_object in self.image_objects:
             if not image_object.matched:
                 log_file.write("Image object {0:d} status changed to hidden:\n".format(image_object.id))
-
                 log_file.write("---{0:s} {1:6.2f} {2:7.2f} {3:7.2f} {4:7.2f} {5:7.2f}\n".format(
                     image_object.name, image_object.confidence, image_object.x_min,
                     image_object.x_max, image_object.y_min, image_object.y_max))
@@ -711,11 +878,15 @@ class ImageWorld:
         # If no match for a detected object, create a new image object
         for detected_object in detected_objects:
             if not detected_object.matched:
-                self.create_image_object(detected_object)
-    
-                log_file.write("Image object {0:d} created: ".format(next_id.image_object_counter))
-    
-                log_file.write("{0:s} {1:6.2f} {2:4d} {3:4d} {4:4d} {5:4d}\n".format(
-                    CLASS_NAMES[detected_object.class_type], detected_object.confidence,
-                    detected_object.x_min, detected_object.x_max, \
-                    detected_object.y_min, detected_object.y_max))
+                found = False
+                for image_object in self.image_objects:
+                    if detected_object.distance(image_object) < SIMILARITY_DISTANCE:
+                        found = True
+                if not found: # only if there is no other image object near
+                    created = self.create_image_object(detected_object)
+                    if created: # if inside border area and we are confident enough
+                        log_file.write("Image object {0:d} created: ".format(next_id.image_object_counter))
+                        log_file.write("{0:s} {1:6.2f} {2:4d} {3:4d} {4:4d} {5:4d}\n".format(
+                            CLASS_NAMES[detected_object.class_type], detected_object.confidence,
+                            detected_object.x_min, detected_object.x_max, \
+                            detected_object.y_min, detected_object.y_max))

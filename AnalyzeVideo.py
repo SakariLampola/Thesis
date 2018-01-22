@@ -72,7 +72,7 @@ def analyze_video(videofile):
 
             # Detect objects in the current frame
             detected_objects = od.detect_objects(frame_detected_objects, \
-                                                 current_time, ic.CONFIDENFE_LEVEL)
+                                                 current_time, ic.CONFIDENFE_LEVEL_UPDATE)
 
             log_file.write("----------------------------------------------\n")
             log_file.write("Time {0:<.2f}, frame {1:d}\n".format(current_time, i_frame))
@@ -181,12 +181,30 @@ def analyze_video(videofile):
     log_file.close()
     trace_file.close()
 
+TEST_VIDEOS = ['videos/AWomanStandsOnTheSeashore-10058.mp4', # 0
+               'videos/BlueTit2975.mp4', # 1
+               'videos/Boat-10876.mp4', # 2
+               'videos/Calf-2679.mp4', # 3
+               'videos/Cars133.mp4', # 4
+               'videos/CarsOnHighway001.mp4', # 5
+               'videos/Cat-3740.mp4', # 6
+               'videos/Dog-4028.mp4', # 7
+               'videos/Dunes-7238.mp4', # 8
+               'videos/Hiker1010.mp4', # 9
+               'videos/Horse-2980.mp4', # 10
+               'videos/Railway-4106.mp4', # 11
+               'videos/SailingBoat6415.mp4', # 12
+               'videos/Sheep-12727.mp4', # 13
+               'videos/Sofa-11294.mp4'] # 14
+
 if __name__ == "__main__":
     # parse the video file
     AP = argparse.ArgumentParser()
     AP.add_argument("-v", "--video", required=True, help="path to input video")
     ARGS = vars(AP.parse_args())
     VIDEOFILE = ARGS["video"]
+    if VIDEOFILE == 'testvideo':
+        VIDEOFILE = TEST_VIDEOS[5]
     # spawn the analyzer
     analyze_video(VIDEOFILE)
     

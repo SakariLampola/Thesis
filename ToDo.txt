@@ -1,9 +1,5 @@
-- speech synthesis
+- border behaviour
 - image object status + life span
 - distance metrics + probabilistic matching
-- remove multiple classifications
-- remove multiple bounding boxes
-- remove background elements
-- remove false detections inside other detections
 - 3d projection
 - 3d state estimation
