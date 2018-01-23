@@ -9,6 +9,7 @@ Created on Wed Nov 29 13:44:02 2017
 @author: Sakari Lampola
 """
 
+from math import sqrt
 import argparse
 import numpy as np
 #import time
@@ -125,11 +126,32 @@ def analyze_video(videofile):
                     float(image_object.appearance[4]), float(image_object.appearance[5]), \
                     float(image_object.appearance[6]), float(image_object.appearance[7])))
 
-                label = "{0:d} {1:s}: {2:.2f} {3:s}".format(image_object.id, image_object.name, \
-                         image_object.confidence, image_object.status)
+                detected_label = ""
+                if not image_object.detected:
+                    detected_label = "Undetected"
+                border_label = ""
+                if image_object.border_left > 1:
+                    border_label += " left " + str(image_object.border_left)
+                if image_object.border_right > 1:
+                    border_label += " right " + str(image_object.border_right)
+                if image_object.border_top > 1:
+                    border_label += " top " + str(image_object.border_top)
+                if image_object.border_bottom > 1:
+                    border_label += " bottom " + str(image_object.border_bottom)
+
+                label = "{0:d} {1:s}: {2:.2f} {3:s} {4:s}".format(image_object.id, image_object.name, \
+                         image_object.confidence, detected_label, border_label)
                 cv2.rectangle(frame_image_objects, (int(image_object.x_min), \
                               int(image_object.y_min)), (int(image_object.x_max), \
                               int(image_object.y_max)), image_object.color, 2)
+                
+                x_center, y_center = image_object.center_point()
+                x_variance, y_variance = image_object.location_variance()
+                x_std2 = 2.0 * sqrt(x_variance)
+                y_std2 = 2.0 * sqrt(y_variance)
+                
+                cv2.ellipse(frame_image_objects, (int(x_center), int(y_center)), (int(x_std2),int(y_std2)), \
+                            0.0, 0, 360, image_object.color, 2)
 
                 ytext = int(image_object.y_min) - 15 if int(image_object.y_min) - 15 > 15 \
                     else int(image_object.y_min) + 15

@@ -21,10 +21,11 @@ CLASS_NAMES = ["background", "aeroplane", "bicycle", "bird", "boat",
                "sofa", "train", "tvmonitor"]
 
 SIMILARITY_DISTANCE = 0.3 # Max distance to size ratio for similarity interpretation
-CONFIDENFE_LEVEL_CREATE = 0.75 # How confident we must be to create a new object
+CONFIDENFE_LEVEL_CREATE = 0.80 # How confident we must be to create a new object
 CONFIDENFE_LEVEL_UPDATE = 0.40 # How confident we must be to update existing object
-BORDER_WIDTH_CREATE = 30 # Image objects are not allowed to born if near image border
-BORDER_WIDTH_REMOVE = 10 # Image objects are removed if near image border
+#BORDER_WIDTH_CREATE = 30 # Image objects are not allowed to born if near image border
+#BORDER_WIDTH_REMOVE = 10 # Image objects are removed if near image border
+BORDER_WIDTH = 30 # Part of screen for special image object behaviour
 
 def next_id(category):
     """
@@ -106,7 +107,7 @@ class DetectedObject:
         return d 
 
 
-IMAGE_OBJECT_R1 = 1.0 # Image object state equation location variance
+IMAGE_OBJECT_R1 = 0.1 # Image object state equation location variance
 IMAGE_OBJECT_R2 = 1.0 # Image object state equation velocity variance
 IMAGE_OBJECT_R = np.array([[IMAGE_OBJECT_R1, 0.0],
                            [0.0, IMAGE_OBJECT_R2]]) # Image object state equation covariance matrix
@@ -139,12 +140,18 @@ class ImageObject:
         self.matched = False # detected object matching
 
         self.id = next_id('image_object')
-        self.status = 'visible'
+        self.detected = True
+        self.border_left = 1 # Inside margin area, normal behaviour
+        self.border_right = 1 # Inside margin area, normal behaviour
+        self.border_top = 1 # Inside margin area, normal behaviour
+        self.border_bottom = 1 # Inside margin area, normal behaviour
 
         self.x_min = detected_object.x_min
         self.x_max = detected_object.x_max
         self.y_min = detected_object.y_min
         self.y_max = detected_object.y_max
+
+        self.set_border_behaviour()
 
         self.vx_min = 0.0
         self.vx_max = 0.0
@@ -159,12 +166,123 @@ class ImageObject:
         self.confidence = detected_object.confidence
         self.appearance = detected_object.appearance
 
+    def center_point(self):
+        """
+        Calculate the bounding box center point
+        """
+        x_center = (self.x_min + self.x_max) / 2.0
+        y_center = (self.y_min + self.y_max) / 2.0
+        
+        return x_center, y_center
+
+    def location_variance(self):
+        """
+        Calculate the bounding box center point
+        """
+        x_variance = self.sigma_x_min[0,0] + self.sigma_x_max[0,0]
+        y_variance = self.sigma_y_min[0,0] + self.sigma_y_max[0,0]
+        
+        return x_variance, y_variance
+
+
     def is_vanished(self):
+        """
+        Checks if the image object size goes zero or negative
+        """
         c1 = (self.x_max <= self.x_min)
         c2 = (self.y_max <= self.y_min)
         if c1 or c2:
             return True
         return False
+    
+    def set_border_behaviour(self):
+        """
+        Sets the border according to:
+            1 = normal area
+            2 = normal + border area
+            3 = normal + out of screen area
+            4 = inside border area
+            5 = border + out of screen area
+            6 = out of screen area
+        """
+        image_width = self.image_world.width
+        image_height = self.image_world.height
+        # left
+        self.border_left = 1
+        if (self.x_max >= BORDER_WIDTH and \
+            self.x_min <= BORDER_WIDTH and \
+            self.x_min >= 0):
+            self.border_left = 2
+        if (self.x_max >= BORDER_WIDTH and \
+            self.x_min <= 0):
+            self.border_left = 3
+        if (self.x_max <= BORDER_WIDTH and \
+            self.x_min <= BORDER_WIDTH and \
+            self.x_min >= 0):
+            self.border_left = 4
+        if (self.x_max <= BORDER_WIDTH and \
+            self.x_min <= 0):
+            self.border_left = 5
+        if (self.x_min <= 0 and \
+            self.x_max <= 0):
+            self.border_left = 6
+        # right
+        self.border_right = 1
+        if (self.x_min <= (image_width - BORDER_WIDTH) and \
+            self.x_max >= (image_width - BORDER_WIDTH) and \
+            self.x_max <= image_width):
+            self.border_right = 2
+        if (self.x_min <= (image_width - BORDER_WIDTH) and \
+            self.x_max >= image_width):
+            self.border_right = 3
+        if (self.x_min >= (image_width - BORDER_WIDTH) and \
+            self.x_max >= (image_width - BORDER_WIDTH) and \
+            self.x_max <= image_width):
+            self.border_right = 4
+        if (self.x_min >= (image_width - BORDER_WIDTH) and \
+            self.x_max >= image_width):
+            self.border_right = 5
+        if (self.x_min >= image_width and \
+            self.x_max >= image_width):
+            self.border_right = 6
+        # top
+        self.border_top = 1
+        if (self.y_max >= BORDER_WIDTH and \
+            self.y_min <= BORDER_WIDTH and \
+            self.y_min >= 0):
+            self.border_top = 2
+        if (self.y_max >= BORDER_WIDTH and \
+            self.y_min <= 0):
+            self.border_top = 3
+        if (self.y_max <= BORDER_WIDTH and \
+            self.y_min <= BORDER_WIDTH and \
+            self.y_min >= 0):
+            self.border_top = 4
+        if (self.y_max <= BORDER_WIDTH and \
+            self.y_min <= 0):
+            self.border_top = 5
+        if (self.y_min <= 0 and \
+            self.y_max <= 0):
+            self.border_top = 6
+        # bottom
+        self.border_bottom = 1
+        if (self.y_min <= (image_height - BORDER_WIDTH) and \
+            self.y_max >= (image_height - BORDER_WIDTH) and \
+            self.y_max <= image_height):
+            self.border_bottom = 2
+        if (self.y_min <= (image_height - BORDER_WIDTH) and \
+            self.y_max >= image_height):
+            self.border_bottom = 3
+        if (self.y_min >= (image_height - BORDER_WIDTH) and \
+            self.y_max >= (image_height - BORDER_WIDTH) and \
+            self.y_max <= image_height):
+            self.border_bottom = 4
+        if (self.y_min >= (image_height - BORDER_WIDTH) and \
+            self.y_max >= image_height):
+            self.border_bottom = 5
+        if (self.y_min >= image_height and \
+            self.y_max >= image_height):
+            self.border_bottom = 6
     
     def predict(self, delta):
         """
@@ -172,25 +290,41 @@ class ImageObject:
         """
         a = np.array([[1.0, delta],[0.0, 1.0]]) # state equation matrix
 
-        mu_xmin = a.dot(np.array([[self.x_min],[self.vx_min]]))
+        self.set_border_behaviour()
+
+        if (self.border_left not in [3,5]):
+            mu_xmin = a.dot(np.array([[self.x_min],[self.vx_min]]))
+        else:
+            mu_xmin = a.dot(np.array([[self.x_min],[self.vx_max]]))
         self.x_min = mu_xmin[0,0]
         self.vx_min = mu_xmin[1,0]
         self.sigma_x_min = a.dot(self.sigma_x_min).dot(a.T) + IMAGE_OBJECT_R
 
-        mu_xmax = a.dot(np.array([[self.x_max],[self.vx_max]]))
+        if (self.border_right not in [3,5]):
+            mu_xmax = a.dot(np.array([[self.x_max],[self.vx_max]]))
+        else:
+            mu_xmax = a.dot(np.array([[self.x_max],[self.vx_min]]))
         self.x_max = mu_xmax[0,0]
         self.vx_max = mu_xmax[1,0]
         self.sigma_x_max = a.dot(self.sigma_x_max).dot(a.T) + IMAGE_OBJECT_R
 
-        mu_ymin = a.dot(np.array([[self.y_min],[self.vy_min]]))
+        if (self.border_top not in [3,5]):
+            mu_ymin = a.dot(np.array([[self.y_min],[self.vy_min]]))
+        else:
+            mu_ymin = a.dot(np.array([[self.y_min],[self.vy_max]]))
         self.y_min = mu_ymin[0,0]
         self.vy_min = mu_ymin[1,0]
         self.sigma_y_min = a.dot(self.sigma_y_min).dot(a.T) + IMAGE_OBJECT_R
 
-        mu_ymax = a.dot(np.array([[self.y_max],[self.vy_max]]))
+        if (self.border_bottom not in [3,5]):
+            mu_ymax = a.dot(np.array([[self.y_max],[self.vy_max]]))
+        else:
+            mu_ymax = a.dot(np.array([[self.y_max],[self.vy_min]]))
         self.y_max = mu_ymax[0,0]
         self.vy_max = mu_ymax[1,0]
         self.sigma_y_max = a.dot(self.sigma_y_max).dot(a.T) + IMAGE_OBJECT_R
+
+        self.set_border_behaviour()
 
         self.matched = False # By default, not matched with any detected object
         
@@ -199,40 +333,47 @@ class ImageObject:
         Correct bounding box coordinates based on detected object measurement
         """
         self.confidence = detected_object.confidence
+        self.set_border_behaviour()
 
         a = np.array([[1.0, delta],[0.0, 1.0]]) # state equation matrix
 
-        k_x_min = self.sigma_x_min.dot(IMAGE_OBJECT_C.T).\
-            dot(np.linalg.inv(IMAGE_OBJECT_C.dot(self.sigma_x_min).dot(IMAGE_OBJECT_C.T) + IMAGE_OBJECT_Q))
-        mu_xmin = a.dot(np.array([[self.x_min],[self.vx_min]]))
-        mu_xmin = mu_xmin + k_x_min.dot(detected_object.x_min - IMAGE_OBJECT_C.dot(mu_xmin))
-        self.x_min = mu_xmin[0,0]
-        self.vx_min = mu_xmin[1,0]
-        self.sigma_x_min = (np.eye(2)-k_x_min.dot(IMAGE_OBJECT_C)).dot(self.sigma_x_min)
+        if (self.border_left not in [3,5]):
+            k_x_min = self.sigma_x_min.dot(IMAGE_OBJECT_C.T).\
+                dot(np.linalg.inv(IMAGE_OBJECT_C.dot(self.sigma_x_min).dot(IMAGE_OBJECT_C.T) + IMAGE_OBJECT_Q))
+            mu_xmin = a.dot(np.array([[self.x_min],[self.vx_min]]))
+            mu_xmin = mu_xmin + k_x_min.dot(detected_object.x_min - IMAGE_OBJECT_C.dot(mu_xmin))
+            self.x_min = mu_xmin[0,0]
+            self.vx_min = mu_xmin[1,0]
+            self.sigma_x_min = (np.eye(2)-k_x_min.dot(IMAGE_OBJECT_C)).dot(self.sigma_x_min)
 
-        k_x_max = self.sigma_x_max.dot(IMAGE_OBJECT_C.T).\
-            dot(np.linalg.inv(IMAGE_OBJECT_C.dot(self.sigma_x_max).dot(IMAGE_OBJECT_C.T) + IMAGE_OBJECT_Q))
-        mu_xmax = a.dot(np.array([[self.x_max],[self.vx_max]]))
-        mu_xmax = mu_xmax + k_x_max.dot(detected_object.x_max - IMAGE_OBJECT_C.dot(mu_xmax))
-        self.x_max = mu_xmax[0,0]
-        self.vx_max = mu_xmax[1,0]
-        self.sigma_x_max = (np.eye(2)-k_x_max.dot(IMAGE_OBJECT_C)).dot(self.sigma_x_max)
+        if (self.border_right not in [3,5]):
+            k_x_max = self.sigma_x_max.dot(IMAGE_OBJECT_C.T).\
+                dot(np.linalg.inv(IMAGE_OBJECT_C.dot(self.sigma_x_max).dot(IMAGE_OBJECT_C.T) + IMAGE_OBJECT_Q))
+            mu_xmax = a.dot(np.array([[self.x_max],[self.vx_max]]))
+            mu_xmax = mu_xmax + k_x_max.dot(detected_object.x_max - IMAGE_OBJECT_C.dot(mu_xmax))
+            self.x_max = mu_xmax[0,0]
+            self.vx_max = mu_xmax[1,0]
+            self.sigma_x_max = (np.eye(2)-k_x_max.dot(IMAGE_OBJECT_C)).dot(self.sigma_x_max)
 
-        k_y_min = self.sigma_y_min.dot(IMAGE_OBJECT_C.T).\
-            dot(np.linalg.inv(IMAGE_OBJECT_C.dot(self.sigma_y_min).dot(IMAGE_OBJECT_C.T) + IMAGE_OBJECT_Q))
-        mu_ymin = a.dot(np.array([[self.y_min],[self.vy_min]]))
-        mu_ymin = mu_ymin + k_y_min.dot(detected_object.y_min - IMAGE_OBJECT_C.dot(mu_ymin))
-        self.y_min = mu_ymin[0,0]
-        self.vy_min = mu_ymin[1,0]
-        self.sigma_y_min = (np.eye(2)-k_y_min.dot(IMAGE_OBJECT_C)).dot(self.sigma_y_min)
+        if (self.border_top not in [3,5]):
+            k_y_min = self.sigma_y_min.dot(IMAGE_OBJECT_C.T).\
+                dot(np.linalg.inv(IMAGE_OBJECT_C.dot(self.sigma_y_min).dot(IMAGE_OBJECT_C.T) + IMAGE_OBJECT_Q))
+            mu_ymin = a.dot(np.array([[self.y_min],[self.vy_min]]))
+            mu_ymin = mu_ymin + k_y_min.dot(detected_object.y_min - IMAGE_OBJECT_C.dot(mu_ymin))
+            self.y_min = mu_ymin[0,0]
+            self.vy_min = mu_ymin[1,0]
+            self.sigma_y_min = (np.eye(2)-k_y_min.dot(IMAGE_OBJECT_C)).dot(self.sigma_y_min)
 
-        k_y_max = self.sigma_y_max.dot(IMAGE_OBJECT_C.T).\
-            dot(np.linalg.inv(IMAGE_OBJECT_C.dot(self.sigma_y_max).dot(IMAGE_OBJECT_C.T) + IMAGE_OBJECT_Q))
-        mu_ymax = a.dot(np.array([[self.y_max],[self.vy_max]]))
-        mu_ymax = mu_ymax + k_y_max.dot(detected_object.y_max - IMAGE_OBJECT_C.dot(mu_ymax))
-        self.y_max = mu_ymax[0,0]
-        self.vy_max = mu_ymax[1,0]
-        self.sigma_y_max = (np.eye(2)-k_y_max.dot(IMAGE_OBJECT_C)).dot(self.sigma_y_max)
+        if (self.border_bottom not in [3,5]):
+            k_y_max = self.sigma_y_max.dot(IMAGE_OBJECT_C.T).\
+                dot(np.linalg.inv(IMAGE_OBJECT_C.dot(self.sigma_y_max).dot(IMAGE_OBJECT_C.T) + IMAGE_OBJECT_Q))
+            mu_ymax = a.dot(np.array([[self.y_max],[self.vy_max]]))
+            mu_ymax = mu_ymax + k_y_max.dot(detected_object.y_max - IMAGE_OBJECT_C.dot(mu_ymax))
+            self.y_max = mu_ymax[0,0]
+            self.vy_max = mu_ymax[1,0]
+            self.sigma_y_max = (np.eye(2)-k_y_max.dot(IMAGE_OBJECT_C)).dot(self.sigma_y_max)
+
+        self.set_border_behaviour()
 
         self.matched = True
 
@@ -492,103 +633,106 @@ class ImageWorld:
         """
         Create a new object based on detected object information
         """
-        # If the object is in the border area it will not be created
-        if not check_bounding_box_location(detected_object.x_min, detected_object.x_max, 
-                              detected_object.y_min, detected_object.y_max,
-                              self.width, self.height, BORDER_WIDTH_CREATE):
-            return False
-        # If the confidence is not high enough it will not be created
         if detected_object.confidence < CONFIDENFE_LEVEL_CREATE:
             return False
-        # Let's create the image object based on measurement
-        conf = int(detected_object.confidence*100.0)
-        conf_str = " ,confidence " + str(conf)
+
+        new_object = None
         if detected_object.class_type == 1:
-            self.image_objects.append(Aeroplane(detected_object, self))
-            self.add_event(detected_object.time, "aeroplane"+conf_str,1)
+            new_object = Aeroplane(detected_object, self)
         elif detected_object.class_type == 2:
-            self.image_objects.append(Bicycle(detected_object, self))
-            self.add_event(detected_object.time, "bicycle"+conf_str,1)
+            new_object = Bicycle(detected_object, self)
         elif detected_object.class_type == 3:
-            self.image_objects.append(Bird(detected_object, self))
-            self.add_event(detected_object.time, "bird"+conf_str,1)
+            new_object = Bird(detected_object, self)
         elif detected_object.class_type == 4:
-            self.image_objects.append(Boat(detected_object, self))
-            self.add_event(detected_object.time, "boat"+conf_str,1)
+            new_object = Boat(detected_object, self)
         elif detected_object.class_type == 5:
-            self.image_objects.append(Bottle(detected_object, self))
-            self.add_event(detected_object.time, "bottle"+conf_str,1)
+            new_object = Bottle(detected_object, self)
         elif detected_object.class_type == 6:
-            self.image_objects.append(Bus(detected_object, self))
-            self.add_event(detected_object.time, "bus"+conf_str,1)
+            new_object = Bus(detected_object, self)
         elif detected_object.class_type == 7:
-            self.image_objects.append(Car(detected_object, self))
-            self.add_event(detected_object.time, "car"+conf_str,1)
+            new_object = Car(detected_object, self)
         elif detected_object.class_type == 8:
-            self.image_objects.append(Cat(detected_object, self))
-            self.add_event(detected_object.time, "cat"+conf_str,1)
+            new_object = Cat(detected_object, self)
         elif detected_object.class_type == 9:
-            self.image_objects.append(Chair(detected_object, self))
-            self.add_event(detected_object.time, "chair"+conf_str,1)
+            new_object = Chair(detected_object, self)
         elif detected_object.class_type == 10:
-            self.image_objects.append(Cow(detected_object, self))
-            self.add_event(detected_object.time, "cow"+conf_str,1)
+            new_object = Cow(detected_object, self)
         elif detected_object.class_type == 11:
-            self.image_objects.append(DiningTable(detected_object, self))
-            self.add_event(detected_object.time, "dining table"+conf_str,1)
+            new_object = DiningTable(detected_object, self)
         elif detected_object.class_type == 12:
-            self.image_objects.append(Dog(detected_object, self))
-            self.add_event(detected_object.time, "dog"+conf_str,1)
+            new_object = Dog(detected_object, self)
         elif detected_object.class_type == 13:
-            self.image_objects.append(Horse(detected_object, self))
-            self.add_event(detected_object.time, "horse"+conf_str,1)
+            new_object = Horse(detected_object, self)
         elif detected_object.class_type == 14:
-            self.image_objects.append(Motorbike(detected_object, self))
-            self.add_event(detected_object.time, "motorbike"+conf_str,1)
+            new_object = Motorbike(detected_object, self)
         elif detected_object.class_type == 15:
-            self.image_objects.append(Person(detected_object, self))
-            self.add_event(detected_object.time, "person"+conf_str,1)
+            new_object = Person(detected_object, self)
         elif detected_object.class_type == 16:
-            self.image_objects.append(PottedPlant(detected_object, self))
-            self.add_event(detected_object.time, "potted pland"+conf_str,1)
+            new_object = PottedPlant(detected_object, self)
         elif detected_object.class_type == 17:
-            self.image_objects.append(Sheep(detected_object, self))
-            self.add_event(detected_object.time, "sheep"+conf_str,1)
+            new_object = Sheep(detected_object, self)
         elif detected_object.class_type == 18:
-            self.image_objects.append(Sofa(detected_object, self))
-            self.add_event(detected_object.time, "sofa"+conf_str,1)
+            new_object = Sofa(detected_object, self)
         elif detected_object.class_type == 19:
-            self.image_objects.append(Train(detected_object, self))
-            self.add_event(detected_object.time, "train"+conf_str,1)
+            new_object = Train(detected_object, self)
         elif detected_object.class_type == 20:
-            self.image_objects.append(TVMonitor(detected_object, self))
-            self.add_event(detected_object.time, "tv monitor"+conf_str,1)
+            new_object = TVMonitor(detected_object, self)
+            
+            
+        # Don't create if not in predefined class
+        if new_object is None:
+            return False
+
+        # Don't create if in border area ot out of screen
+        if new_object.border_left > 3 or new_object.border_right > 3 or \
+            new_object.border_top > 3 or new_object.border_bottom > 3:
+            return False
+        
+        speech = new_object.name
+        speech += " " + str(new_object.id)
+        conf = int(detected_object.confidence*100.0)
+        speech += " confidence " + str(conf)
+        speech += " observed"
+        self.add_event(detected_object.time, speech, 1)
+        self.image_objects.append(new_object)
+
         return True
+
+    def remove_image_object(self, image_object, time):
+        """
+        Remove image object from the world
+
+        """
+        speech = image_object.name
+        speech += " " + str(image_object.id)
+        speech += " vanished"
+        self.add_event(time, speech, 1)
+        self.image_objects.remove(image_object)
 
     def update(self, detection_time, detected_objects, log_file, trace_file, time_step):
         """
         Detected objects are taken into consideration. Previously observed
-        image objects are matched into the new detections. If no match
+        image objects are matched to the new detections. If no match
         is found, a new image object is created. Matched image objects are
         updated. Image objects not matched are removed.
         """
 
-        # If the detected object location is in border area, the object will be removed
-        removes = []
-        for detected_object in detected_objects:
-            if not check_bounding_box_location(detected_object.x_min, detected_object.x_max, 
-                                  detected_object.y_min, detected_object.y_max,
-                                  self.width, self.height, BORDER_WIDTH_REMOVE):
-                log_file.write("Delected object {0:d} removed due to being in border area:\n".format(detected_object.id))
-                log_file.write("---{0:6.2f} {1:7.2f} {2:7.2f} {3:7.2f} {4:7.2f}\n".format(
-                    detected_object.confidence, detected_object.x_min,
-                    detected_object.x_max, detected_object.y_min, detected_object.y_max))
-
-                removes.append(detected_object)
-
-        # Delete removed objects
-        for remove in removes:
-            detected_objects.remove(remove)
+#        # If the detected object location is in border area, the object will be removed
+#        removes = []
+#        for detected_object in detected_objects:
+#            if not check_bounding_box_location(detected_object.x_min, detected_object.x_max, 
+#                                  detected_object.y_min, detected_object.y_max,
+#                                  self.width, self.height, BORDER_WIDTH_REMOVE):
+#                log_file.write("Delected object {0:d} removed due to being in border area:\n".format(detected_object.id))
+#                log_file.write("---{0:6.2f} {1:7.2f} {2:7.2f} {3:7.2f} {4:7.2f}\n".format(
+#                    detected_object.confidence, detected_object.x_min,
+#                    detected_object.x_max, detected_object.y_min, detected_object.y_max))
+#
+#                removes.append(detected_object)
+#
+#        # Delete removed objects
+#        for remove in removes:
+#            detected_objects.remove(remove)
 
         # Predict new coordinates for each image object
         log_file.write("Image objects ({0:d}), predicted new locations:\n".format(len(self.image_objects)))
@@ -603,13 +747,11 @@ class ImageWorld:
                 float(image_object.appearance[4]), float(image_object.appearance[5]), \
                 float(image_object.appearance[6]), float(image_object.appearance[7])))
             
-        # If the predicted location is in border area, the object will be removed
+        # If the predicted location is out of screen it will be removed
         removes = []
         for image_object in self.image_objects:
-            if not check_bounding_box_location(image_object.x_min, image_object.x_max, 
-                                  image_object.y_min, image_object.y_max,
-                                  self.width, self.height, BORDER_WIDTH_REMOVE):
-                log_file.write("Image object {0:d} removed due to being in border area:\n".format(image_object.id))
+            if image_object.border_left == 6 or image_object.border_right == 6 or image_object.border_top == 6 or image_object.border_bottom == 6:
+                log_file.write("Image object {0:d} removed due to being out of screen:\n".format(image_object.id))
                 log_file.write("---{0:s} {1:6.2f} {2:7.2f} {3:7.2f} {4:7.2f} {5:7.2f}\n".format(
                     image_object.name, image_object.confidence, image_object.x_min,
                     image_object.x_max, image_object.y_min, image_object.y_max))
@@ -618,7 +760,7 @@ class ImageWorld:
 
         # Delete removed objects
         for remove in removes:
-            self.image_objects.remove(remove)
+            self.remove_image_object(remove, detection_time)
 
         # Calculate cost matrix for the Hungarian algorithm (assignment problem)
         log_file.write("Original cost matrix for Hungarian algorithm:\n")
@@ -671,7 +813,6 @@ class ImageWorld:
                 image_objects_to_match.append(image_object)
 
         # The optimal assignment without far-away objects:
-
         cost_to_match = np.zeros((len(detected_objects_to_match), \
                                   len(image_objects_to_match)))
 
@@ -755,7 +896,7 @@ class ImageWorld:
                     distance))
                 
                 image_object.correct(detected_object, time_step)
-                image_object.status = "visible"
+                image_object.detected = True
                 detected_object.matched = True
     
                 log_file.write("---corrected: {0:s} {1:6.2f} {2:6.2f} {3:6.2f} {4:6.2f} {5:6.2f} {6:.2f} {7:.2f} {8:.2f} {9:.2f} {10:.2f} {11:.2f} {12:.2f} {13:.2f}\n".format(
@@ -816,14 +957,11 @@ class ImageWorld:
                                             image_object.confidence))
                 match_index += 1
             
-
-        # If the corrected location is in border area, the object will be removed
+        # If the corrected location is out of screen it will be removed
         removes = []
         for image_object in self.image_objects:
-            if not check_bounding_box_location(image_object.x_min, image_object.x_max, 
-                                  image_object.y_min, image_object.y_max,
-                                  self.width, self.height, BORDER_WIDTH_REMOVE):
-                log_file.write("Image object {0:d} removed due to being in border area:\n".format(image_object.id))
+            if image_object.border_left == 6 or image_object.border_right == 6 or image_object.border_top == 6 or image_object.border_bottom == 6:
+                log_file.write("Image object {0:d} removed due to being pot of screen:\n".format(image_object.id))
                 log_file.write("---{0:s} {1:6.2f} {2:7.2f} {3:7.2f} {4:7.2f} {5:7.2f}\n".format(
                     image_object.name, image_object.confidence, image_object.x_min,
                     image_object.x_max, image_object.y_min, image_object.y_max))
@@ -832,7 +970,24 @@ class ImageWorld:
 
         # Delete removed objects
         for remove in removes:
-            self.image_objects.remove(remove)
+            self.remove_image_object(remove, detection_time)
+
+#        # If the corrected location is in border area, the object will be removed
+#        removes = []
+#        for image_object in self.image_objects:
+#            if not check_bounding_box_location(image_object.x_min, image_object.x_max, 
+#                                  image_object.y_min, image_object.y_max,
+#                                  self.width, self.height, BORDER_WIDTH_REMOVE):
+#                log_file.write("Image object {0:d} removed due to being in border area:\n".format(image_object.id))
+#                log_file.write("---{0:s} {1:6.2f} {2:7.2f} {3:7.2f} {4:7.2f} {5:7.2f}\n".format(
+#                    image_object.name, image_object.confidence, image_object.x_min,
+#                    image_object.x_max, image_object.y_min, image_object.y_max))
+#
+#                removes.append(image_object)
+#
+#        # Delete removed objects
+#        for remove in removes:
+#            self.image_objects.remove(remove)
 
         # Remove vanished image objects
         removes = []
@@ -847,10 +1002,9 @@ class ImageWorld:
 
         # Delete removed objects
         for remove in removes:
-            self.image_objects.remove(remove)
+            self.remove_image_object(remove, detection_time)
 
-
-        # Any image object not matched is changed to "hidden" state
+        # Any image object not matched is changed to not detected state
         for image_object in self.image_objects:
             if not image_object.matched:
                 log_file.write("Image object {0:d} status changed to hidden:\n".format(image_object.id))
@@ -858,7 +1012,7 @@ class ImageWorld:
                     image_object.name, image_object.confidence, image_object.x_min,
                     image_object.x_max, image_object.y_min, image_object.y_max))
 
-                image_object.status = "hidden"
+                image_object.detected = False
 #        # Any image object not matched is removed
 #        removes = []
 #        for image_object in self.image_objects:
