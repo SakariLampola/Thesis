@@ -112,10 +112,10 @@ IMAGE_OBJECT_R2 = 1.0 # Image object state equation velocity variance
 IMAGE_OBJECT_R = np.array([[IMAGE_OBJECT_R1, 0.0],
                            [0.0, IMAGE_OBJECT_R2]]) # Image object state equation covariance matrix
 
-IMAGE_OBJECT_Q1 = 100.0 # Image object (location) measurement variance
+IMAGE_OBJECT_Q1 = 200.0 # Image object (location) measurement variance
 IMAGE_OBJECT_Q = np.array([IMAGE_OBJECT_Q1])
 
-IMAGE_OBJECT_ALFA = 10.0 # Image object initial location error variance
+IMAGE_OBJECT_ALFA = 200.0 # Image object initial location error variance
 IMAGE_OBJECT_BETA = 10000.0 # Image object initial velocity error variance
 
 IMAGE_OBJECT_C = np.array([[1.0, 0.0]]) # Image object measurement matrix
@@ -172,6 +172,15 @@ class ImageObject:
         """
         x_center = (self.x_min + self.x_max) / 2.0
         y_center = (self.y_min + self.y_max) / 2.0
+        
+        return x_center, y_center
+
+    def center_point_velocity(self):
+        """
+        Calculate the bounding box center point
+        """
+        x_center = (self.vx_min + self.vx_max) / 2.0
+        y_center = (self.vy_min + self.vy_max) / 2.0
         
         return x_center, y_center
 
@@ -705,7 +714,7 @@ class ImageWorld:
         """
         speech = image_object.name
         speech += " " + str(image_object.id)
-        speech += " vanished"
+        speech += " disappeared"
         self.add_event(time, speech, 1)
         self.image_objects.remove(image_object)
 

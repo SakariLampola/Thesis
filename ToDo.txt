@@ -1,4 +1,4 @@
-- border behaviour
+- bug fixes
 - image object status + life span
 - distance metrics + probabilistic matching
 - 3d projection

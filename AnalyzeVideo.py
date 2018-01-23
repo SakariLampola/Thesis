@@ -149,9 +149,12 @@ def analyze_video(videofile):
                 x_variance, y_variance = image_object.location_variance()
                 x_std2 = 2.0 * sqrt(x_variance)
                 y_std2 = 2.0 * sqrt(y_variance)
-                
                 cv2.ellipse(frame_image_objects, (int(x_center), int(y_center)), (int(x_std2),int(y_std2)), \
                             0.0, 0, 360, image_object.color, 2)
+
+                x_center_velocity, y_center_velocity = image_object.center_point_velocity()
+                cv2.arrowedLine(frame_image_objects, (int(x_center), int(y_center)), (int(x_center+x_center_velocity),int(y_center+y_center_velocity)), \
+                            image_object.color, 2)
 
                 ytext = int(image_object.y_min) - 15 if int(image_object.y_min) - 15 > 15 \
                     else int(image_object.y_min) + 15
