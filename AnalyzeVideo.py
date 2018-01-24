@@ -65,6 +65,7 @@ def analyze_video(videofile):
                 frame_previous = frame_current.copy()
                 frame_final = np.concatenate((frame_previous, frame_current), axis=0)
                 cv2.imshow(videofile, frame_final)
+                cv2.moveWindow(videofile, 20, 20)
 #                not_found = True
 #                while not_found: # Discard everything except n, q, c
 #                    key_pushed = cv2.waitKey(0) & 0xFF
@@ -77,9 +78,11 @@ def analyze_video(videofile):
 
             log_file.write("----------------------------------------------\n")
             log_file.write("Time {0:<.2f}, frame {1:d}\n".format(current_time, i_frame))
-            log_file.write("Detected objects ({0:d}):\n".format(len(detected_objects)))
-
+            
             # Display detected objects
+            if len(detected_objects) > 0:
+                log_file.write("Detected objects ({0:d}):\n".format(len(detected_objects)))
+
             for detected_object in detected_objects:
 
                 log_file.write("---{0:d} {1:s} {2:6.2f} {3:4d} {4:4d} {5:4d} {6:4d} {7:.2f} {8:.2f} {9:.2f} {10:.2f} {11:.2f} {12:.2f} {13:.2f} {14:.2f}\n".format( \
@@ -113,7 +116,8 @@ def analyze_video(videofile):
             world.update(current_time, detected_objects, log_file, trace_file, time_step)
 
             # display the world with updated image objects
-            log_file.write("Image objects ({0:d}):\n".format(len(world.image_objects)))
+            if len(world.image_objects) > 0:
+                log_file.write("Image objects ({0:d}):\n".format(len(world.image_objects)))
 
             for image_object in world.image_objects:
 
@@ -145,16 +149,17 @@ def analyze_video(videofile):
                               int(image_object.y_min)), (int(image_object.x_max), \
                               int(image_object.y_max)), image_object.color, 2)
                 
-                x_center, y_center = image_object.center_point()
-                x_variance, y_variance = image_object.location_variance()
-                x_std2 = 2.0 * sqrt(x_variance)
-                y_std2 = 2.0 * sqrt(y_variance)
-                cv2.ellipse(frame_image_objects, (int(x_center), int(y_center)), (int(x_std2),int(y_std2)), \
-                            0.0, 0, 360, image_object.color, 2)
-
-                x_center_velocity, y_center_velocity = image_object.center_point_velocity()
-                cv2.arrowedLine(frame_image_objects, (int(x_center), int(y_center)), (int(x_center+x_center_velocity),int(y_center+y_center_velocity)), \
-                            image_object.color, 2)
+                if (image_object.is_center_reliable()):
+                    x_center, y_center = image_object.center_point()
+                    x_variance, y_variance = image_object.location_variance()
+                    x_std2 = 2.0 * sqrt(x_variance)
+                    y_std2 = 2.0 * sqrt(y_variance)
+                    cv2.ellipse(frame_image_objects, (int(x_center), int(y_center)), (int(x_std2),int(y_std2)), \
+                                0.0, 0, 360, image_object.color, 2)
+    
+                    x_center_velocity, y_center_velocity = image_object.center_point_velocity()
+                    cv2.arrowedLine(frame_image_objects, (int(x_center), int(y_center)), (int(x_center+x_center_velocity),int(y_center+y_center_velocity)), \
+                                image_object.color, 2)
 
                 ytext = int(image_object.y_min) - 15 if int(image_object.y_min) - 15 > 15 \
                     else int(image_object.y_min) + 15

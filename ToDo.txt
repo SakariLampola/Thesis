@@ -1,5 +1,5 @@
-- bug fixes
-- image object status + life span
-- distance metrics + probabilistic matching
 - 3d projection
 - 3d state estimation
+- bug fixes
+- distance metrics + probabilistic matching
+- class change

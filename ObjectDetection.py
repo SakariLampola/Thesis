@@ -72,5 +72,10 @@ def detect_objects(image, time, confidence_level):
             appearance = get_hue_histogram(image, x_min, x_max, y_min, y_max)
             objects.append(ioc.DetectedObject(time, class_type, x_min, x_max, \
                                               y_min, y_max, confidence, appearance))
-            
+            x_min_app = max(0, x_min)          
+            y_min_app = max(0, y_min)          
+            x_max_app = min(width-1, x_max)          
+            y_max_app = min(height-1, y_max)          
+            appearance = get_hue_histogram(image, x_min_app, x_max_app, y_min_app, y_max_app)
+
     return objects

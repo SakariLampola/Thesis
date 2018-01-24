@@ -20,12 +20,13 @@ CLASS_NAMES = ["background", "aeroplane", "bicycle", "bird", "boat",
                "dog", "horse", "motorbike", "person", "pottedplant", "sheep",
                "sofa", "train", "tvmonitor"]
 
-SIMILARITY_DISTANCE = 0.3 # Max distance to size ratio for similarity interpretation
+SIMILARITY_DISTANCE = 0.4 # Max distance to size ratio for similarity interpretation
 CONFIDENFE_LEVEL_CREATE = 0.80 # How confident we must be to create a new object
-CONFIDENFE_LEVEL_UPDATE = 0.40 # How confident we must be to update existing object
+CONFIDENFE_LEVEL_UPDATE = 0.20 # How confident we must be to update existing object
 #BORDER_WIDTH_CREATE = 30 # Image objects are not allowed to born if near image border
 #BORDER_WIDTH_REMOVE = 10 # Image objects are removed if near image border
 BORDER_WIDTH = 30 # Part of screen for special image object behaviour
+RETENTION_COUNT_MAX = 30 # How many frames and image object is kept untedected
 
 def next_id(category):
     """
@@ -165,6 +166,7 @@ class ImageObject:
         
         self.confidence = detected_object.confidence
         self.appearance = detected_object.appearance
+        self.retention_count = 0
 
     def center_point(self):
         """
@@ -192,7 +194,41 @@ class ImageObject:
         y_variance = self.sigma_y_min[0,0] + self.sigma_y_max[0,0]
         
         return x_variance, y_variance
+    
+    def is_center_reliable(self):
+        """
+        Decides whethet center point is reliable
+        """
+        if self.border_left in (3,5,6):
+            return False
 
+        if self.border_right in (3,5,6):
+            return False
+
+        if self.border_top in (3,5,6):
+            return False
+
+        if self.border_bottom in (3,5,6):
+            return False
+
+        return True
+
+    def border_extent(self):
+        """
+        Counts the number of borders the object touches
+        """
+        extent = 0
+
+        if self.border_left > 1:
+            extent  += 1
+        if self.border_right > 1:
+            extent  += 1
+        if self.border_top > 1:
+            extent  += 1
+        if self.border_bottom > 1:
+            extent  += 1
+        
+        return extent
 
     def is_vanished(self):
         """
@@ -301,34 +337,38 @@ class ImageObject:
 
         self.set_border_behaviour()
 
-        if (self.border_left not in [3,5]):
-            mu_xmin = a.dot(np.array([[self.x_min],[self.vx_min]]))
-        else:
-            mu_xmin = a.dot(np.array([[self.x_min],[self.vx_max]]))
+#        if (self.border_left not in [3,5]):
+#            mu_xmin = a.dot(np.array([[self.x_min],[self.vx_min]]))
+#        else:
+#            mu_xmin = a.dot(np.array([[self.x_min],[self.vx_max]]))
+        mu_xmin = a.dot(np.array([[self.x_min],[self.vx_min]]))
         self.x_min = mu_xmin[0,0]
         self.vx_min = mu_xmin[1,0]
         self.sigma_x_min = a.dot(self.sigma_x_min).dot(a.T) + IMAGE_OBJECT_R
 
-        if (self.border_right not in [3,5]):
-            mu_xmax = a.dot(np.array([[self.x_max],[self.vx_max]]))
-        else:
-            mu_xmax = a.dot(np.array([[self.x_max],[self.vx_min]]))
+#        if (self.border_right not in [3,5]):
+#            mu_xmax = a.dot(np.array([[self.x_max],[self.vx_max]]))
+#        else:
+#            mu_xmax = a.dot(np.array([[self.x_max],[self.vx_min]]))
+        mu_xmax = a.dot(np.array([[self.x_max],[self.vx_max]]))
         self.x_max = mu_xmax[0,0]
         self.vx_max = mu_xmax[1,0]
         self.sigma_x_max = a.dot(self.sigma_x_max).dot(a.T) + IMAGE_OBJECT_R
 
-        if (self.border_top not in [3,5]):
-            mu_ymin = a.dot(np.array([[self.y_min],[self.vy_min]]))
-        else:
-            mu_ymin = a.dot(np.array([[self.y_min],[self.vy_max]]))
+#        if (self.border_top not in [3,5]):
+#            mu_ymin = a.dot(np.array([[self.y_min],[self.vy_min]]))
+#        else:
+#            mu_ymin = a.dot(np.array([[self.y_min],[self.vy_max]]))
+        mu_ymin = a.dot(np.array([[self.y_min],[self.vy_min]]))
         self.y_min = mu_ymin[0,0]
         self.vy_min = mu_ymin[1,0]
         self.sigma_y_min = a.dot(self.sigma_y_min).dot(a.T) + IMAGE_OBJECT_R
 
-        if (self.border_bottom not in [3,5]):
-            mu_ymax = a.dot(np.array([[self.y_max],[self.vy_max]]))
-        else:
-            mu_ymax = a.dot(np.array([[self.y_max],[self.vy_min]]))
+#        if (self.border_bottom not in [3,5]):
+#            mu_ymax = a.dot(np.array([[self.y_max],[self.vy_max]]))
+#        else:
+#            mu_ymax = a.dot(np.array([[self.y_max],[self.vy_min]]))
+        mu_ymax = a.dot(np.array([[self.y_max],[self.vy_max]]))
         self.y_max = mu_ymax[0,0]
         self.vy_max = mu_ymax[1,0]
         self.sigma_y_max = a.dot(self.sigma_y_max).dot(a.T) + IMAGE_OBJECT_R
@@ -346,41 +386,41 @@ class ImageObject:
 
         a = np.array([[1.0, delta],[0.0, 1.0]]) # state equation matrix
 
-        if (self.border_left not in [3,5]):
-            k_x_min = self.sigma_x_min.dot(IMAGE_OBJECT_C.T).\
-                dot(np.linalg.inv(IMAGE_OBJECT_C.dot(self.sigma_x_min).dot(IMAGE_OBJECT_C.T) + IMAGE_OBJECT_Q))
-            mu_xmin = a.dot(np.array([[self.x_min],[self.vx_min]]))
-            mu_xmin = mu_xmin + k_x_min.dot(detected_object.x_min - IMAGE_OBJECT_C.dot(mu_xmin))
-            self.x_min = mu_xmin[0,0]
-            self.vx_min = mu_xmin[1,0]
-            self.sigma_x_min = (np.eye(2)-k_x_min.dot(IMAGE_OBJECT_C)).dot(self.sigma_x_min)
+#        if (self.border_left not in [3,5]):
+        k_x_min = self.sigma_x_min.dot(IMAGE_OBJECT_C.T).\
+            dot(np.linalg.inv(IMAGE_OBJECT_C.dot(self.sigma_x_min).dot(IMAGE_OBJECT_C.T) + IMAGE_OBJECT_Q))
+        mu_xmin = a.dot(np.array([[self.x_min],[self.vx_min]]))
+        mu_xmin = mu_xmin + k_x_min.dot(detected_object.x_min - IMAGE_OBJECT_C.dot(mu_xmin))
+        self.x_min = mu_xmin[0,0]
+        self.vx_min = mu_xmin[1,0]
+        self.sigma_x_min = (np.eye(2)-k_x_min.dot(IMAGE_OBJECT_C)).dot(self.sigma_x_min)
 
-        if (self.border_right not in [3,5]):
-            k_x_max = self.sigma_x_max.dot(IMAGE_OBJECT_C.T).\
-                dot(np.linalg.inv(IMAGE_OBJECT_C.dot(self.sigma_x_max).dot(IMAGE_OBJECT_C.T) + IMAGE_OBJECT_Q))
-            mu_xmax = a.dot(np.array([[self.x_max],[self.vx_max]]))
-            mu_xmax = mu_xmax + k_x_max.dot(detected_object.x_max - IMAGE_OBJECT_C.dot(mu_xmax))
-            self.x_max = mu_xmax[0,0]
-            self.vx_max = mu_xmax[1,0]
-            self.sigma_x_max = (np.eye(2)-k_x_max.dot(IMAGE_OBJECT_C)).dot(self.sigma_x_max)
+#        if (self.border_right not in [3,5]):
+        k_x_max = self.sigma_x_max.dot(IMAGE_OBJECT_C.T).\
+            dot(np.linalg.inv(IMAGE_OBJECT_C.dot(self.sigma_x_max).dot(IMAGE_OBJECT_C.T) + IMAGE_OBJECT_Q))
+        mu_xmax = a.dot(np.array([[self.x_max],[self.vx_max]]))
+        mu_xmax = mu_xmax + k_x_max.dot(detected_object.x_max - IMAGE_OBJECT_C.dot(mu_xmax))
+        self.x_max = mu_xmax[0,0]
+        self.vx_max = mu_xmax[1,0]
+        self.sigma_x_max = (np.eye(2)-k_x_max.dot(IMAGE_OBJECT_C)).dot(self.sigma_x_max)
 
-        if (self.border_top not in [3,5]):
-            k_y_min = self.sigma_y_min.dot(IMAGE_OBJECT_C.T).\
-                dot(np.linalg.inv(IMAGE_OBJECT_C.dot(self.sigma_y_min).dot(IMAGE_OBJECT_C.T) + IMAGE_OBJECT_Q))
-            mu_ymin = a.dot(np.array([[self.y_min],[self.vy_min]]))
-            mu_ymin = mu_ymin + k_y_min.dot(detected_object.y_min - IMAGE_OBJECT_C.dot(mu_ymin))
-            self.y_min = mu_ymin[0,0]
-            self.vy_min = mu_ymin[1,0]
-            self.sigma_y_min = (np.eye(2)-k_y_min.dot(IMAGE_OBJECT_C)).dot(self.sigma_y_min)
+#        if (self.border_top not in [3,5]):
+        k_y_min = self.sigma_y_min.dot(IMAGE_OBJECT_C.T).\
+            dot(np.linalg.inv(IMAGE_OBJECT_C.dot(self.sigma_y_min).dot(IMAGE_OBJECT_C.T) + IMAGE_OBJECT_Q))
+        mu_ymin = a.dot(np.array([[self.y_min],[self.vy_min]]))
+        mu_ymin = mu_ymin + k_y_min.dot(detected_object.y_min - IMAGE_OBJECT_C.dot(mu_ymin))
+        self.y_min = mu_ymin[0,0]
+        self.vy_min = mu_ymin[1,0]
+        self.sigma_y_min = (np.eye(2)-k_y_min.dot(IMAGE_OBJECT_C)).dot(self.sigma_y_min)
 
-        if (self.border_bottom not in [3,5]):
-            k_y_max = self.sigma_y_max.dot(IMAGE_OBJECT_C.T).\
-                dot(np.linalg.inv(IMAGE_OBJECT_C.dot(self.sigma_y_max).dot(IMAGE_OBJECT_C.T) + IMAGE_OBJECT_Q))
-            mu_ymax = a.dot(np.array([[self.y_max],[self.vy_max]]))
-            mu_ymax = mu_ymax + k_y_max.dot(detected_object.y_max - IMAGE_OBJECT_C.dot(mu_ymax))
-            self.y_max = mu_ymax[0,0]
-            self.vy_max = mu_ymax[1,0]
-            self.sigma_y_max = (np.eye(2)-k_y_max.dot(IMAGE_OBJECT_C)).dot(self.sigma_y_max)
+#        if (self.border_bottom not in [3,5]):
+        k_y_max = self.sigma_y_max.dot(IMAGE_OBJECT_C.T).\
+            dot(np.linalg.inv(IMAGE_OBJECT_C.dot(self.sigma_y_max).dot(IMAGE_OBJECT_C.T) + IMAGE_OBJECT_Q))
+        mu_ymax = a.dot(np.array([[self.y_max],[self.vy_max]]))
+        mu_ymax = mu_ymax + k_y_max.dot(detected_object.y_max - IMAGE_OBJECT_C.dot(mu_ymax))
+        self.y_max = mu_ymax[0,0]
+        self.vy_max = mu_ymax[1,0]
+        self.sigma_y_max = (np.eye(2)-k_y_max.dot(IMAGE_OBJECT_C)).dot(self.sigma_y_max)
 
         self.set_border_behaviour()
 
@@ -692,9 +732,13 @@ class ImageWorld:
         if new_object is None:
             return False
 
-        # Don't create if in border area ot out of screen
+        # Don't create if in border area or out of screen
         if new_object.border_left > 3 or new_object.border_right > 3 or \
             new_object.border_top > 3 or new_object.border_bottom > 3:
+            return False
+
+        # Don't create if touching 3 or more borders
+        if new_object.border_extent() > 2:
             return False
         
         speech = new_object.name
@@ -743,260 +787,266 @@ class ImageWorld:
 #        for remove in removes:
 #            detected_objects.remove(remove)
 
-        # Predict new coordinates for each image object
-        log_file.write("Image objects ({0:d}), predicted new locations:\n".format(len(self.image_objects)))
-        for image_object in self.image_objects:
-            image_object.predict(time_step)
-            log_file.write("---{0:d} {1:s} {2:6.2f} {3:7.2f} {4:7.2f} {5:7.2f} {6:7.2f} {7:.2f} {8:.2f} {9:.2f} {10:.2f} {11:.2f} {12:.2f} {13:.2f} {14:.2f}\n".format(
-                image_object.id, image_object.name, image_object.confidence,
-                image_object.x_min, image_object.x_max, \
-                image_object.y_min, image_object.y_max, \
-                float(image_object.appearance[0]), float(image_object.appearance[1]), \
-                float(image_object.appearance[2]), float(image_object.appearance[3]), \
-                float(image_object.appearance[4]), float(image_object.appearance[5]), \
-                float(image_object.appearance[6]), float(image_object.appearance[7])))
-            
-        # If the predicted location is out of screen it will be removed
-        removes = []
-        for image_object in self.image_objects:
-            if image_object.border_left == 6 or image_object.border_right == 6 or image_object.border_top == 6 or image_object.border_bottom == 6:
-                log_file.write("Image object {0:d} removed due to being out of screen:\n".format(image_object.id))
-                log_file.write("---{0:s} {1:6.2f} {2:7.2f} {3:7.2f} {4:7.2f} {5:7.2f}\n".format(
-                    image_object.name, image_object.confidence, image_object.x_min,
-                    image_object.x_max, image_object.y_min, image_object.y_max))
-
-                removes.append(image_object)
-
-        # Delete removed objects
-        for remove in removes:
-            self.remove_image_object(remove, detection_time)
-
-        # Calculate cost matrix for the Hungarian algorithm (assignment problem)
-        log_file.write("Original cost matrix for Hungarian algorithm:\n")
-        cost = np.zeros((len(detected_objects), len(self.image_objects)))
-        detected_object_index = 0
-        for detected_object in detected_objects:
-            log_file.write("{0:6d} ".format(detected_object.id))
-            image_object_index = 0
-            found = False # Just to decide whether to print a newline into the log
+        # Process previous image objects
+        if len(self.image_objects) > 0:
+            # Predict new coordinates for each image object
+            log_file.write("Image objects ({0:d}), predicted new locations:\n".format(len(self.image_objects)))
             for image_object in self.image_objects:
-                cost[detected_object_index, image_object_index] = \
-                    detected_object.distance_with_class(image_object)
-                log_file.write("{0:7.2f} ({1:d}) ".format(cost[detected_object_index, image_object_index], image_object.id))
-                image_object_index += 1
-                found = True
-            detected_object_index += 1
-            if found:
-                log_file.write("\n")
-
-        # Remove rows and columns with no values inside SIMILARITY_DISTANCE
-        count_detected_objects = len(detected_objects)        
-        count_image_objects = len(self.image_objects)
-
-        remove_detected_objects = []
-        for detected_object_index in range(0, count_detected_objects):
-            found = False
-            for image_object_index in range(0, count_image_objects):
-                if cost[detected_object_index, image_object_index] < SIMILARITY_DISTANCE:
-                    found = True
-            if found == False:
-                remove_detected_objects.append(detected_objects[detected_object_index]) 
-        remove_image_objects = []
-        for image_object_index in range(0, count_image_objects):
-            found = False
-            for detected_object_index in range(0, count_detected_objects):
-                if cost[detected_object_index, image_object_index] < SIMILARITY_DISTANCE:
-                    found = True
-            if found == False:
-                remove_image_objects.append(self.image_objects[image_object_index]) 
-
-        detected_objects_to_match = []
-        image_objects_to_match = []
-
-        for detected_object in detected_objects:
-            if detected_object not in remove_detected_objects:
-                detected_objects_to_match.append(detected_object)
-            
-        for image_object in self.image_objects:
-            if image_object not in remove_image_objects:
-                image_objects_to_match.append(image_object)
-
-        # The optimal assignment without far-away objects:
-        cost_to_match = np.zeros((len(detected_objects_to_match), \
-                                  len(image_objects_to_match)))
-
-        row_index = -1
-        row_index_original = 0
-        for detected_object in detected_objects:
-            if detected_object not in remove_detected_objects:
-                row_index += 1
-                col_index = -1
-                col_index_original = 0
-                for image_object in self.image_objects:
-                    if image_object not in remove_image_objects:
-                        col_index +=1
-                        cost_to_match[row_index, col_index] = cost[row_index_original, col_index_original]
-                    col_index_original += 1
-            row_index_original += 1
-
-        # Let's print the modified cost matrix
-        log_file.write("Modified cost matrix for Hungarian algorithm:\n")
-        detected_object_index = 0
-        for detected_object in detected_objects_to_match:
-            log_file.write("{0:6d} ".format(detected_object.id))
-            image_object_index = 0
-            found = False # Just to decide whether to print a newline into the log
-            for image_object in image_objects_to_match:
-                log_file.write("{0:7.2f} ({1:d}) ".format(cost_to_match[detected_object_index, image_object_index], image_object.id))
-                image_object_index += 1
-                found = True
-            detected_object_index += 1
-            if found:
-                log_file.write("\n")
-       
-        # Find the optimal assigment
-        row_ind, col_ind = linear_sum_assignment(cost_to_match)
-        
-        # Update matched objects
-        log_file.write("Optimal assignment:\n")
-        match_index = 0
-        for row in row_ind:
-            i1 = row_ind[match_index]
-            i2 = col_ind[match_index]
-            detected_object = detected_objects_to_match[i1]
-            image_object = image_objects_to_match[i2]
-            log_file.write("Detected object {0:d} matched to image object {1:d}\n".format(detected_object.id, \
-                           image_object.id))
-            distance = cost_to_match[i1,i2]
-            if distance > SIMILARITY_DISTANCE:
-                log_file.write("Detected object {0:d} - image object {1:d}, distance too far!\n".format(\
-                               detected_object.id, image_object.id))
-                match_index += 1
-            else:
-                log_file.write("Existing image object {0:d} updated:\n".format(image_object.id))
-    
-                x_min_predicted = image_object.x_min
-                x_max_predicted = image_object.x_max
-                y_min_predicted = image_object.y_min
-                y_max_predicted = image_object.y_max
-
-                vx_min_predicted = image_object.vx_min
-                vx_max_predicted = image_object.vx_max
-                vy_min_predicted = image_object.vy_min
-                vy_max_predicted = image_object.vy_max
-    
-                log_file.write("---predicted: {0:s} {1:6.2f} {2:6.2f} {3:6.2f} {4:6.2f} {5:6.2f} {6:.2f} {7:.2f} {8:.2f} {9:.2f} {10:.2f} {11:.2f} {12:.2f} {13:.2f}\n".format(
-                    image_object.name, image_object.confidence, \
-                    image_object.x_min, image_object.x_max, \
-                    image_object.y_min, image_object.y_max,
-                    float(image_object.appearance[0]), float(image_object.appearance[1]), \
-                    float(image_object.appearance[2]), float(image_object.appearance[3]), \
-                    float(image_object.appearance[4]), float(image_object.appearance[5]), \
-                    float(image_object.appearance[6]), float(image_object.appearance[7])))
-    
-                log_file.write("---measured:  {0:s} {1:6.2f} {2:6.2f} {3:6.2f} {4:6.2f} {5:6.2f} {6:.2f} {7:.2f} {8:.2f} {9:.2f} {10:.2f} {11:.2f} {12:.2f} {13:.2f} {14:.2f}\n".format( \
-                    CLASS_NAMES[detected_object.class_type], detected_object.confidence, \
-                    float(detected_object.x_min), float(detected_object.x_max), \
-                    float(detected_object.y_min), float(detected_object.y_max), \
-                    float(detected_object.appearance[0]), float(detected_object.appearance[1]), \
-                    float(detected_object.appearance[2]), float(detected_object.appearance[3]), \
-                    float(detected_object.appearance[4]), float(detected_object.appearance[5]), \
-                    float(detected_object.appearance[6]), float(detected_object.appearance[7]), \
-                    distance))
+                image_object.predict(time_step)
                 
-                image_object.correct(detected_object, time_step)
-                image_object.detected = True
-                detected_object.matched = True
-    
-                log_file.write("---corrected: {0:s} {1:6.2f} {2:6.2f} {3:6.2f} {4:6.2f} {5:6.2f} {6:.2f} {7:.2f} {8:.2f} {9:.2f} {10:.2f} {11:.2f} {12:.2f} {13:.2f}\n".format(
-                    image_object.name, image_object.confidence, \
+                log_file.write("---{0:d} {1:s} {2:6.2f} {3:7.2f} {4:7.2f} {5:7.2f} {6:7.2f} {7:.2f} {8:.2f} {9:.2f} {10:.2f} {11:.2f} {12:.2f} {13:.2f} {14:.2f}\n".format(
+                    image_object.id, image_object.name, image_object.confidence,
                     image_object.x_min, image_object.x_max, \
-                    image_object.y_min, image_object.y_max,
+                    image_object.y_min, image_object.y_max, \
                     float(image_object.appearance[0]), float(image_object.appearance[1]), \
                     float(image_object.appearance[2]), float(image_object.appearance[3]), \
                     float(image_object.appearance[4]), float(image_object.appearance[5]), \
                     float(image_object.appearance[6]), float(image_object.appearance[7])))
+                
+            # If the predicted location is out of screen it will be removed
+            removes = []
+            for image_object in self.image_objects:
+                if image_object.border_left == 6 or image_object.border_right == 6 or image_object.border_top == 6 or image_object.border_bottom == 6:
+                    log_file.write("Image object {0:d} removed due to being out of screen:\n".format(image_object.id))
+                    log_file.write("---{0:s} {1:6.2f} {2:7.2f} {3:7.2f} {4:7.2f} {5:7.2f}\n".format(
+                        image_object.name, image_object.confidence, image_object.x_min,
+                        image_object.x_max, image_object.y_min, image_object.y_max))
     
-                fmt = ("{0:.3f},{1:d},{2:.3f},{3:.3f},{4:.3f},{5:.3f},"
-                       "{6:.3f},{7:.3f},{8:.3f},{9:.3f},{10:.3f},{11:.3f},"
-                       "{12:.3f},{13:.3f},{14:.3f},"
-                       "{15:.3f},{15:.3f},{17:.3f},{18:.3f},{19:.3f},{20:.3f},{21:.3f},{22:.3f},"
-                       "{23:.2f},{24:.2f},{25:.2f},{26:.2f},{27:.2f},{28:.2f},{29:.2f},{30:.2f},"
-                       "{31:.2f},{32:.2f},{33:.2f},{34:.2f},{35:.2f},{36:.2f},{37:.2f},{38:.2f},{39:.2f}\n")
+                    removes.append(image_object)
     
-                trace_file.write(fmt.format(detection_time, \
-                                            image_object.id, \
-                                            x_min_predicted, \
-                                            x_max_predicted, \
-                                            y_min_predicted, \
-                                            y_max_predicted, \
-                                            detected_object.x_min, \
-                                            detected_object.x_max, \
-                                            detected_object.y_min, \
-                                            detected_object.y_max, \
-                                            image_object.x_min, \
-                                            image_object.x_max, \
-                                            image_object.y_min, \
-                                            image_object.y_max, \
-                                            vx_min_predicted, \
-                                            vx_max_predicted, \
-                                            vy_min_predicted, \
-                                            vy_max_predicted, \
-                                            image_object.vx_min, \
-                                            image_object.vx_max, \
-                                            image_object.vy_min, \
-                                            image_object.vy_max, \
-                                            distance, \
-                                            float(detected_object.appearance[0]), \
-                                            float(detected_object.appearance[1]), \
-                                            float(detected_object.appearance[2]), \
-                                            float(detected_object.appearance[3]), \
-                                            float(detected_object.appearance[4]), \
-                                            float(detected_object.appearance[5]), \
-                                            float(detected_object.appearance[6]), \
-                                            float(detected_object.appearance[7]), \
-                                            float(image_object.appearance[0]), \
-                                            float(image_object.appearance[1]), \
-                                            float(image_object.appearance[2]), \
-                                            float(image_object.appearance[3]), \
-                                            float(image_object.appearance[4]), \
-                                            float(image_object.appearance[5]), \
-                                            float(image_object.appearance[6]), \
-                                            float(image_object.appearance[7]), \
-                                            image_object.confidence))
-                match_index += 1
+            # Delete removed objects
+            for remove in removes:
+                self.remove_image_object(remove, detection_time)
+
+        # Match detected objects to image objects
+        if len(self.image_objects) > 0 and len(detected_objects) > 0:
+            # Calculate cost matrix for the Hungarian algorithm (assignment problem)
+            log_file.write("Original cost matrix for Hungarian algorithm:\n")
+            cost = np.zeros((len(detected_objects), len(self.image_objects)))
+            detected_object_index = 0
+            for detected_object in detected_objects:
+                log_file.write("{0:6d} ".format(detected_object.id))
+                image_object_index = 0
+                found = False # Just to decide whether to print a newline into the log
+                for image_object in self.image_objects:
+                    cost[detected_object_index, image_object_index] = \
+                        detected_object.distance_with_class(image_object)
+                    log_file.write("{0:7.2f} ({1:d}) ".format(cost[detected_object_index, image_object_index], image_object.id))
+                    image_object_index += 1
+                    found = True
+                detected_object_index += 1
+                if found:
+                    log_file.write("\n")
+    
+            # Remove rows and columns with no values inside SIMILARITY_DISTANCE
+            count_detected_objects = len(detected_objects)        
+            count_image_objects = len(self.image_objects)
+    
+            remove_detected_objects = []
+            for detected_object_index in range(0, count_detected_objects):
+                found = False
+                for image_object_index in range(0, count_image_objects):
+                    if cost[detected_object_index, image_object_index] < SIMILARITY_DISTANCE:
+                        found = True
+                if found == False:
+                    remove_detected_objects.append(detected_objects[detected_object_index]) 
+            remove_image_objects = []
+            for image_object_index in range(0, count_image_objects):
+                found = False
+                for detected_object_index in range(0, count_detected_objects):
+                    if cost[detected_object_index, image_object_index] < SIMILARITY_DISTANCE:
+                        found = True
+                if found == False:
+                    remove_image_objects.append(self.image_objects[image_object_index]) 
+    
+            detected_objects_to_match = []
+            image_objects_to_match = []
+    
+            for detected_object in detected_objects:
+                if detected_object not in remove_detected_objects:
+                    detected_objects_to_match.append(detected_object)
+                
+            for image_object in self.image_objects:
+                if image_object not in remove_image_objects:
+                    image_objects_to_match.append(image_object)
+    
+            # The optimal assignment without far-away objects:
+            cost_to_match = np.zeros((len(detected_objects_to_match), \
+                                      len(image_objects_to_match)))
+    
+            row_index = -1
+            row_index_original = 0
+            for detected_object in detected_objects:
+                if detected_object not in remove_detected_objects:
+                    row_index += 1
+                    col_index = -1
+                    col_index_original = 0
+                    for image_object in self.image_objects:
+                        if image_object not in remove_image_objects:
+                            col_index +=1
+                            cost_to_match[row_index, col_index] = cost[row_index_original, col_index_original]
+                        col_index_original += 1
+                row_index_original += 1
+    
+            # Let's print the modified cost matrix
+            log_file.write("Modified cost matrix for Hungarian algorithm:\n")
+            detected_object_index = 0
+            for detected_object in detected_objects_to_match:
+                log_file.write("{0:6d} ".format(detected_object.id))
+                image_object_index = 0
+                found = False # Just to decide whether to print a newline into the log
+                for image_object in image_objects_to_match:
+                    log_file.write("{0:7.2f} ({1:d}) ".format(cost_to_match[detected_object_index, image_object_index], image_object.id))
+                    image_object_index += 1
+                    found = True
+                detected_object_index += 1
+                if found:
+                    log_file.write("\n")
+           
+            # Find the optimal assigment
+            row_ind, col_ind = linear_sum_assignment(cost_to_match)
             
-        # If the corrected location is out of screen it will be removed
-        removes = []
-        for image_object in self.image_objects:
-            if image_object.border_left == 6 or image_object.border_right == 6 or image_object.border_top == 6 or image_object.border_bottom == 6:
-                log_file.write("Image object {0:d} removed due to being pot of screen:\n".format(image_object.id))
-                log_file.write("---{0:s} {1:6.2f} {2:7.2f} {3:7.2f} {4:7.2f} {5:7.2f}\n".format(
-                    image_object.name, image_object.confidence, image_object.x_min,
-                    image_object.x_max, image_object.y_min, image_object.y_max))
-
-                removes.append(image_object)
-
-        # Delete removed objects
-        for remove in removes:
-            self.remove_image_object(remove, detection_time)
-
-#        # If the corrected location is in border area, the object will be removed
-#        removes = []
-#        for image_object in self.image_objects:
-#            if not check_bounding_box_location(image_object.x_min, image_object.x_max, 
-#                                  image_object.y_min, image_object.y_max,
-#                                  self.width, self.height, BORDER_WIDTH_REMOVE):
-#                log_file.write("Image object {0:d} removed due to being in border area:\n".format(image_object.id))
-#                log_file.write("---{0:s} {1:6.2f} {2:7.2f} {3:7.2f} {4:7.2f} {5:7.2f}\n".format(
-#                    image_object.name, image_object.confidence, image_object.x_min,
-#                    image_object.x_max, image_object.y_min, image_object.y_max))
-#
-#                removes.append(image_object)
-#
-#        # Delete removed objects
-#        for remove in removes:
-#            self.image_objects.remove(remove)
+            # Update matched objects
+            log_file.write("Optimal assignment:\n")
+            match_index = 0
+            for row in row_ind:
+                i1 = row_ind[match_index]
+                i2 = col_ind[match_index]
+                detected_object = detected_objects_to_match[i1]
+                image_object = image_objects_to_match[i2]
+                log_file.write("Detected object {0:d} matched to image object {1:d}\n".format(detected_object.id, \
+                               image_object.id))
+                distance = cost_to_match[i1,i2]
+                if distance > SIMILARITY_DISTANCE:
+                    log_file.write("Detected object {0:d} - image object {1:d}, distance too far!\n".format(\
+                                   detected_object.id, image_object.id))
+                    match_index += 1
+                else:
+                    log_file.write("Existing image object {0:d} updated:\n".format(image_object.id))
+        
+                    x_min_predicted = image_object.x_min
+                    x_max_predicted = image_object.x_max
+                    y_min_predicted = image_object.y_min
+                    y_max_predicted = image_object.y_max
+    
+                    vx_min_predicted = image_object.vx_min
+                    vx_max_predicted = image_object.vx_max
+                    vy_min_predicted = image_object.vy_min
+                    vy_max_predicted = image_object.vy_max
+        
+                    log_file.write("---predicted: {0:s} {1:6.2f} {2:6.2f} {3:6.2f} {4:6.2f} {5:6.2f} {6:.2f} {7:.2f} {8:.2f} {9:.2f} {10:.2f} {11:.2f} {12:.2f} {13:.2f}\n".format(
+                        image_object.name, image_object.confidence, \
+                        image_object.x_min, image_object.x_max, \
+                        image_object.y_min, image_object.y_max,
+                        float(image_object.appearance[0]), float(image_object.appearance[1]), \
+                        float(image_object.appearance[2]), float(image_object.appearance[3]), \
+                        float(image_object.appearance[4]), float(image_object.appearance[5]), \
+                        float(image_object.appearance[6]), float(image_object.appearance[7])))
+        
+                    log_file.write("---measured:  {0:s} {1:6.2f} {2:6.2f} {3:6.2f} {4:6.2f} {5:6.2f} {6:.2f} {7:.2f} {8:.2f} {9:.2f} {10:.2f} {11:.2f} {12:.2f} {13:.2f} {14:.2f}\n".format( \
+                        CLASS_NAMES[detected_object.class_type], detected_object.confidence, \
+                        float(detected_object.x_min), float(detected_object.x_max), \
+                        float(detected_object.y_min), float(detected_object.y_max), \
+                        float(detected_object.appearance[0]), float(detected_object.appearance[1]), \
+                        float(detected_object.appearance[2]), float(detected_object.appearance[3]), \
+                        float(detected_object.appearance[4]), float(detected_object.appearance[5]), \
+                        float(detected_object.appearance[6]), float(detected_object.appearance[7]), \
+                        distance))
+                    
+                    image_object.correct(detected_object, time_step)
+                    image_object.detected = True
+                    image_object.retention_count = 0
+                    detected_object.matched = True
+        
+                    log_file.write("---corrected: {0:s} {1:6.2f} {2:6.2f} {3:6.2f} {4:6.2f} {5:6.2f} {6:.2f} {7:.2f} {8:.2f} {9:.2f} {10:.2f} {11:.2f} {12:.2f} {13:.2f}\n".format(
+                        image_object.name, image_object.confidence, \
+                        image_object.x_min, image_object.x_max, \
+                        image_object.y_min, image_object.y_max,
+                        float(image_object.appearance[0]), float(image_object.appearance[1]), \
+                        float(image_object.appearance[2]), float(image_object.appearance[3]), \
+                        float(image_object.appearance[4]), float(image_object.appearance[5]), \
+                        float(image_object.appearance[6]), float(image_object.appearance[7])))
+        
+                    fmt = ("{0:.3f},{1:d},{2:.3f},{3:.3f},{4:.3f},{5:.3f},"
+                           "{6:.3f},{7:.3f},{8:.3f},{9:.3f},{10:.3f},{11:.3f},"
+                           "{12:.3f},{13:.3f},{14:.3f},"
+                           "{15:.3f},{15:.3f},{17:.3f},{18:.3f},{19:.3f},{20:.3f},{21:.3f},{22:.3f},"
+                           "{23:.2f},{24:.2f},{25:.2f},{26:.2f},{27:.2f},{28:.2f},{29:.2f},{30:.2f},"
+                           "{31:.2f},{32:.2f},{33:.2f},{34:.2f},{35:.2f},{36:.2f},{37:.2f},{38:.2f},{39:.2f}\n")
+        
+                    trace_file.write(fmt.format(detection_time, \
+                                                image_object.id, \
+                                                x_min_predicted, \
+                                                x_max_predicted, \
+                                                y_min_predicted, \
+                                                y_max_predicted, \
+                                                detected_object.x_min, \
+                                                detected_object.x_max, \
+                                                detected_object.y_min, \
+                                                detected_object.y_max, \
+                                                image_object.x_min, \
+                                                image_object.x_max, \
+                                                image_object.y_min, \
+                                                image_object.y_max, \
+                                                vx_min_predicted, \
+                                                vx_max_predicted, \
+                                                vy_min_predicted, \
+                                                vy_max_predicted, \
+                                                image_object.vx_min, \
+                                                image_object.vx_max, \
+                                                image_object.vy_min, \
+                                                image_object.vy_max, \
+                                                distance, \
+                                                float(detected_object.appearance[0]), \
+                                                float(detected_object.appearance[1]), \
+                                                float(detected_object.appearance[2]), \
+                                                float(detected_object.appearance[3]), \
+                                                float(detected_object.appearance[4]), \
+                                                float(detected_object.appearance[5]), \
+                                                float(detected_object.appearance[6]), \
+                                                float(detected_object.appearance[7]), \
+                                                float(image_object.appearance[0]), \
+                                                float(image_object.appearance[1]), \
+                                                float(image_object.appearance[2]), \
+                                                float(image_object.appearance[3]), \
+                                                float(image_object.appearance[4]), \
+                                                float(image_object.appearance[5]), \
+                                                float(image_object.appearance[6]), \
+                                                float(image_object.appearance[7]), \
+                                                image_object.confidence))
+                    match_index += 1
+                
+            # If the corrected location is out of screen it will be removed
+            removes = []
+            for image_object in self.image_objects:
+                if image_object.border_left == 6 or image_object.border_right == 6 or image_object.border_top == 6 or image_object.border_bottom == 6:
+                    log_file.write("Image object {0:d} removed due to being pot of screen:\n".format(image_object.id))
+                    log_file.write("---{0:s} {1:6.2f} {2:7.2f} {3:7.2f} {4:7.2f} {5:7.2f}\n".format(
+                        image_object.name, image_object.confidence, image_object.x_min,
+                        image_object.x_max, image_object.y_min, image_object.y_max))
+    
+                    removes.append(image_object)
+    
+            # Delete removed objects
+            for remove in removes:
+                self.remove_image_object(remove, detection_time)
+    
+    #        # If the corrected location is in border area, the object will be removed
+    #        removes = []
+    #        for image_object in self.image_objects:
+    #            if not check_bounding_box_location(image_object.x_min, image_object.x_max, 
+    #                                  image_object.y_min, image_object.y_max,
+    #                                  self.width, self.height, BORDER_WIDTH_REMOVE):
+    #                log_file.write("Image object {0:d} removed due to being in border area:\n".format(image_object.id))
+    #                log_file.write("---{0:s} {1:6.2f} {2:7.2f} {3:7.2f} {4:7.2f} {5:7.2f}\n".format(
+    #                    image_object.name, image_object.confidence, image_object.x_min,
+    #                    image_object.x_max, image_object.y_min, image_object.y_max))
+    #
+    #                removes.append(image_object)
+    #
+    #        # Delete removed objects
+    #        for remove in removes:
+    #            self.image_objects.remove(remove)
 
         # Remove vanished image objects
         removes = []
@@ -1013,15 +1063,48 @@ class ImageWorld:
         for remove in removes:
             self.remove_image_object(remove, detection_time)
 
+        # Remove objects touching 3 or more borders
+        removes = []
+        for image_object in self.image_objects:
+            if image_object.border_extent() > 2:
+                log_file.write("Image object {0:d} removed due to touching 3 borders:\n".format(image_object.id))
+                log_file.write("---{0:s} {1:6.2f} {2:7.2f} {3:7.2f} {4:7.2f} {5:7.2f}\n".format(
+                    image_object.name, image_object.confidence, image_object.x_min,
+                    image_object.x_max, image_object.y_min, image_object.y_max))
+
+                removes.append(image_object)
+
+        # Delete removed objects
+        for remove in removes:
+            self.remove_image_object(remove, detection_time)
+
         # Any image object not matched is changed to not detected state
         for image_object in self.image_objects:
             if not image_object.matched:
-                log_file.write("Image object {0:d} status changed to hidden:\n".format(image_object.id))
+                log_file.write("Image object {0:d} status changed to not detected:\n".format(image_object.id))
                 log_file.write("---{0:s} {1:6.2f} {2:7.2f} {3:7.2f} {4:7.2f} {5:7.2f}\n".format(
                     image_object.name, image_object.confidence, image_object.x_min,
                     image_object.x_max, image_object.y_min, image_object.y_max))
 
                 image_object.detected = False
+                image_object.retention_count += 1
+
+
+        # Remove objects that has not been detected for some time
+        removes = []
+        for image_object in self.image_objects:
+            if image_object.retention_count > RETENTION_COUNT_MAX:
+                log_file.write("Image object {0:d} removed due to being not detected for a while:\n".format(image_object.id))
+                log_file.write("---{0:s} {1:6.2f} {2:7.2f} {3:7.2f} {4:7.2f} {5:7.2f}\n".format(
+                    image_object.name, image_object.confidence, image_object.x_min,
+                    image_object.x_max, image_object.y_min, image_object.y_max))
+
+                removes.append(image_object)
+
+        # Delete removed objects
+        for remove in removes:
+            self.remove_image_object(remove, detection_time)
+
 #        # Any image object not matched is removed
 #        removes = []
 #        for image_object in self.image_objects:
