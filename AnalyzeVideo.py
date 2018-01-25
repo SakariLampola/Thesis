@@ -9,13 +9,23 @@ Created on Wed Nov 29 13:44:02 2017
 @author: Sakari Lampola
 """
 
-from math import sqrt
+from math import sqrt, tan
 import argparse
 import numpy as np
 #import time
 import cv2
 import ImageClasses as ic
 import ObjectDetection as od
+
+MAP_PIXEL_PER_METER = 10 # How many pixels for a meter in the map presentation
+
+def world_to_map_coordinates(xw, zw, wi, hi):
+    """
+    Calculates map coordinates from world coordinates
+    """
+    xi = int(wi/2.0 + xw*MAP_PIXEL_PER_METER)
+    yi = int(hi/2.0 + zw*MAP_PIXEL_PER_METER)
+    return xi, yi
 
 def analyze_video(videofile):
     """
@@ -50,20 +60,36 @@ def analyze_video(videofile):
 
     # Create an empty world
     world = ic.ImageWorld(width, height)
+    # Frame for the 3d presentation
+    frame_3d_background = np.zeros((height,width,3), np.uint8)
+    frame_3d_background[:,0,:] = 255
+    frame_3d_background[:,width-1,:] = 255
+    frame_3d_background[0,:,:] = 255
+    frame_3d_background[height-1,:,:] = 255
+    # Frame for the map presentation
+    frame_map_background = np.zeros((height,width,3), np.uint8)
+    frame_map_background[:,0,:] = 255
+    frame_map_background[:,width-1,:] = 255
+    frame_map_background[0,:,:] = 255
+    frame_map_background[height-1,:,:] = 255
 
     # Loop every frame in the video
     mode_step = True
     while video.isOpened():
-        ret, frame_detected_objects = video.read()
+        ret, frame_video = video.read()
         if ret:
-            frame_image_objects = frame_detected_objects.copy() # Make a copy to present image objects
+            frame_image_objects = frame_video.copy() # Make a copy to present image objects
 
             if i_frame == 1: # First frame, display frame and wait for 's'
-                frame_detected_objects_start = cv2.resize(frame_detected_objects, (0, 0), None, size_ratio, size_ratio)
+                frame_detected_objects_start = cv2.resize(frame_video, (0, 0), None, size_ratio, size_ratio)
                 frame_image_objects_start = frame_detected_objects_start
-                frame_current = np.concatenate((frame_detected_objects_start, frame_image_objects_start), axis=1)
-                frame_previous = frame_current.copy()
-                frame_final = np.concatenate((frame_previous, frame_current), axis=0)
+                frame_top = np.concatenate((frame_detected_objects_start, frame_image_objects_start), axis=1)
+                
+                frame_3d_start = cv2.resize(frame_3d_background, (0, 0), None, size_ratio, size_ratio)
+                frame_map_start = cv2.resize(frame_map_background, (0, 0), None, size_ratio, size_ratio)
+                frame_bottom = np.concatenate((frame_3d_start, frame_map_start), axis=1)
+
+                frame_final = np.concatenate((frame_top, frame_bottom), axis=0)
                 cv2.imshow(videofile, frame_final)
                 cv2.moveWindow(videofile, 20, 20)
 #                not_found = True
@@ -73,8 +99,7 @@ def analyze_video(videofile):
 #                        not_found = False
 
             # Detect objects in the current frame
-            detected_objects = od.detect_objects(frame_detected_objects, \
-                                                 current_time, ic.CONFIDENFE_LEVEL_UPDATE)
+            detected_objects = od.detect_objects(frame_video, current_time, ic.CONFIDENFE_LEVEL_UPDATE)
 
             log_file.write("----------------------------------------------\n")
             log_file.write("Time {0:<.2f}, frame {1:d}\n".format(current_time, i_frame))
@@ -99,23 +124,23 @@ def analyze_video(videofile):
                 label = "{0:d} {1:s}: {2:.2f}".format(detected_object.id, \
                          ic.CLASS_NAMES[detected_object.class_type], \
                          detected_object.confidence)
-                cv2.rectangle(frame_detected_objects, \
+                cv2.rectangle(frame_video, \
                               (detected_object.x_min, detected_object.y_min), \
                               (detected_object.x_max, detected_object.y_max), 255, 2)
                 ytext = detected_object.y_min - 15 if detected_object.y_min - 15 > 15 \
                     else detected_object.y_min + 15
-                cv2.putText(frame_detected_objects, label, (detected_object.x_min, ytext), \
+                cv2.putText(frame_video, label, (detected_object.x_min, ytext), \
                             cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255) , 2)
 
             time_label_detected_objects = "Time {0:<.2f}, frame {1:d}, detected objects".format(\
                                                 current_time, i_frame)
-            cv2.putText(frame_detected_objects, time_label_detected_objects, (10,20), \
+            cv2.putText(frame_video, time_label_detected_objects, (10,20), \
                         cv2.FONT_HERSHEY_SIMPLEX, 0.5, 255, 2)
 
-            # update the world model
+            # Update the world model
             world.update(current_time, detected_objects, log_file, trace_file, time_step)
 
-            # display the world with updated image objects
+            # Display the world with updated image objects
             if len(world.image_objects) > 0:
                 log_file.write("Image objects ({0:d}):\n".format(len(world.image_objects)))
 
@@ -171,18 +196,33 @@ def analyze_video(videofile):
             cv2.putText(frame_image_objects, time_label_image_objects, (10,20), \
                         cv2.FONT_HERSHEY_SIMPLEX, 0.5, 255, 2)
             
-            frame_detected_objects = cv2.resize(frame_detected_objects, (0, 0), None, size_ratio, size_ratio)
+            frame_video = cv2.resize(frame_video, (0, 0), None, size_ratio, size_ratio)
             frame_image_objects = cv2.resize(frame_image_objects, (0, 0), None, size_ratio, size_ratio)
-            frame_current = np.concatenate((frame_detected_objects, frame_image_objects), axis=1)
             
-            if i_frame == 1:
-                frame_previous = frame_current.copy()
+            frame_top = np.concatenate((frame_video, frame_image_objects), axis=1)
+            
+            # Map presentation
+            frame_map = frame_map_background.copy()
+            cv2.circle(frame_map, (int(width/2), int(height/2)), 2, (255,255,255), 1, 8, 0)
+            fov_distance = (height/2.0)*tan(world.fov/2.0)
+            cv2.line(frame_map, ((int(width/2), int(height/2))), (int(width/2-fov_distance),0), (255,255,255), 1)
+            cv2.line(frame_map, ((int(width/2), int(height/2))), (int(width/2+fov_distance),0), (255,255,255), 1)
+            for image_object in world.image_objects:
+                if (image_object.is_center_reliable()):
+                    xw = image_object.x_camera
+                    zw = image_object.z_camera
+                    xi, yi = world_to_map_coordinates(xw, zw, width, height)
+                    if (xi >= 0 and xi < width and yi >= 0 and yi < height):
+                        cv2.circle(frame_map, (xi, yi), 3, (255,255,255), 1, 8, 0)
+                
 
-            frame_final = np.concatenate((frame_previous, frame_current), axis=0)
+            frame_map = cv2.resize(frame_map, (0, 0), None, size_ratio, size_ratio)
+            
+            frame_bottom = np.concatenate((frame_3d_start, frame_map), axis=1)
+            
+            frame_final = np.concatenate((frame_top, frame_bottom), axis=0)
             cv2.imshow(videofile, frame_final)
             
-            frame_previous = frame_current.copy()
-
             i_frame = i_frame + 1
             current_time = current_time + time_step
 

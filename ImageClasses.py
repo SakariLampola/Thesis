@@ -9,7 +9,7 @@ Created on Wed Nov 29 09:08:16 2017
 @author: Sakari Lampola
 """
 
-from math import inf, nan
+from math import inf, nan, atan, cos, sqrt
 import random as rnd
 import numpy as np
 import SpeechSynthesis as ss
@@ -167,6 +167,10 @@ class ImageObject:
         self.confidence = detected_object.confidence
         self.appearance = detected_object.appearance
         self.retention_count = 0
+        
+        self.x_camera = 0.0 
+        self.y_camera = 0.0 
+        self.z_camera = 0.0 
 
     def center_point(self):
         """
@@ -669,12 +673,53 @@ class ImageWorld:
         Initialization
         """
         self.image_objects = [] # In the beginning, the world is empty...
-        self.width = width
-        self.height = height
+
+        self.width = width # image size in pixels
+        self.height = height # image height in pixels
+
+        self.focal_length = 0.050 # meters
+        self.sensor_width = 0.0359 # meters
+        self.sensor_height = 0.0240 # meters
+        self.fov = 2.0*atan(self.sensor_width / (2.0*self.focal_length)) # field of view
+        
         self.speech_synthesizer = ss.SpeechSynthesizer()
         self.events = [] # In the beginning, no events
 
+    def get_camera_coordinates_from_image_object(self, image_object):
+        """
+        Calculates camera coordinates from image object center point
+        coordinates and camera parameters
+        """
+        sw = self.sensor_width
+        sh = self.sensor_height
+        pw = self.width
+        ph = self.height
+        hi = image_object.y_max - image_object.y_min
+        h = image_object.height_mean
+        f = self.focal_length
+        xp, yp = image_object.center_point()
+        
+        xc = -sw/2.0 + xp*sw/pw
+        yc = sh/2.0 - yp*sh/ph
+        zc = -f
+        
+        alfa = atan(yc/f)
+        beta = atan(xc/f)
+        
+        d = f*h/(cos(alfa)*cos(beta)*hi*sh/ph)
+        t = d / sqrt(xc**2.0 + yc**2.0 + zc**2.0)
+
+        xo = t*xc
+        yo = t*yc
+        zo = t*zc
+        
+        return xo, yo, zo
+        
+
     def add_event(self, time, text, priority):
+        """
+        Create a new events to be spelled out
+        """
         event = Event(time, text, priority, self)
         self.events.append(event)
 
@@ -1136,3 +1181,10 @@ class ImageWorld:
                             CLASS_NAMES[detected_object.class_type], detected_object.confidence,
                             detected_object.x_min, detected_object.x_max, \
                             detected_object.y_min, detected_object.y_max))
+
+
+        # Update image object camera coordinates
+        for image_object in self.image_objects:
+            image_object.x_camera, image_object.y_camera, image_object.z_camera = \
+                self.get_camera_coordinates_from_image_object(image_object)
+        
