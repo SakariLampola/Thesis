@@ -11,8 +11,7 @@ import cv2
 import time
 import random as rnd
 import pyttsx3
-import matplotlib.pyplot as plt
-from math import atan, cos, sqrt
+from math import atan, cos, sqrt, inf, tan
 from scipy.optimize import linear_sum_assignment
 # Hyperparameters--------------------------------------------------------------
 BORDER_WIDTH = 30 # Part of video window for special pattern behaviour
@@ -882,36 +881,69 @@ class PresentationMap(Presentation):
     """
     World event of interest
     """
-    def __init__(self, world, figure_id, height, width):
+    def __init__(self, world, map_id, height_pixels, width_pixels):
         """
         Initialization
         """
         super().__init__(world)
-        self.figure_id = figure_id
-        self.height = height
-        self.width = width
+        self.map_id =map_id
+        self.height_pixels = height_pixels
+        self.width_pixels = width_pixels
+        self.frame = np.zeros((height_pixels, width_pixels, 3), np.uint8)
+        self.window_name = "Map " + str(map_id)
+        cv2.imshow(self.window_name, self.frame)
+        cv2.moveWindow(self.window_name, 940, 20)
         
     def close(self):
         """
         Release resources
         """
-        plt.close(self.figure_id)
+        cv2.destroyWindow(self.window_name)
 
     def update(self, current_time):
         """
         Update presentation at time t
         """
-        plt.figure(self.figure_id)
-        plt.clf()
-        plt.axis([-self.width, self.width, -self.height, self.height])
-        x = []
-        y = []
+        # No bodies, now update
+        if len(self.world.bodies) == 0:
+            return
+        self.frame = np.zeros((self.height_pixels, self.width_pixels, 3), 
+                              np.uint8)
+        # Get the min and max coordinates
+        c_max = -inf
         for body in self.world.bodies:
-            x.append(body.x)
-            y.append(-body.z)
-        plt.scatter(x,y)
-        plt.show()
-    
+            if abs(body.x) > c_max:
+                c_max = abs(body.x)
+            if abs(body.z) > c_max:
+                c_max = abs(body.z)
+        extension_meters = max(c_max+10.0, 10.0) # At least 10 meters
+        extension_pixels = min(self.height_pixels, self.width_pixels)
+        pixels_meter = 0.5*extension_pixels / extension_meters
+        # Draw
+        for body in self.world.bodies:
+            xc = self.width_pixels/2.0 + body.x * pixels_meter
+            yc = self.height_pixels/2.0 + body.z * pixels_meter
+            cv2.ellipse(self.frame, (int(xc), int(yc)), (1,1), 0.0, 0, 360, 
+                        (255,255,255), 2)
+        # Radar circles
+        radius = 10.0
+        while radius < extension_meters:
+            radius_pixels = int(radius * pixels_meter)
+            cv2.circle(self.frame, (int(self.width_pixels/2), 
+                                    int(self.height_pixels/2)), radius_pixels, 
+                                    (255,255,255), 1)
+            radius += 10.0
+        # Camera field of views
+        for camera in self.world.cameras:
+            x = self.height_pixels / 2.0 * tan(camera.field_of_view/2.0)
+            pt1 = (int(self.width_pixels/2), int(self.height_pixels/2))
+            pt2 = (int(self.width_pixels/2-x),0)
+            cv2.line(self.frame, pt1, pt2, (255,255,255), 1)
+            pt2 = (int(self.width_pixels/2+x),0)
+            cv2.line(self.frame, pt1, pt2, (255,255,255), 1)
+        
+        cv2.imshow(self.window_name, self.frame)
+                
 #------------------------------------------------------------------------------
 class SpeechSynthesizer:
     """
@@ -1033,6 +1065,12 @@ class World:
                 more_camera = camera.update(self.current_time, self.delta_time)
                 if not more_camera:
                     more = False
+            for body in self.bodies:
+                if body.pattern is not None:
+                    xo, yo, zo = body.coordinates_from_pattern()
+                    body.x = xo
+                    body.y = yo
+                    body.z = zo
             for presentation in self.presentations:
                 presentation.update(self.current_time)
             self.current_time += self.delta_time
@@ -1064,7 +1102,7 @@ def run_application():
                      pitch=0.0, roll=0.0, videofile=TEST_VIDEOS[5])
     world.add_camera(camera)
 
-    presentationmap= PresentationMap(world, 1, 50, 50)
+    presentationmap= PresentationMap(world, 1, 500, 500)
     world.add_presentation(presentationmap)
 
     world.run()
