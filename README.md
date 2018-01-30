@@ -6,7 +6,7 @@ Software requirements:
   
 Usage:
 
-  python AnalyzeVideo.py --video videofile
+  python ShadowWorld
 
 Object detection network:
 
@@ -18,16 +18,4 @@ Object detection network:
   located in two files: MobileNetSSD_deploy.caffemodel and 
   MobileNetSSD_deploy.prototxt.txt. 
   
-Commands:
-
-  n = next frame
-  q = quit
-  c = continuous till end
-  s = step mode (from continuous mode)
-
-Output:
-
-  2 windows: detected object and static image objects
-  log.txt: log for all objects
-  trace.txt: detailed log for matlab import
   

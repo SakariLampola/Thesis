@@ -1,4 +1,5 @@
-- 3d projection
+- appearance
+- map
 - 3d state estimation
 - bug fixes
 - distance metrics + probabilistic matching
