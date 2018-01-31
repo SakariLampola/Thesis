@@ -360,6 +360,7 @@ class Camera:
         # References
         self.world = world
         self.patterns = []
+        self.detections = []
         # Attributes
         self.focal_length = focal_length
         self.sensor_width = sensor_width
@@ -406,6 +407,8 @@ class Camera:
         new_pattern.body = new_body
         self.world.add_body(new_body)
         self.patterns.append(new_pattern)
+        self.world.add_event(Event(self.world, self.world.current_time, 2,
+                                   id(new_pattern), "Pattern created"))
 
         return True
     
@@ -450,6 +453,8 @@ class Camera:
         """
         Remove pattern and clear references
         """
+        self.world.add_event(Event(self.world, self.world.current_time, 2,
+                                   id(pattern), "Pattern removed"))
         self.patterns.remove(pattern)
         pattern.body.pattern = None
 
@@ -465,7 +470,10 @@ class Camera:
             return False # end of video file
         self.current_frame += 1
 
-        detections = self.detect(frame_video, current_time)
+        self.detections = self.detect(frame_video, current_time)
+        for detection in self.detections:
+            self.world.add_event(Event(self.world, current_time, 3,
+                                       id(detection), "Detection created"))
 
         # Process previous patterns
         if len(self.patterns) > 0:
@@ -483,11 +491,11 @@ class Camera:
                 self.remove_pattern(remove)
 
         # Match detections to patterns
-        if len(self.patterns) > 0 and len(detections) > 0:
+        if len(self.patterns) > 0 and len(self.detections) > 0:
             # Calculate cost matrix for the Hungarian algorithm (assignment problem)
-            cost = np.zeros((len(detections), len(self.patterns)))
+            cost = np.zeros((len(self.detections), len(self.patterns)))
             detection_index = 0
-            for detection in detections:
+            for detection in self.detections:
                 pattern_index = 0
                 for pattern in self.patterns:
                     cost[detection_index, pattern_index] = \
@@ -495,7 +503,7 @@ class Camera:
                     pattern_index += 1
                 detection_index += 1
             # Remove rows and columns with no values inside SIMILARITY_DISTANCE
-            count_detections = len(detections)
+            count_detections = len(self.detections)
             count_patterns = len(self.patterns)
             remove_detections = []
             for detection_index in range(0, count_detections):
@@ -504,7 +512,7 @@ class Camera:
                     if cost[detection_index, pattern_index] < SIMILARITY_DISTANCE:
                         found = True
                 if not found:
-                    remove_detections.append(detections[detection_index])
+                    remove_detections.append(self.detections[detection_index])
             remove_patterns = []
             for pattern_index in range(0, count_patterns):
                 found = False
@@ -515,7 +523,7 @@ class Camera:
                     remove_patterns.append(self.patterns[pattern_index])
             detections_to_match = []
             patterns_to_match = []
-            for detection in detections:
+            for detection in self.detections:
                 if detection not in remove_detections:
                     detections_to_match.append(detection)
             for pattern in self.patterns:
@@ -526,7 +534,7 @@ class Camera:
                                       len(patterns_to_match)))
             row_index = -1
             row_index_original = 0
-            for detection in detections:
+            for detection in self.detections:
                 if detection not in remove_detections:
                     row_index += 1
                     col_index = -1
@@ -605,7 +613,7 @@ class Camera:
             self.remove_pattern(remove)
 
         # If no match for a detection, create a new pattern
-        for detection in detections:
+        for detection in self.detections:
             if not detection.matched:
                 found = False
                 for pattern in self.patterns:
@@ -619,7 +627,7 @@ class Camera:
         cv2.putText(frame_video, label, (10,20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, 255, 2)
 
         # Draw detections
-        for detection in detections:
+        for detection in self.detections:
             cv2.rectangle(frame_video, (detection.x_min, detection.y_min), \
                           (detection.x_max, detection.y_max), (255,255,255), 1)
 
@@ -709,16 +717,17 @@ class Event:
     """
     World event of interest
     """
-    def __init__(self, speechsynthesizer, time, priority, text):
+    def __init__(self, world, time, priority, object_id, text):
         """
         Initialization
         Priority: 0 highest
         """
         # References
-        self.speechsynthesizer = speechsynthesizer
+        self.world = world
         # Attributes
         self.time = time
         self.priority = priority
+        self.object_id = object_id
         self.text = text
 
 #------------------------------------------------------------------------------
@@ -879,9 +888,10 @@ class Presentation:
 #------------------------------------------------------------------------------
 class PresentationMap(Presentation):
     """
-    World event of interest
+    2D map presentation (looked from above)
     """
-    def __init__(self, world, map_id, height_pixels, width_pixels):
+    def __init__(self, world, map_id, height_pixels, width_pixels, min_extent,
+                 max_extent):
         """
         Initialization
         """
@@ -889,6 +899,8 @@ class PresentationMap(Presentation):
         self.map_id =map_id
         self.height_pixels = height_pixels
         self.width_pixels = width_pixels
+        self.min_extent = min_extent
+        self.max_extent = max_extent
         self.frame = np.zeros((height_pixels, width_pixels, 3), np.uint8)
         self.window_name = "Map " + str(map_id)
         cv2.imshow(self.window_name, self.frame)
@@ -916,7 +928,8 @@ class PresentationMap(Presentation):
                 c_max = abs(body.x)
             if abs(body.z) > c_max:
                 c_max = abs(body.z)
-        extension_meters = max(c_max+10.0, 10.0) # At least 10 meters
+        extension_meters = max(c_max, self.min_extent)
+        extension_meters = min(c_max, self.max_extent)
         extension_pixels = min(self.height_pixels, self.width_pixels)
         pixels_meter = 0.5*extension_pixels / extension_meters
         # Draw
@@ -945,6 +958,205 @@ class PresentationMap(Presentation):
         cv2.imshow(self.window_name, self.frame)
                 
 #------------------------------------------------------------------------------
+class PresentationLog(Presentation):
+    """
+    Text file of object history for analyzing data in external software
+    Categories:
+        Detection
+        Pattern
+        Body
+        Event
+    """
+    def __init__(self, world, category, text_file):
+        """
+        Initialization
+        """
+        super().__init__(world)
+        self.category = category
+        self.file = open(text_file, "w")
+        if self.category == "Detection":
+            self.file.write("time,id,class_id,confidence,")
+            self.file.write("x_min,x_max,y_min,y_max,")
+            self.file.write("border_left,border_right,")
+            self.file.write("border_top,border_bottom,")
+            self.file.write("pattern,matched")
+            self.file.write("\n")
+            f = "{0:.3f},{1:d},{2:d},{3:.3f}," # time,id,class_id,confidence
+            f += "{4:.3f},{5:.3f},{6:.3f},{7:.3f}," # x_min,x_max,y_min,y_max
+            f += "{8:d},{9:d}," # border_left,border_right
+            f += "{10:d},{11:d}," # border_top,border_bottom
+            f += "{12:d},{13:s}" # pattern,matched
+            f += "\n"
+            self.fmt = f
+        elif self.category == "Pattern":
+            self.file.write("time,id,class_id,confidence,")
+            self.file.write("x_min,x_max,y_min,y_max,")
+            self.file.write("border_left,border_right,")
+            self.file.write("border_top,border_bottom,")
+            self.file.write("vx_min,vx_max,vy_min,vy_max,")
+            self.file.write("sigma_x_min_00,sigma_x_min_01,")
+            self.file.write("sigma_x_min_10,sigma_x_min_11,")
+            self.file.write("sigma_x_max_00,sigma_x_max_01,")
+            self.file.write("sigma_x_max_10,sigma_x_max_11,")
+            self.file.write("sigma_y_min_00,sigma_y_min_01,")
+            self.file.write("sigma_y_min_10,sigma_y_min_11,")
+            self.file.write("sigma_y_max_00,sigma_y_max_01,")
+            self.file.write("sigma_y_max_10,sigma_y_max_11,")
+            self.file.write("x_center,y_center,")
+            self.file.write("vx_center,vy_center,")
+            self.file.write("vx_center_var,vy_center_var,")
+            self.file.write("retention_count,body,matched")
+            self.file.write("\n")
+            f = "{0:.3f},{1:d},{2:d},{3:.3f}," # time,id,class_id,confidence
+            f += "{4:.3f},{5:.3f},{6:.3f},{7:.3f}," # x_min,x_max,y_min,y_max
+            f += "{8:d},{9:d}," # border_left,border_right
+            f += "{10:d},{11:d}," # border_top,border_bottom
+            f += "{12:.3f},{13:.3f},{14:.3f},{15:.3f}," # vx_min,vx_max,vy_min,vy_max
+            f += "{16:.3f},{17:.3f}," # sigma_x_min_00,sigma_x_min_01
+            f += "{18:.3f},{19:.3f}," # sigma_x_min_10,sigma_x_min_11
+            f += "{20:.3f},{21:.3f}," # sigma_x_max_00,sigma_x_max_01
+            f += "{22:.3f},{23:.3f}," # sigma_x_max_10,sigma_x_max_11
+            f += "{24:.3f},{25:.3f}," # sigma_y_min_00,sigma_y_min_01
+            f += "{26:.3f},{27:.3f}," # sigma_y_min_10,sigma_y_min_11
+            f += "{28:.3f},{29:.3f}," # sigma_y_max_00,sigma_y_max_01
+            f += "{30:.3f},{31:.3f}," # sigma_y_max_10,sigma_y_max_11
+            f += "{32:.3f},{33:.3f}," # x_center,y_center
+            f += "{34:.3f},{35:.3f}," # vx_center,vy_center
+            f += "{36:.3f},{37:.3f}," # vx_center_var,vy_center_var
+            f += "{38:d},{39:d},{40:s}" # retention_count,body,matched
+            f += "\n"
+            self.fmt = f
+        elif self.category == "Body":
+            self.file.write("time,id,class_id,")
+            self.file.write("x,y,z,")
+            self.file.write("vx,vy,vz,")
+            self.file.write("ax,ay,az,")
+            self.file.write("pattern")
+            self.file.write("\n")
+            f = "{0:.3f},{1:d},{2:d}," # time,id,class_id
+            f += "{3:.3f},{4:.3f},{5:.3f}," # x,y,z
+            f += "{6:.3f},{7:.3f},{8:.3f}," # vx,vy,vz
+            f += "{9:.3f},{10:.3f},{11:.3f}," # ax,ay,az
+            f += "{12:d}" # pattern
+            f += "\n"
+            self.fmt = f
+        elif self.category == "Event":
+            self.file.write("time,priority,object,text")
+            self.file.write("\n")
+            f = "{0:.3f},{1:d},{2:d},{3:s}" # time,priority,object,text
+            f += "\n"
+            self.fmt = f
+        else:
+            self.file.write("Unsupported category.")
+        
+    def close(self):
+        """
+        Release resources
+        """
+        if self.category == "Event":
+            for event in self.world.events:
+                self.file.write(self.fmt.format(event.time,
+                                                event.priority,
+                                                event.object_id,
+                                                event.text))
+        self.file.close()
+
+    def update(self, current_time):
+        """
+        Update presentation at time t
+        """
+        if self.category == "Detection":
+            for camera in self.world.cameras:
+                for detection in camera.detections:
+                    pattern_id = 0
+                    if detection.pattern is not None:
+                        pattern_id = id(detection.pattern)
+                    self.file.write(self.fmt.format(current_time,
+                                                    id(detection),
+                                                    detection.class_id,
+                                                    detection.confidence,
+                                                    detection.x_min,
+                                                    detection.x_max,
+                                                    detection.y_min,
+                                                    detection.y_max,
+                                                    detection.border_left,
+                                                    detection.border_right,
+                                                    detection.border_top,
+                                                    detection.border_bottom,
+                                                    pattern_id,
+                                                    str(detection.matched)))
+        elif self.category == "Pattern":
+            for camera in self.world.cameras:
+                for pattern in camera.patterns:                    
+                    body_id = 0
+                    if pattern.body is not None:
+                        body_id = id(pattern.body)
+                    x_center,y_center = pattern.center_point()
+                    vx_center,vy_center = pattern.velocity()
+                    vx_center_var,vy_center_var = pattern.location_variance()
+                    self.file.write(self.fmt.format(current_time,
+                                                    id(pattern),
+                                                    pattern.class_id,
+                                                    pattern.confidence,
+                                                    pattern.x_min,
+                                                    pattern.x_max,
+                                                    pattern.y_min,
+                                                    pattern.y_max,
+                                                    pattern.border_left,
+                                                    pattern.border_right,
+                                                    pattern.border_top,
+                                                    pattern.border_bottom,
+                                                    pattern.vx_min,
+                                                    pattern.vx_max,
+                                                    pattern.vy_min,
+                                                    pattern.vy_max,
+                                                    pattern.sigma_x_min[0,0],
+                                                    pattern.sigma_x_min[0,1],
+                                                    pattern.sigma_x_min[1,0],
+                                                    pattern.sigma_x_min[1,1],
+                                                    pattern.sigma_x_max[0,0],
+                                                    pattern.sigma_x_max[0,1],
+                                                    pattern.sigma_x_max[1,0],
+                                                    pattern.sigma_x_max[1,1],
+                                                    pattern.sigma_y_min[0,0],
+                                                    pattern.sigma_y_min[0,1],
+                                                    pattern.sigma_y_min[1,0],
+                                                    pattern.sigma_y_min[1,1],
+                                                    pattern.sigma_y_max[0,0],
+                                                    pattern.sigma_y_max[0,1],
+                                                    pattern.sigma_y_max[1,0],
+                                                    pattern.sigma_y_max[1,1],
+                                                    x_center,
+                                                    y_center,
+                                                    vx_center,
+                                                    vy_center,
+                                                    vx_center_var,
+                                                    vy_center_var,
+                                                    pattern.retention_count,
+                                                    body_id,
+                                                    str(pattern.matched)))
+        elif self.category == "Body":
+            for body in self.world.bodies:
+                pattern_id = 0
+                if body.pattern is not None:
+                    pattern_id = id(body.pattern)
+                self.file.write(self.fmt.format(current_time,
+                                                id(body),
+                                                body.class_id,
+                                                body.x,
+                                                body.y,
+                                                body.z,
+                                                body.vx,
+                                                body.vy,
+                                                body.vz,
+                                                body.ax,
+                                                body.ay,
+                                                body.az,
+                                                pattern_id))
+        else:
+            pass
+                
+#------------------------------------------------------------------------------
 class SpeechSynthesizer:
     """
     Class for spelling out text. Relies on pyttsc3 package and currently
@@ -957,7 +1169,6 @@ class SpeechSynthesizer:
         # References
         self.world = world
         self.engine = pyttsx3.init()
-        self.events = []
         # Attributes
 
     def say(self, text):
@@ -967,18 +1178,10 @@ class SpeechSynthesizer:
         self.engine.say(text)
         self.engine.runAndWait()
 
-    def add_event(self, time, category, priority, text):
-        """
-        Create a new event to be spelled out
-        """
-        new_event = Event(self, time, category, priority, text)
-        self.events.append(new_event)
-        self.say(text)
-
 #------------------------------------------------------------------------------
 class Trace:
     """
-    History of body movement and other body changes
+    History of body movement and other changes
     """
     def __init__(self, current_time, body):
         """
@@ -1012,6 +1215,7 @@ class World:
         self.bodies = []
         self.cameras = []
         self.presentations = []
+        self.events = []
         self.speech_synthesizer = SpeechSynthesizer(self)
         # Attributes
         self.current_time = 0.0
@@ -1022,6 +1226,8 @@ class World:
         Add a body
         """
         self.bodies.append(body)
+        self.add_event(Event(self, self.current_time, 1, id(body),
+                             "Body created"))
 
     def add_camera(self, camera):
         """
@@ -1029,6 +1235,14 @@ class World:
         """
         self.cameras.append(camera)
         
+    def add_event(self, event):
+        """
+        Add an event
+        """
+        self.events.append(event)
+        if event.priority == 0:
+            self.speech_synthesizer.say(event.text)
+
     def add_presentation(self, presentation):
         """
         Adds a presentation
@@ -1097,13 +1311,18 @@ def run_application():
     Example application
     """
     world = World()
-    camera = Camera(world, focal_length=0.050, sensor_width=0.0359, 
-                     sensor_height=0.0240, x=0.0, y=0.0, z=0.0, yaw=0.0, 
-                     pitch=0.0, roll=0.0, videofile=TEST_VIDEOS[5])
-    world.add_camera(camera)
+    
+    world.add_camera(Camera(world, focal_length=0.050, sensor_width=0.0359, 
+                            sensor_height=0.0240, x=0.0, y=0.0, z=0.0, yaw=0.0,
+                            pitch=0.0, roll=0.0, videofile=TEST_VIDEOS[5]))
 
-    presentationmap= PresentationMap(world, 1, 500, 500)
-    world.add_presentation(presentationmap)
+    world.add_presentation(PresentationMap(world, map_id=1, height_pixels=500, 
+                                           width_pixels=500, min_extent=10.0,
+                                           max_extent=50.0))
+    world.add_presentation(PresentationLog(world, "Detection", "Detection.txt"))
+    world.add_presentation(PresentationLog(world, "Pattern", "Pattern.txt"))
+    world.add_presentation(PresentationLog(world, "Body", "Body.txt"))
+    world.add_presentation(PresentationLog(world, "Event", "Event.txt"))
 
     world.run()
 
