@@ -98,7 +98,7 @@ class Body:
         Correct body location based on new measurement. 
         """
         self.state = "measured"
-        measurement = np.array([[x], [y], [x]])
+        measurement = np.array([[x], [y], [z]])
         a = np.array([[1.0, delta,   0.0, 0.0,   0.0,   0.0, 0.0,   0.0,   0.0],
                       [0.0,   1.0, delta, 0.0,   0.0,   0.0, 0.0,   0.0,   0.0],
                       [0.0,   0.0,   1.0, 0.0,   0.0,   0.0, 0.0,   0.0,   0.0],
@@ -1150,40 +1150,42 @@ class PresentationLog(Presentation):
             self.file.write("sigma_80,sigma_81,sigma_82,")
             self.file.write("sigma_83,sigma_84,sigma_85,")
             self.file.write("sigma_86,sigma_87,sigma_88,")
+            self.file.write("x_pattern,y_pattern,z_pattern,")
             self.file.write("pattern")
             self.file.write("\n")
             f = "{0:.3f},{1:d},{2:d}," # time,id,class_id
             f += "{3:.3f},{4:.3f},{5:.3f}," # x,y,z
             f += "{6:.3f},{7:.3f},{8:.3f}," # vx,vy,vz
             f += "{9:.3f},{10:.3f},{11:.3f}," # ax,ay,az
-            f += "{12:.3f},{13:.3f},{14:.3f}," # sigma_00, sigma_01, sigma_02
-            f += "{15:.3f},{16:.3f},{17:.3f}," # sigma_03, sigma_04, sigma_05
-            f += "{18:.3f},{19:.3f},{20:.3f}," # sigma_06, sigma_07, sigma_08
-            f += "{21:.3f},{22:.3f},{23:.3f}," # sigma_10, sigma_11, sigma_12
-            f += "{24:.3f},{25:.3f},{26:.3f}," # sigma_13, sigma_14, sigma_15
-            f += "{27:.3f},{28:.3f},{29:.3f}," # sigma_16, sigma_17, sigma_18
-            f += "{30:.3f},{31:.3f},{32:.3f}," # sigma_20, sigma_21, sigma_22
-            f += "{33:.3f},{34:.3f},{35:.3f}," # sigma_23, sigma_24, sigma_25
-            f += "{36:.3f},{37:.3f},{38:.3f}," # sigma_26, sigma_27, sigma_28
-            f += "{39:.3f},{40:.3f},{41:.3f}," # sigma_30, sigma_31, sigma_42
-            f += "{42:.3f},{43:.3f},{44:.3f}," # sigma_33, sigma_34, sigma_45
-            f += "{45:.3f},{46:.3f},{47:.3f}," # sigma_36, sigma_37, sigma_48
-            f += "{48:.3f},{49:.3f},{50:.3f}," # sigma_40, sigma_41, sigma_42
-            f += "{51:.3f},{52:.3f},{53:.3f}," # sigma_43, sigma_44, sigma_45
-            f += "{54:.3f},{55:.3f},{56:.3f}," # sigma_46, sigma_47, sigma_48
-            f += "{57:.3f},{58:.3f},{59:.3f}," # sigma_50, sigma_51, sigma_52
-            f += "{60:.3f},{61:.3f},{62:.3f}," # sigma_53, sigma_54, sigma_55
-            f += "{63:.3f},{64:.3f},{65:.3f}," # sigma_56, sigma_57, sigma_58
-            f += "{66:.3f},{67:.3f},{68:.3f}," # sigma_60, sigma_61, sigma_62
-            f += "{69:.3f},{70:.3f},{71:.3f}," # sigma_63, sigma_64, sigma_65
-            f += "{72:.3f},{73:.3f},{74:.3f}," # sigma_66, sigma_67, sigma_68
-            f += "{75:.3f},{76:.3f},{77:.3f}," # sigma_70, sigma_71, sigma_72
-            f += "{78:.3f},{79:.3f},{80:.3f}," # sigma_73, sigma_74, sigma_75
-            f += "{81:.3f},{82:.3f},{83:.3f}," # sigma_76, sigma_77, sigma_78
-            f += "{84:.3f},{85:.3f},{86:.3f}," # sigma_80, sigma_81, sigma_82
-            f += "{87:.3f},{88:.3f},{89:.3f}," # sigma_83, sigma_84, sigma_85
-            f += "{90:.3f},{91:.3f},{92:.3f}," # sigma_86, sigma_87, sigma_88
-            f += "{93:d}" # pattern
+            f += "{12:.3f},{13:.3f},{14:.3f}," # sigma_00,sigma_01,sigma_02
+            f += "{15:.3f},{16:.3f},{17:.3f}," # sigma_03,sigma_04,sigma_05
+            f += "{18:.3f},{19:.3f},{20:.3f}," # sigma_06,sigma_07,sigma_08
+            f += "{21:.3f},{22:.3f},{23:.3f}," # sigma_10,sigma_11,sigma_12
+            f += "{24:.3f},{25:.3f},{26:.3f}," # sigma_13,sigma_14,sigma_15
+            f += "{27:.3f},{28:.3f},{29:.3f}," # sigma_16,sigma_17,sigma_18
+            f += "{30:.3f},{31:.3f},{32:.3f}," # sigma_20,sigma_21,sigma_22
+            f += "{33:.3f},{34:.3f},{35:.3f}," # sigma_23,sigma_24,sigma_25
+            f += "{36:.3f},{37:.3f},{38:.3f}," # sigma_26,sigma_27,sigma_28
+            f += "{39:.3f},{40:.3f},{41:.3f}," # sigma_30,sigma_31,sigma_42
+            f += "{42:.3f},{43:.3f},{44:.3f}," # sigma_33,sigma_34,sigma_45
+            f += "{45:.3f},{46:.3f},{47:.3f}," # sigma_36,sigma_37,sigma_48
+            f += "{48:.3f},{49:.3f},{50:.3f}," # sigma_40,sigma_41,sigma_42
+            f += "{51:.3f},{52:.3f},{53:.3f}," # sigma_43,sigma_44,sigma_45
+            f += "{54:.3f},{55:.3f},{56:.3f}," # sigma_46,sigma_47,sigma_48
+            f += "{57:.3f},{58:.3f},{59:.3f}," # sigma_50,sigma_51,sigma_52
+            f += "{60:.3f},{61:.3f},{62:.3f}," # sigma_53,sigma_54,sigma_55
+            f += "{63:.3f},{64:.3f},{65:.3f}," # sigma_56,sigma_57,sigma_58
+            f += "{66:.3f},{67:.3f},{68:.3f}," # sigma_60,sigma_61,sigma_62
+            f += "{69:.3f},{70:.3f},{71:.3f}," # sigma_63,sigma_64,sigma_65
+            f += "{72:.3f},{73:.3f},{74:.3f}," # sigma_66,sigma_67,sigma_68
+            f += "{75:.3f},{76:.3f},{77:.3f}," # sigma_70,sigma_71,sigma_72
+            f += "{78:.3f},{79:.3f},{80:.3f}," # sigma_73,sigma_74,sigma_75
+            f += "{81:.3f},{82:.3f},{83:.3f}," # sigma_76,sigma_77,sigma_78
+            f += "{84:.3f},{85:.3f},{86:.3f}," # sigma_80,sigma_81,sigma_82
+            f += "{87:.3f},{88:.3f},{89:.3f}," # sigma_83,sigma_84,sigma_85
+            f += "{90:.3f},{91:.3f},{92:.3f}," # sigma_86,sigma_87,sigma_88
+            f += "{93:.3f},{94:.3f},{95:.3f}," # x_pattern,y_pattern,z_pattern
+            f += "{96:d}" # pattern
             f += "\n"
             self.fmt = f
         elif self.category == "Event":
@@ -1284,8 +1286,10 @@ class PresentationLog(Presentation):
         elif self.category == "Body":
             for body in self.world.bodies:
                 pattern_id = 0
+                x_pattern,y_pattern,z_pattern = 0.0, 0.0, 0.0
                 if body.pattern is not None:
                     pattern_id = id(body.pattern)
+                    x_pattern,y_pattern,z_pattern = body.coordinates_from_pattern()
                 self.file.write(self.fmt.format(current_time,
                                                 id(body),
                                                 body.class_id,
@@ -1379,6 +1383,9 @@ class PresentationLog(Presentation):
                                                 body.sigma[8,6],
                                                 body.sigma[8,7],
                                                 body.sigma[8,8],
+                                                x_pattern,
+                                                y_pattern,
+                                                z_pattern,
                                                 pattern_id))
         else:
             pass
