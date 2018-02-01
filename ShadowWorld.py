@@ -16,6 +16,11 @@ from scipy.optimize import linear_sum_assignment
 # Hyperparameters--------------------------------------------------------------
 BODY_ALFA = 100000.0 # Body initial location error variance 200
 BODY_BETA = 100000.0 # Body initial velocity error variance 10000
+BODY_C = np.array([[1.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                   [0.0, 1.0, 0.0, 0.0, 0.0, 0.0],
+                   [0.0, 0.0, 1.0, 0.0, 0.0, 0.0]
+                  ]) # Body measurement matrix
+BODY_DATA_COLLECTION_COUNT = 30 # How many frames until notification
 BODY_Q = np.array([[200.0, 0.0,   0.0],
                    [0.0, 200.0,   0.0],
                    [0.0,   0.0, 200.0]]) # Body measurement variance 200
@@ -26,10 +31,6 @@ BODY_R = np.array([[0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
                    [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
                    [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
                   ]) # Body state equation covariance
-BODY_C = np.array([[1.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-                   [0.0, 1.0, 0.0, 0.0, 0.0, 0.0],
-                   [0.0, 0.0, 1.0, 0.0, 0.0, 0.0]
-                  ]) # Body measurement matrix
 #
 BORDER_WIDTH = 30 # Part of video window for special pattern behaviour
 #
@@ -38,10 +39,10 @@ CONFIDENFE_LEVEL_UPDATE = 0.20 # How confident must be to update pattern
 #
 PATTERN_ALFA = 200.0 # Pattern initial location error variance
 PATTERN_BETA = 10000.0 # Pattern initial velocity error variance
+PATTERN_C = np.array([[1.0, 0.0]]) # Pattern measurement matrix
 PATTERN_Q = np.array([200.0]) # Pattern measurement variance
 PATTERN_R = np.array([[0.1, 0.0],
                       [0.0, 1.0]]) # Pattern state equation covariance
-PATTERN_C = np.array([[1.0, 0.0]]) # Pattern measurement matrix
 #
 RETENTION_COUNT_MAX = 30 # How many frames pattern is kept untedected
 #
@@ -69,6 +70,7 @@ class Body:
         self.traces = []
         # Attributes
         self.set_class_attributes(pattern.class_id)
+        self.frame_age = 0
         self.x, self.y, self.z = self.coordinates_from_pattern()
         self.status = "measured"
         self.vx = 0.0
@@ -82,6 +84,36 @@ class Body:
                                [0.0,       0.0,       0.0,       0.0, BODY_BETA,       0.0],
                                [0.0,       0.0,       0.0,       0.0,       0.0, BODY_BETA]])
 
+
+    def coordinates_from_pattern(self):
+        """
+        Calculates world coordinates from pattern center point, pattern height,
+        camera parameters and default body height
+        """
+        sw = self.pattern.camera.sensor_width
+        sh = self.pattern.camera.sensor_height
+        pw = self.pattern.camera.image_width
+        ph = self.pattern.camera.image_height
+        hi = self.pattern.y_max - self.pattern.y_min
+        h = self.height_mean
+        f = self.pattern.camera.focal_length
+        xp, yp = self.pattern.center_point()
+
+        xc = -sw/2.0 + xp*sw/pw
+        yc = sh/2.0 - yp*sh/ph
+        zc = -f
+
+        alfa = atan(yc/f)
+        beta = atan(xc/f)
+
+        d = f*h/(cos(alfa)*cos(beta)*hi*sh/ph)
+        t = d / sqrt(xc**2.0 + yc**2.0 + zc**2.0)
+
+        xo = t*xc
+        yo = t*yc
+        zo = t*zc
+
+        return xo, yo, zo
 
     def correct(self, x, y, z, delta):
         """
@@ -106,11 +138,20 @@ class Body:
         self.vz = mu[5, 0]
         self.sigma = (np.eye(6)-k.dot(BODY_C)).dot(self.sigma)
 
+    def location_variance(self):
+        """
+        Calculate location variance by summing covariance matrix diagonal
+        elements
+        """
+        variance = self.sigma[0, 0] + self.sigma[1, 1]+ self.sigma[2, 2]
+        return variance
+
     def predict(self, delta):
         """
         Predicts body location, based on Kalman filtering.
         """
         self.status = "predicted"
+        self.frame_age += 1
         a = np.array([[1.0, 0.0, 0.0, delta,   0.0,   0.0],
                       [0.0, 1.0, 0.0,   0.0, delta,   0.0],
                       [0.0, 0.0, 1.0,   0.0,   0.0, delta],
@@ -240,35 +281,8 @@ class Body:
             self.length_min, self.length_mean, self.length_max = 0.04, 0.1, 0.5
             self.velocity_max, self.acceleration_max = 10.0, 3.0
 
-    def coordinates_from_pattern(self):
-        """
-        Calculates world coordinates from pattern center point, pattern height,
-        camera parameters and default body height
-        """
-        sw = self.pattern.camera.sensor_width
-        sh = self.pattern.camera.sensor_height
-        pw = self.pattern.camera.image_width
-        ph = self.pattern.camera.image_height
-        hi = self.pattern.y_max - self.pattern.y_min
-        h = self.height_mean
-        f = self.pattern.camera.focal_length
-        xp, yp = self.pattern.center_point()
-
-        xc = -sw/2.0 + xp*sw/pw
-        yc = sh/2.0 - yp*sh/ph
-        zc = -f
-
-        alfa = atan(yc/f)
-        beta = atan(xc/f)
-
-        d = f*h/(cos(alfa)*cos(beta)*hi*sh/ph)
-        t = d / sqrt(xc**2.0 + yc**2.0 + zc**2.0)
-
-        xo = t*xc
-        yo = t*yc
-        zo = t*zc
-
-        return xo, yo, zo
+    def speed(self):
+        return sqrt(self.vx**2.0 + self.vy**2.0 + self.vz**2.0)
 
 #------------------------------------------------------------------------------
 class BoundingBox:
@@ -478,6 +492,14 @@ class Camera:
 
         # Don't create if touching 3 or more borders
         if detection.border_count() > 2:
+            return False
+
+        # Don't create if unreliable
+        if not detection.is_reliable():
+            return False
+
+        # Don't create if vanished
+        if detection.is_vanished():
             return False
 
         new_pattern = Pattern(self, detection)
@@ -1029,6 +1051,8 @@ class PresentationMap(Presentation):
                 color = (0,0,255) # red
             cv2.ellipse(self.frame, (int(xc), int(yc)), (1,1), 0.0, 0, 360, 
                         color, 2)
+            std = int(sqrt(body.location_variance()))
+            cv2.circle(self.frame, (int(xc), int(yc)), std, color, 1)
         
         cv2.imshow(self.window_name, self.frame)
                 
@@ -1422,6 +1446,31 @@ class World:
                     more = False
             for body in self.bodies:
                 body.predict(self.delta_time)
+                    
+                if body.frame_age == BODY_DATA_COLLECTION_COUNT:
+                    text = CLASS_NAMES[body.class_id]+" observed "
+                    speed = int(3.6*body.speed())
+                    distance = int(abs(body.z))
+                    text += "distance " + str(distance) + " meters "
+                    if (speed < 4):
+                        text += "hanging around "
+                    else:
+                        if body.z <= 0 and body.vz >= 0:
+                            text += "moving towards us "
+                        elif body.z <= 0 and body.vz < 0:
+                            text += "moving away from us "
+                        if body.z > 0 and body.vz >= 0:
+                            text += "moving away from us "
+                        elif body.z > 0 and body.vz < 0:
+                            text += "moving towards us "
+                        if body.vx <= 0:
+                            text += "from right to left "
+                        else:
+                            text += "from left to right "
+                        text += "speed " + str(speed) + " kilometers per hour "
+
+                    self.add_event(Event(self, self.current_time, 0, id(body),
+                                         text))
                 if body.pattern is not None:
                     if body.pattern.is_reliable():
                         xo, yo, zo = body.coordinates_from_pattern()
@@ -1447,18 +1496,18 @@ TEST_VIDEOS = ['videos/AWomanStandsOnTheSeashore-10058.mp4', # 0
                'videos/Sheep-12727.mp4', # 13
                'videos/Sofa-11294.mp4'] # 14
 
-TEST_FOCAL_LENGTHS = [0.020, # 0
-                      0.030, # 1
+TEST_FOCAL_LENGTHS = [0.040, # 0
+                      0.120, # 1
                       0.150, # 2
-                      0.030, # 3
-                      0.050, # 4
-                      0.040, # 5
-                      0.030, # 6
+                      0.050, # 3
+                      0.200, # 4
+                      0.200, # 5 
+                      0.070, # 6
                       0.040, # 7
-                      0.050, # 8
+                      0.020, # 8
                       0.050, # 9
                       0.040, # 10
-                      0.025, # 11
+                      0.150, # 11
                       0.100, # 12
                       0.050, # 13
                       0.050] # 14
@@ -1467,14 +1516,14 @@ TEST_EXTENTS = [11.0, # 0
                 11.0, # 1
                 500.0, # 2
                 11.0, # 3
-                30.0, # 4
-                30.0, # 5
+                61.0, # 4
+                111.0, # 5
                 11.0, # 6
                 21.0, # 7
-                31.0, # 8
+                21.0, # 8
                 31.0, # 9
                 11.0, # 10
-                41.0, # 11
+                131.0, # 11
                 101.0, # 12
                 11.0, # 13
                 11.0] # 14
