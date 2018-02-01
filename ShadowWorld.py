@@ -14,25 +14,21 @@ import pyttsx3
 from math import atan, cos, sqrt, tan
 from scipy.optimize import linear_sum_assignment
 # Hyperparameters--------------------------------------------------------------
-BODY_ALFA = 200.0 # Body initial location error variance
-BODY_BETA = 10000.0 # Body initial velocity error variance
-BODY_GAMMA = 10000.0 # Body initial acceleration error variance
-BODY_Q = np.array([[200.0, 0.0, 0.0],
-                   [0.0, 200.0, 0.0],
-                   [0.0, 0.0, 200.0]]) # Body measurement variance
-BODY_R = np.array([[1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-                   [0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-                   [0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-                   [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-                   [0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0],
-                   [0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0],
-                   [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0],
-                   [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0],
-                   [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]
+BODY_ALFA = 100000.0 # Body initial location error variance 200
+BODY_BETA = 100000.0 # Body initial velocity error variance 10000
+BODY_Q = np.array([[200.0, 0.0,   0.0],
+                   [0.0, 200.0,   0.0],
+                   [0.0,   0.0, 200.0]]) # Body measurement variance 200
+BODY_R = np.array([[0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                   [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                   [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                   [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                   [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                   [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
                   ]) # Body state equation covariance
-BODY_C = np.array([[1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-                   [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-                   [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0]
+BODY_C = np.array([[1.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                   [0.0, 1.0, 0.0, 0.0, 0.0, 0.0],
+                   [0.0, 0.0, 1.0, 0.0, 0.0, 0.0]
                   ]) # Body measurement matrix
 #
 BORDER_WIDTH = 30 # Part of video window for special pattern behaviour
@@ -74,85 +70,67 @@ class Body:
         # Attributes
         self.set_class_attributes(pattern.class_id)
         self.x, self.y, self.z = self.coordinates_from_pattern()
-        self.state = "measured"
+        self.status = "measured"
         self.vx = 0.0
         self.vy = 0.0
         self.vz = 0.0
-        self.ax = 0.0
-        self.ay = 0.0
-        self.az = 0.0
         
-        self.sigma = np.array([[BODY_ALFA, 0.0,        0.0,       0.0,       0.0,        0.0,       0.0,       0.0,        0.0],
-                               [0.0, BODY_BETA,        0.0,       0.0,       0.0,        0.0,       0.0,       0.0,        0.0],
-                               [0.0,       0.0, BODY_GAMMA,       0.0,       0.0,        0.0,       0.0,       0.0,        0.0],
-                               [0.0,       0.0,        0.0, BODY_ALFA,       0.0,        0.0,       0.0,       0.0,        0.0],
-                               [0.0,       0.0,        0.0,       0.0, BODY_BETA,        0.0,       0.0,       0.0,        0.0],
-                               [0.0,       0.0,        0.0,       0.0,       0.0, BODY_GAMMA,       0.0,       0.0,        0.0],
-                               [0.0,       0.0,        0.0,       0.0,       0.0,        0.0, BODY_ALFA,       0.0,        0.0],
-                               [0.0,       0.0,        0.0,       0.0,       0.0,        0.0,       0.0, BODY_BETA,        0.0],
-                               [0.0,       0.0,        0.0,       0.0,       0.0,        0.0,       0.0,       0.0, BODY_GAMMA]])
+        self.sigma = np.array([[BODY_ALFA, 0.0,       0.0,       0.0,       0.0,       0.0],
+                               [0.0, BODY_ALFA,       0.0,       0.0,       0.0,       0.0],
+                               [0.0,       0.0, BODY_ALFA,       0.0,       0.0,       0.0],
+                               [0.0,       0.0,       0.0, BODY_BETA,       0.0,       0.0],
+                               [0.0,       0.0,       0.0,       0.0, BODY_BETA,       0.0],
+                               [0.0,       0.0,       0.0,       0.0,       0.0, BODY_BETA]])
 
 
     def correct(self, x, y, z, delta):
         """
         Correct body location based on new measurement. 
         """
-        self.state = "measured"
+        self.status = "measured"
         measurement = np.array([[x], [y], [z]])
-        a = np.array([[1.0, delta,   0.0, 0.0,   0.0,   0.0, 0.0,   0.0,   0.0],
-                      [0.0,   1.0, delta, 0.0,   0.0,   0.0, 0.0,   0.0,   0.0],
-                      [0.0,   0.0,   1.0, 0.0,   0.0,   0.0, 0.0,   0.0,   0.0],
-                      [0.0,   0.0,   0.0, 1.0, delta,   0.0, 0.0,   0.0,   0.0],
-                      [0.0,   0.0,   0.0, 0.0,   1.0, delta, 0.0,   0.0,   0.0],
-                      [0.0,   0.0,   0.0, 0.0,   0.0,   1.0, 0.0,   0.0,   0.0],
-                      [0.0,   0.0,   0.0, 0.0,   0.0,   0.0, 1.0, delta,   0.0],
-                      [0.0,   0.0,   0.0, 0.0,   0.0,   0.0, 0.0,   1.0, delta],
-                      [0.0,   0.0,   0.0, 0.0,   0.0,   0.0, 0.0,   0.0,   1.0]])
         #
         k = self.sigma.dot(BODY_C.T).dot(np.linalg.inv(BODY_C.dot(self.sigma).dot(BODY_C.T) + BODY_Q))
-        mu = a.dot(np.array([[self.x], [self.vx], [self.ax],
-                             [self.y], [self.vy], [self.ay],
-                             [self.z], [self.vz], [self.az]]))
+        mu = np.array([[self.x], 
+                       [self.y], 
+                       [self.z],
+                       [self.vx], 
+                       [self.vy], 
+                       [self.vz]])
         mu = mu + k.dot(measurement - BODY_C.dot(mu))
         self.x  = mu[0, 0]
-        self.vx = mu[1, 0]
-        self.ax = mu[2, 0]
-        self.y  = mu[3, 0]
+        self.y  = mu[1, 0]
+        self.z  = mu[2, 0]
+        self.vx = mu[3, 0]
         self.vy = mu[4, 0]
-        self.ay = mu[5, 0]
-        self.z  = mu[6, 0]
-        self.vz = mu[7, 0]
-        self.az = mu[8, 0]
-        self.sigma = (np.eye(9)-k.dot(BODY_C)).dot(self.sigma)
+        self.vz = mu[5, 0]
+        self.sigma = (np.eye(6)-k.dot(BODY_C)).dot(self.sigma)
 
     def predict(self, delta):
         """
         Predicts body location, based on Kalman filtering.
         """
-        self.state = "predicted"
-        a = np.array([[1.0, delta,   0.0, 0.0,   0.0,   0.0, 0.0,   0.0,   0.0],
-                      [0.0,   1.0, delta, 0.0,   0.0,   0.0, 0.0,   0.0,   0.0],
-                      [0.0,   0.0,   1.0, 0.0,   0.0,   0.0, 0.0,   0.0,   0.0],
-                      [0.0,   0.0,   0.0, 1.0, delta,   0.0, 0.0,   0.0,   0.0],
-                      [0.0,   0.0,   0.0, 0.0,   1.0, delta, 0.0,   0.0,   0.0],
-                      [0.0,   0.0,   0.0, 0.0,   0.0,   1.0, 0.0,   0.0,   0.0],
-                      [0.0,   0.0,   0.0, 0.0,   0.0,   0.0, 1.0, delta,   0.0],
-                      [0.0,   0.0,   0.0, 0.0,   0.0,   0.0, 0.0,   1.0, delta],
-                      [0.0,   0.0,   0.0, 0.0,   0.0,   0.0, 0.0,   0.0,   1.0]])
+        self.status = "predicted"
+        a = np.array([[1.0, 0.0, 0.0, delta,   0.0,   0.0],
+                      [0.0, 1.0, 0.0,   0.0, delta,   0.0],
+                      [0.0, 0.0, 1.0,   0.0,   0.0, delta],
+                      [0.0, 0.0, 0.0,   1.0,   0.0,   0.0],
+                      [0.0, 0.0, 0.0,   0.0,   1.0,   0.0],
+                      [0.0, 0.0, 0.0,   0.0,   0.0,   1.0]])
         #
-        mu = a.dot(np.array([[self.x], [self.vx], [self.ax],
-                             [self.y], [self.vy], [self.ay],
-                             [self.z], [self.vz], [self.az]]))
+        mu = a.dot(np.array([[self.x], 
+                             [self.y], 
+                             [self.z],
+                             [self.vx], 
+                             [self.vy], 
+                             [self.vz]]))
 
         self.x  = mu[0, 0]
-        self.vx = mu[1, 0]
-        self.ax = mu[2, 0]
-        self.y  = mu[3, 0]
+        self.y  = mu[1, 0]
+        self.z  = mu[2, 0]
+        self.vx = mu[3, 0]
         self.vy = mu[4, 0]
-        self.ay = mu[5, 0]
-        self.z  = mu[6, 0]
-        self.vz = mu[7, 0]
-        self.az = mu[8, 0]
+        self.vz = mu[5, 0]
 
         self.sigma = a.dot(self.sigma).dot(a.T) + BODY_R
 
@@ -177,9 +155,9 @@ class Body:
             self.length_min, self.length_mean, self.length_max = 0.1, 0.2, 1.2
             self.velocity_max, self.acceleration_max = 80.0, 100.0
         if class_id == 4: # Boat
-            self.height_min, self.height_mean, self.height_max = 1.0, 2.0, 20.0
+            self.height_min, self.height_mean, self.height_max = 1.0, 6.0, 20.0
             self.width_min, self.width_mean, self.width_max = 0.6, 3.0, 60.0
-            self.length_min, self.length_mean, self.length_max = 1.5, 3.0, 350.0
+            self.length_min, self.length_mean, self.length_max = 1.5, 10.0, 350.0
             self.velocity_max, self.acceleration_max = 20.0, 5.0
         if class_id == 5: # Bottle
             self.height_min, self.height_mean, self.height_max = 0.1, 0.25, 0.5
@@ -694,7 +672,7 @@ class Camera:
 
         # Delete removed patterns
         for remove in removes:
-            self.remove_image_object(remove)
+            self.remove_pattern(remove)
 
         # Any pattern not matched is changed to not detected state
         for pattern in self.patterns:
@@ -879,31 +857,30 @@ class Pattern(BoundingBox):
         delta seconds ago. Also updates other attribute information.
         """
         self.confidence = detection.confidence
-        a = np.array([[1.0, delta], [0.0, 1.0]])
         #
         k_x_min = self.sigma_x_min.dot(PATTERN_C.T).dot(np.linalg.inv(PATTERN_C.dot(self.sigma_x_min).dot(PATTERN_C.T) + PATTERN_Q))
-        mu_xmin = a.dot(np.array([[self.x_min], [self.vx_min]]))
+        mu_xmin = np.array([[self.x_min], [self.vx_min]])
         mu_xmin = mu_xmin + k_x_min.dot(detection.x_min - PATTERN_C.dot(mu_xmin))
         self.x_min = mu_xmin[0, 0]
         self.vx_min = mu_xmin[1, 0]
         self.sigma_x_min = (np.eye(2)-k_x_min.dot(PATTERN_C)).dot(self.sigma_x_min)
         #
         k_x_max = self.sigma_x_max.dot(PATTERN_C.T).dot(np.linalg.inv(PATTERN_C.dot(self.sigma_x_max).dot(PATTERN_C.T) + PATTERN_Q))
-        mu_xmax = a.dot(np.array([[self.x_max], [self.vx_max]]))
+        mu_xmax = np.array([[self.x_max], [self.vx_max]])
         mu_xmax = mu_xmax + k_x_max.dot(detection.x_max - PATTERN_C.dot(mu_xmax))
         self.x_max = mu_xmax[0, 0]
         self.vx_max = mu_xmax[1, 0]
         self.sigma_x_max = (np.eye(2)-k_x_max.dot(PATTERN_C)).dot(self.sigma_x_max)
         #
         k_y_min = self.sigma_y_min.dot(PATTERN_C.T).dot(np.linalg.inv(PATTERN_C.dot(self.sigma_y_min).dot(PATTERN_C.T) + PATTERN_Q))
-        mu_ymin = a.dot(np.array([[self.y_min], [self.vy_min]]))
+        mu_ymin = np.array([[self.y_min], [self.vy_min]])
         mu_ymin = mu_ymin + k_y_min.dot(detection.y_min - PATTERN_C.dot(mu_ymin))
         self.y_min = mu_ymin[0, 0]
         self.vy_min = mu_ymin[1, 0]
         self.sigma_y_min = (np.eye(2)-k_y_min.dot(PATTERN_C)).dot(self.sigma_y_min)
         #
         k_y_max = self.sigma_y_max.dot(PATTERN_C.T).dot(np.linalg.inv(PATTERN_C.dot(self.sigma_y_max).dot(PATTERN_C.T) + PATTERN_Q))
-        mu_ymax = a.dot(np.array([[self.y_max], [self.vy_max]]))
+        mu_ymax = np.array([[self.y_max], [self.vy_max]])
         mu_ymax = mu_ymax + k_y_max.dot(detection.y_max - PATTERN_C.dot(mu_ymax))
         self.y_max = mu_ymax[0, 0]
         self.vy_max = mu_ymax[1, 0]
@@ -1014,22 +991,13 @@ class PresentationMap(Presentation):
         """
         Update presentation at time t
         """
-        # No bodies, now update
-        if len(self.world.bodies) == 0:
-            return
-        self.frame = np.zeros((self.height_pixels, self.width_pixels, 3), 
-                              np.uint8)
         extension_pixels = min(self.height_pixels, self.width_pixels)
         pixels_meter = 0.5*extension_pixels / self.extent
-        # Draw
-        for body in self.world.bodies:
-            xc = self.width_pixels/2.0 + body.x * pixels_meter
-            yc = self.height_pixels/2.0 + body.z * pixels_meter
-            color = (0,255,0) # green
-            if body.state == "predicted":
-                color = (0,0,255) # red
-            cv2.ellipse(self.frame, (int(xc), int(yc)), (1,1), 0.0, 0, 360, 
-                        color, 2)
+
+        # Empty frame
+        self.frame = np.zeros((self.height_pixels, self.width_pixels, 3), 
+                              np.uint8)
+
         # Radar circles
         radius = 10.0
         while radius < self.extent:
@@ -1038,6 +1006,7 @@ class PresentationMap(Presentation):
                                     int(self.height_pixels/2)), radius_pixels, 
                                     (255,255,255), 1)
             radius += 10.0
+
         # Camera field of views
         for camera in self.world.cameras:
             x = self.height_pixels / 2.0 * tan(camera.field_of_view/2.0)
@@ -1046,6 +1015,20 @@ class PresentationMap(Presentation):
             cv2.line(self.frame, pt1, pt2, (255,255,255), 1)
             pt2 = (int(self.width_pixels/2+x),0)
             cv2.line(self.frame, pt1, pt2, (255,255,255), 1)
+
+        # No bodies, now update
+        if len(self.world.bodies) == 0:
+            return
+
+        # Draw
+        for body in self.world.bodies:
+            xc = self.width_pixels/2.0 + body.x * pixels_meter
+            yc = self.height_pixels/2.0 + body.z * pixels_meter
+            color = (0,255,0) # green
+            if body.status == "predicted":
+                color = (0,0,255) # red
+            cv2.ellipse(self.frame, (int(xc), int(yc)), (1,1), 0.0, 0, 360, 
+                        color, 2)
         
         cv2.imshow(self.window_name, self.frame)
                 
@@ -1122,70 +1105,38 @@ class PresentationLog(Presentation):
             self.file.write("time,id,class_id,")
             self.file.write("x,y,z,")
             self.file.write("vx,vy,vz,")
-            self.file.write("ax,ay,az,")
             self.file.write("sigma_00,sigma_01,sigma_02,")
             self.file.write("sigma_03,sigma_04,sigma_05,")
-            self.file.write("sigma_06,sigma_07,sigma_08,")
             self.file.write("sigma_10,sigma_11,sigma_12,")
             self.file.write("sigma_13,sigma_14,sigma_15,")
-            self.file.write("sigma_16,sigma_17,sigma_18,")
             self.file.write("sigma_20,sigma_21,sigma_22,")
             self.file.write("sigma_23,sigma_24,sigma_25,")
-            self.file.write("sigma_26,sigma_27,sigma_28,")
             self.file.write("sigma_30,sigma_31,sigma_32,")
             self.file.write("sigma_33,sigma_34,sigma_35,")
-            self.file.write("sigma_36,sigma_37,sigma_38,")
             self.file.write("sigma_40,sigma_41,sigma_42,")
             self.file.write("sigma_43,sigma_44,sigma_45,")
-            self.file.write("sigma_46,sigma_47,sigma_48,")
             self.file.write("sigma_50,sigma_51,sigma_52,")
             self.file.write("sigma_53,sigma_54,sigma_55,")
-            self.file.write("sigma_56,sigma_57,sigma_58,")
-            self.file.write("sigma_60,sigma_61,sigma_62,")
-            self.file.write("sigma_63,sigma_64,sigma_65,")
-            self.file.write("sigma_66,sigma_67,sigma_68,")
-            self.file.write("sigma_70,sigma_71,sigma_72,")
-            self.file.write("sigma_73,sigma_74,sigma_75,")
-            self.file.write("sigma_76,sigma_77,sigma_78,")
-            self.file.write("sigma_80,sigma_81,sigma_82,")
-            self.file.write("sigma_83,sigma_84,sigma_85,")
-            self.file.write("sigma_86,sigma_87,sigma_88,")
             self.file.write("x_pattern,y_pattern,z_pattern,")
-            self.file.write("pattern")
+            self.file.write("pattern,status")
             self.file.write("\n")
             f = "{0:.3f},{1:d},{2:d}," # time,id,class_id
             f += "{3:.3f},{4:.3f},{5:.3f}," # x,y,z
             f += "{6:.3f},{7:.3f},{8:.3f}," # vx,vy,vz
-            f += "{9:.3f},{10:.3f},{11:.3f}," # ax,ay,az
-            f += "{12:.3f},{13:.3f},{14:.3f}," # sigma_00,sigma_01,sigma_02
-            f += "{15:.3f},{16:.3f},{17:.3f}," # sigma_03,sigma_04,sigma_05
-            f += "{18:.3f},{19:.3f},{20:.3f}," # sigma_06,sigma_07,sigma_08
-            f += "{21:.3f},{22:.3f},{23:.3f}," # sigma_10,sigma_11,sigma_12
-            f += "{24:.3f},{25:.3f},{26:.3f}," # sigma_13,sigma_14,sigma_15
-            f += "{27:.3f},{28:.3f},{29:.3f}," # sigma_16,sigma_17,sigma_18
-            f += "{30:.3f},{31:.3f},{32:.3f}," # sigma_20,sigma_21,sigma_22
-            f += "{33:.3f},{34:.3f},{35:.3f}," # sigma_23,sigma_24,sigma_25
-            f += "{36:.3f},{37:.3f},{38:.3f}," # sigma_26,sigma_27,sigma_28
-            f += "{39:.3f},{40:.3f},{41:.3f}," # sigma_30,sigma_31,sigma_42
-            f += "{42:.3f},{43:.3f},{44:.3f}," # sigma_33,sigma_34,sigma_45
-            f += "{45:.3f},{46:.3f},{47:.3f}," # sigma_36,sigma_37,sigma_48
-            f += "{48:.3f},{49:.3f},{50:.3f}," # sigma_40,sigma_41,sigma_42
-            f += "{51:.3f},{52:.3f},{53:.3f}," # sigma_43,sigma_44,sigma_45
-            f += "{54:.3f},{55:.3f},{56:.3f}," # sigma_46,sigma_47,sigma_48
-            f += "{57:.3f},{58:.3f},{59:.3f}," # sigma_50,sigma_51,sigma_52
-            f += "{60:.3f},{61:.3f},{62:.3f}," # sigma_53,sigma_54,sigma_55
-            f += "{63:.3f},{64:.3f},{65:.3f}," # sigma_56,sigma_57,sigma_58
-            f += "{66:.3f},{67:.3f},{68:.3f}," # sigma_60,sigma_61,sigma_62
-            f += "{69:.3f},{70:.3f},{71:.3f}," # sigma_63,sigma_64,sigma_65
-            f += "{72:.3f},{73:.3f},{74:.3f}," # sigma_66,sigma_67,sigma_68
-            f += "{75:.3f},{76:.3f},{77:.3f}," # sigma_70,sigma_71,sigma_72
-            f += "{78:.3f},{79:.3f},{80:.3f}," # sigma_73,sigma_74,sigma_75
-            f += "{81:.3f},{82:.3f},{83:.3f}," # sigma_76,sigma_77,sigma_78
-            f += "{84:.3f},{85:.3f},{86:.3f}," # sigma_80,sigma_81,sigma_82
-            f += "{87:.3f},{88:.3f},{89:.3f}," # sigma_83,sigma_84,sigma_85
-            f += "{90:.3f},{91:.3f},{92:.3f}," # sigma_86,sigma_87,sigma_88
-            f += "{93:.3f},{94:.3f},{95:.3f}," # x_pattern,y_pattern,z_pattern
-            f += "{96:d}" # pattern
+            f += "{9:.3f},{10:.3f},{11:.3f}," # sigma_00,sigma_01,sigma_02
+            f += "{12:.3f},{13:.3f},{14:.3f}," # sigma_03,sigma_04,sigma_05
+            f += "{15:.3f},{16:.3f},{17:.3f}," # sigma_10,sigma_11,sigma_12
+            f += "{18:.3f},{19:.3f},{20:.3f}," # sigma_13,sigma_14,sigma_15
+            f += "{21:.3f},{22:.3f},{23:.3f}," # sigma_20,sigma_21,sigma_22
+            f += "{24:.3f},{25:.3f},{26:.3f}," # sigma_23,sigma_24,sigma_25
+            f += "{27:.3f},{28:.3f},{29:.3f}," # sigma_30,sigma_31,sigma_42
+            f += "{30:.3f},{31:.3f},{32:.3f}," # sigma_33,sigma_34,sigma_45
+            f += "{33:.3f},{34:.3f},{35:.3f}," # sigma_40,sigma_41,sigma_42
+            f += "{36:.3f},{37:.3f},{38:.3f}," # sigma_43,sigma_44,sigma_45
+            f += "{39:.3f},{40:.3f},{41:.3f}," # sigma_50,sigma_51,sigma_52
+            f += "{42:.3f},{43:.3f},{44:.3f}," # sigma_53,sigma_54,sigma_55
+            f += "{45:.3f},{46:.3f},{47:.3f}," # x_pattern,y_pattern,z_pattern
+            f += "{48:d},{49:d}" # pattern, status
             f += "\n"
             self.fmt = f
         elif self.category == "Event":
@@ -1290,6 +1241,9 @@ class PresentationLog(Presentation):
                 if body.pattern is not None:
                     pattern_id = id(body.pattern)
                     x_pattern,y_pattern,z_pattern = body.coordinates_from_pattern()
+                status = 0
+                if body.status == 'measured':
+                    status = 1
                 self.file.write(self.fmt.format(current_time,
                                                 id(body),
                                                 body.class_id,
@@ -1299,94 +1253,47 @@ class PresentationLog(Presentation):
                                                 body.vx,
                                                 body.vy,
                                                 body.vz,
-                                                body.ax,
-                                                body.ay,
-                                                body.az,
                                                 body.sigma[0,0],
                                                 body.sigma[0,1],
                                                 body.sigma[0,2],
                                                 body.sigma[0,3],
                                                 body.sigma[0,4],
                                                 body.sigma[0,5],
-                                                body.sigma[0,6],
-                                                body.sigma[0,7],
-                                                body.sigma[0,8],
                                                 body.sigma[1,0],
                                                 body.sigma[1,1],
                                                 body.sigma[1,2],
                                                 body.sigma[1,3],
                                                 body.sigma[1,4],
                                                 body.sigma[1,5],
-                                                body.sigma[1,6],
-                                                body.sigma[1,7],
-                                                body.sigma[1,8],
                                                 body.sigma[2,0],
                                                 body.sigma[2,1],
                                                 body.sigma[2,2],
                                                 body.sigma[2,3],
                                                 body.sigma[2,4],
                                                 body.sigma[2,5],
-                                                body.sigma[2,6],
-                                                body.sigma[2,7],
-                                                body.sigma[2,8],
                                                 body.sigma[3,0],
                                                 body.sigma[3,1],
                                                 body.sigma[3,2],
                                                 body.sigma[3,3],
                                                 body.sigma[3,4],
                                                 body.sigma[3,5],
-                                                body.sigma[3,6],
-                                                body.sigma[3,7],
-                                                body.sigma[3,8],
                                                 body.sigma[4,0],
                                                 body.sigma[4,1],
                                                 body.sigma[4,2],
                                                 body.sigma[4,3],
                                                 body.sigma[4,4],
                                                 body.sigma[4,5],
-                                                body.sigma[4,6],
-                                                body.sigma[4,7],
-                                                body.sigma[4,8],
                                                 body.sigma[5,0],
                                                 body.sigma[5,1],
                                                 body.sigma[5,2],
                                                 body.sigma[5,3],
                                                 body.sigma[5,4],
                                                 body.sigma[5,5],
-                                                body.sigma[5,6],
-                                                body.sigma[5,7],
-                                                body.sigma[5,8],
-                                                body.sigma[6,0],
-                                                body.sigma[6,1],
-                                                body.sigma[6,2],
-                                                body.sigma[6,3],
-                                                body.sigma[6,4],
-                                                body.sigma[6,5],
-                                                body.sigma[6,6],
-                                                body.sigma[6,7],
-                                                body.sigma[6,8],
-                                                body.sigma[7,0],
-                                                body.sigma[7,1],
-                                                body.sigma[7,2],
-                                                body.sigma[7,3],
-                                                body.sigma[7,4],
-                                                body.sigma[7,5],
-                                                body.sigma[7,6],
-                                                body.sigma[7,7],
-                                                body.sigma[7,8],
-                                                body.sigma[8,0],
-                                                body.sigma[8,1],
-                                                body.sigma[8,2],
-                                                body.sigma[8,3],
-                                                body.sigma[8,4],
-                                                body.sigma[8,5],
-                                                body.sigma[8,6],
-                                                body.sigma[8,7],
-                                                body.sigma[8,8],
                                                 x_pattern,
                                                 y_pattern,
                                                 z_pattern,
-                                                pattern_id))
+                                                pattern_id,
+                                                status))
         else:
             pass
                 
@@ -1540,18 +1447,55 @@ TEST_VIDEOS = ['videos/AWomanStandsOnTheSeashore-10058.mp4', # 0
                'videos/Sheep-12727.mp4', # 13
                'videos/Sofa-11294.mp4'] # 14
 
+TEST_FOCAL_LENGTHS = [0.020, # 0
+                      0.030, # 1
+                      0.150, # 2
+                      0.030, # 3
+                      0.050, # 4
+                      0.040, # 5
+                      0.030, # 6
+                      0.040, # 7
+                      0.050, # 8
+                      0.050, # 9
+                      0.040, # 10
+                      0.025, # 11
+                      0.100, # 12
+                      0.050, # 13
+                      0.050] # 14
+
+TEST_EXTENTS = [11.0, # 0
+                11.0, # 1
+                500.0, # 2
+                11.0, # 3
+                30.0, # 4
+                30.0, # 5
+                11.0, # 6
+                21.0, # 7
+                31.0, # 8
+                31.0, # 9
+                11.0, # 10
+                41.0, # 11
+                101.0, # 12
+                11.0, # 13
+                11.0] # 14
+
 def run_application():
     """
     Example application
     """
+    test_video = 5
+
     world = World()
     
-    world.add_camera(Camera(world, focal_length=0.050, sensor_width=0.0359, 
-                            sensor_height=0.0240, x=0.0, y=0.0, z=0.0, yaw=0.0,
-                            pitch=0.0, roll=0.0, videofile=TEST_VIDEOS[5]))
+    world.add_camera(Camera(world, focal_length=TEST_FOCAL_LENGTHS[test_video],
+                            sensor_width=0.0359, sensor_height=0.0240, 
+                            x=0.0, y=0.0, z=0.0, 
+                            yaw=0.0, pitch=0.0, roll=0.0, 
+                            videofile=TEST_VIDEOS[test_video]))
 
     world.add_presentation(PresentationMap(world, map_id=1, height_pixels=500, 
-                                           width_pixels=500, extent=30.0))
+                                           width_pixels=500, 
+                                           extent=TEST_EXTENTS[test_video]))
 
     world.add_presentation(PresentationLog(world, "Detection", "Detection.txt"))
     world.add_presentation(PresentationLog(world, "Pattern", "Pattern.txt"))
