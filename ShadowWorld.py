@@ -1532,7 +1532,7 @@ def run_application():
     """
     Example application
     """
-    test_video = 5
+    test_video = 12
 
     world = World()
     
