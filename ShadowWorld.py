@@ -473,8 +473,35 @@ class Camera:
         self.size_ratio = 900.0 / self.image_width
         frame = np.zeros((self.image_height, self.image_width, 3), np.uint8)
         frame = cv2.resize(frame, (0, 0), None, self.size_ratio, self.size_ratio)
+        label = "Videofile: " + self.videofile
+        cv2.putText(frame, label, (10,20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, 
+                    (255, 255, 255), 1)
+        label = "Width: " + str(self.image_width)
+        cv2.putText(frame, label, (10,40), cv2.FONT_HERSHEY_SIMPLEX, 0.5, 
+                    (255, 255, 255), 1)
+        label = "Height: " + str(self.image_height)
+        cv2.putText(frame, label, (10,60), cv2.FONT_HERSHEY_SIMPLEX, 0.5, 
+                    (255, 255, 255), 1)
+        label = "Fps: " + str(self.fps)
+        cv2.putText(frame, label, (10,80), cv2.FONT_HERSHEY_SIMPLEX, 0.5, 
+                    (255, 255, 255), 1)
+        label = "Commands:"
+        cv2.putText(frame, label, (10,100), cv2.FONT_HERSHEY_SIMPLEX, 0.5, 
+                    (255, 255, 255), 1)
+        label = "   s: step one frame"
+        cv2.putText(frame, label, (10,120), cv2.FONT_HERSHEY_SIMPLEX, 0.5, 
+                    (255, 255, 255), 1)
+        label = "   c: continuous mode"
+        cv2.putText(frame, label, (10,140), cv2.FONT_HERSHEY_SIMPLEX, 0.5, 
+                    (255, 255, 255), 1)
+        label = "   q: quit"
+        cv2.putText(frame, label, (10,160), cv2.FONT_HERSHEY_SIMPLEX, 0.5, 
+                    (255, 255, 255), 1)
+
         cv2.imshow(self.videofile, frame)
         cv2.moveWindow(self.videofile, 20, 20)
+        self.mode = "step"
+        self.check_keyboard_command()
 
     def add_pattern(self, detection):
         """
@@ -511,6 +538,29 @@ class Camera:
 
         return True
     
+    def check_keyboard_command(self):
+        """
+        Wait for keyboard command and set the required mode
+        """
+        if self.mode == "step":
+            found = False
+            while not found: # Discard everything except n, q, c
+                key_pushed = cv2.waitKey(0) & 0xFF
+                if key_pushed in [ord('s'), ord('q'), ord('c')]:
+                    found = True
+            if key_pushed == ord('q'):
+                self.mode = "quit"
+            if key_pushed == ord('s'):
+                self.mode = "step"
+            if key_pushed == ord('c'):
+                self.mode = "continuous"
+        else:
+            key_pushed = cv2.waitKey(1) & 0xFF
+            if key_pushed == ord('q'):
+                self.mode = "quit"
+            if key_pushed == ord('s'):
+                self.mode = "step"
+
     def close(self):
         """
         Release resources
@@ -762,9 +812,14 @@ class Camera:
         frame_display = cv2.resize(frame_video, (0, 0), None, self.size_ratio, 
                            self.size_ratio)
         cv2.imshow(self.videofile, frame_display)
-        cv2.waitKey(1)
+
+        self.check_keyboard_command()
+
+        if self.mode == "quit":
+            return False
 
         return True
+
 #------------------------------------------------------------------------------
 class Detection(BoundingBox):
     """

@@ -18,4 +18,7 @@ Object detection network:
   located in two files: MobileNetSSD_deploy.caffemodel and 
   MobileNetSSD_deploy.prototxt.txt. 
   
-  
+Commands:
+  s = step one frame
+  c = continuos mode
+  q = quit
