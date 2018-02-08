@@ -11,7 +11,7 @@ import cv2
 import time
 import random as rnd
 import pyttsx3
-from math import atan, cos, sqrt, tan
+from math import atan, cos, sqrt, tan, exp, log
 from scipy.optimize import linear_sum_assignment
 # Hyperparameters--------------------------------------------------------------
 BODY_ALFA = 100000.0 # Body initial location error variance 200
@@ -76,7 +76,6 @@ class Body:
         self.vx = 0.0
         self.vy = 0.0
         self.vz = 0.0
-        
         self.sigma = np.array([[BODY_ALFA, 0.0,       0.0,       0.0,       0.0,       0.0],
                                [0.0, BODY_ALFA,       0.0,       0.0,       0.0,       0.0],
                                [0.0,       0.0, BODY_ALFA,       0.0,       0.0,       0.0],
@@ -94,8 +93,8 @@ class Body:
         sh = self.pattern.camera.sensor_height
         pw = self.pattern.camera.image_width
         ph = self.pattern.camera.image_height
-        hi = self.pattern.y_max - self.pattern.y_min
-        h = self.height_mean
+        ri = self.pattern.radius()
+        r = self.mean_radius()
         f = self.pattern.camera.focal_length
         xp, yp = self.pattern.center_point()
 
@@ -106,7 +105,7 @@ class Body:
         alfa = atan(yc/f)
         beta = atan(xc/f)
 
-        d = f*h/(cos(alfa)*cos(beta)*hi*sh/ph)
+        d = f*r/(cos(alfa)*cos(beta)*ri*sh/ph)
         t = d / sqrt(xc**2.0 + yc**2.0 + zc**2.0)
 
         xo = t*xc
@@ -145,6 +144,14 @@ class Body:
         """
         variance = self.sigma[0, 0] + self.sigma[1, 1]+ self.sigma[2, 2]
         return variance
+    
+    def mean_radius(self):
+        """
+        Calculate mean radius
+        """
+        mu = self.diameter_mu
+        sigma = self.diameter_sigma
+        return exp(mu + sigma * sigma / 2.0)/2.0
 
     def predict(self, delta):
         """
@@ -181,105 +188,85 @@ class Body:
         """
         self.class_id = class_id
         if class_id == 1: # Aeroplane
-            self.height_min, self.height_mean, self.height_max = 1.5, 2.0, 6.0
-            self.width_min, self.width_mean, self.width_max = 2.0, 20.0, 80.0
-            self.length_min, self.length_mean, self.length_max = 3.0, 20.0, 80.0
-            self.velocity_max, self.acceleration_max = 300.0, 10.0
+            self.diameter_mu = log(20.0)
+            self.diameter_sigma = 0.35
+            self.velocity_max= 300.0
         if class_id == 2: # Bicycle
-            self.height_min, self.height_mean, self.height_max = 0.6, 1.1, 1.4
-            self.width_min, self.width_mean, self.width_max = 0.4, 0.6, 0.8
-            self.length_min, self.length_mean, self.length_max = 1.2, 1.5, 1.7
-            self.velocity_max, self.acceleration_max = 13.0, 1.0
+            self.diameter_mu = log(1.5)
+            self.diameter_sigma = 0.04
+            self.velocity_max = 13.0
         if class_id == 3: # Bird
-            self.height_min, self.height_mean, self.height_max = 0.1, 0.25, 2.8
-            self.width_min, self.width_mean, self.width_max = 0.05, 0.5, 1.2
-            self.length_min, self.length_mean, self.length_max = 0.1, 0.2, 1.2
-            self.velocity_max, self.acceleration_max = 80.0, 100.0
+            self.diameter_mu = log(0.15)
+            self.diameter_sigma = 0.35
+            self.velocity_max = 80.0
         if class_id == 4: # Boat
-            self.height_min, self.height_mean, self.height_max = 1.0, 6.0, 20.0
-            self.width_min, self.width_mean, self.width_max = 0.6, 3.0, 60.0
-            self.length_min, self.length_mean, self.length_max = 1.5, 10.0, 350.0
-            self.velocity_max, self.acceleration_max = 20.0, 5.0
+            self.diameter_mu = log(6.0)
+            self.diameter_sigma = 0.35
+            self.velocity_max = 20.0
         if class_id == 5: # Bottle
-            self.height_min, self.height_mean, self.height_max = 0.1, 0.25, 0.5
-            self.width_min, self.width_mean, self.width_max = 0.05, 0.1, 0.3
-            self.length_min, self.length_mean, self.length_max = 0.05, 0.1, 0.3
-            self.velocity_max, self.acceleration_max = 10.0, 3.0
+            self.diameter_mu = log(0.2)
+            self.diameter_sigma = 0.25
+            self.velocity_max = 10.0
         if class_id == 6: # Bus
-            self.height_min, self.height_mean, self.height_max = 2.5, 2.8, 5.0
-            self.width_min, self.width_mean, self.width_max = 2.3, 2.5, 2.8
-            self.length_min, self.length_mean, self.length_max = 6.0, 15.0, 30.0
-            self.velocity_max, self.acceleration_max = 30.0, 2.0
+            self.diameter_mu = log(15.0)
+            self.diameter_sigma = 0.3
+            self.velocity_max = 30.0
         if class_id == 7: # Car
-            self.height_min, self.height_mean, self.height_max = 1.3, 1.5, 2.0
-            self.width_min, self.width_mean, self.width_max = 1.6, 1.8, 2.0
-            self.length_min, self.length_mean, self.length_max = 3.5, 4.3, 5.5
-            self.velocity_max, self.acceleration_max = 50.0, 10.0
+            self.diameter_mu = log(3.6)
+            self.diameter_sigma = 0.25
+            self.velocity_max = 50.0
         if class_id == 8: # Cat
-            self.height_min, self.height_mean, self.height_max = 0.2, 0.3, 0.4
-            self.width_min, self.width_mean, self.width_max = 0.1, 0.15, 0.2
-            self.length_min, self.length_mean, self.length_max = 0.3, 0.4, 0.5
-            self.velocity_max, self.acceleration_max = 13.0, 10.0
+            self.diameter_mu = log(0.3)
+            self.diameter_sigma = 0.2
+            self.velocity_max = 13.0
         if class_id == 9: # Chair
-            self.height_min, self.height_mean, self.height_max = 0.5, 1.0, 1.5
-            self.width_min, self.width_mean, self.width_max = 0.5, 0.6, 0.7
-            self.length_min, self.length_mean, self.length_max = 0.5, 0.6, 0.7
-            self.velocity_max, self.acceleration_max = 10.0, 3.0
+            self.diameter_mu = log(1.0)
+            self.diameter_sigma = 0.15
+            self.velocity_max = 10.0
         if class_id == 10: # Cow
-            self.height_min, self.height_mean, self.height_max = 1.3, 1.3, 1.5
-            self.width_min, self.width_mean, self.width_max = 0.5, 0.6, 0.7
-            self.length_min, self.length_mean, self.length_max = 1.8, 2.3, 2.8
-            self.velocity_max, self.acceleration_max = 10.0, 2.0
+            self.diameter_mu = log(2.0)
+            self.diameter_sigma = 0.1
+            self.velocity_max = 10.0
         if class_id == 11: # Dining table
-            self.height_min, self.height_mean, self.height_max = 0.7, 0.75, 0.9
-            self.width_min, self.width_mean, self.width_max = 0.5, 1.0, 1.5
-            self.length_min, self.length_mean, self.length_max = 0.5, 2.0, 5.0
-            self.velocity_max, self.acceleration_max = 10.0, 3.0
+            self.diameter_mu = log(1.7)
+            self.diameter_sigma = 0.3
+            self.velocity_max = 10.0
         if class_id == 12: # Dog
-            self.height_min, self.height_mean, self.height_max = 0.2, 0.35, 0.8
-            self.width_min, self.width_mean, self.width_max = 0.15, 0.2, 0.3
-            self.length_min, self.length_mean, self.length_max = 0.3, 0.6, 1.3
-            self.velocity_max, self.acceleration_max = 13.0, 10.0
+            self.diameter_mu = log(0.4)
+            self.diameter_sigma = 0.3
+            self.velocity_max = 13.0
         if class_id == 13: # Horse
-            self.height_min, self.height_mean, self.height_max = 1.2, 1.6, 1.8
-            self.width_min, self.width_mean, self.width_max = 0.3, 0.45, 0.6
-            self.length_min, self.length_mean, self.length_max = 2.0, 2.4, 3.0
-            self.velocity_max, self.acceleration_max = 13.0, 4.0
+            self.diameter_mu = log(2.0)
+            self.diameter_sigma = 0.07
+            self.velocity_max = 13.0
         if class_id == 14: # Motorbike
-            self.height_min, self.height_mean, self.height_max = 0.6, 1.1, 1.4
-            self.width_min, self.width_mean, self.width_max = 0.4, 0.6, 0.8
-            self.length_min, self.length_mean, self.length_max = 1.2, 1.5, 1.7
-            self.velocity_max, self.acceleration_max = 50.0, 10.0
+            self.diameter_mu = log(1.6)
+            self.diameter_sigma = 0.07
+            self.velocity_max = 50.0
         if class_id == 15: # Person
-            self.height_min, self.height_mean, self.height_max = 1.0, 1.7, 2.0
-            self.width_min, self.width_mean, self.width_max = 0.5, 0.6, 0.7
-            self.length_min, self.length_mean, self.length_max = 0.25, 0.35, 0.45
-            self.velocity_max, self.acceleration_max = 10.0, 3.0
+            self.diameter_mu = log(1.67)
+            self.diameter_sigma = 0.07
+            self.velocity_max = 10.0
         if class_id == 16: # Potted plant
-            self.height_min, self.height_mean, self.height_max = 0.2, 0.35, 1.0
-            self.width_min, self.width_mean, self.width_max = 0.15, 0.25, 0.4
-            self.length_min, self.length_mean, self.length_max = 0.15, 0.25, 0.4
-            self.velocity_max, self.acceleration_max = 10.0, 3.0
+            self.diameter_mu = log(0.3)
+            self.diameter_sigma = 0.25
+            self.velocity_max = 10.0
         if class_id == 17: # Sheep
-            self.height_min, self.height_mean, self.height_max = 0.8, 1.2, 1.4
-            self.width_min, self.width_mean, self.width_max = 0.25, 0.35, 0.45
-            self.length_min, self.length_mean, self.length_max = 1.0, 1.3, 1.5
-            self.velocity_max, self.acceleration_max = 10.0, 6.0
+            self.diameter_mu = log(1.3)
+            self.diameter_sigma = 0.07
+            self.velocity_max = 10.0
         if class_id == 18: # Sofa
-            self.height_min, self.height_mean, self.height_max = 0.7, 1.0, 1.4
-            self.width_min, self.width_mean, self.width_max = 0.7, 1.0, 1.5
-            self.length_min, self.length_mean, self.length_max = 1.5, 2.0, 4.0
-            self.velocity_max, self.acceleration_max = 10.0, 3.0
+            self.diameter_mu = log(2.3)
+            self.diameter_sigma = 0.15
+            self.velocity_max = 10.0
         if class_id == 19: # Train
-            self.height_min, self.height_mean, self.height_max = 2.5, 3.0, 5.0
-            self.width_min, self.width_mean, self.width_max = 2.5, 3.1, 3.5
-            self.length_min, self.length_mean, self.length_max = 25.0, 150.0, 1000.0
-            self.velocity_max, self.acceleration_max = 50.0, 1.0
+            self.diameter_mu = log(140.0)
+            self.diameter_sigma = 0.45
+            self.velocity_max = 50.0
         if class_id == 20: # TV Monitor
-            self.height_min, self.height_mean, self.height_max = 0.2, 0.5, 1.2
-            self.width_min, self.width_mean, self.width_max = 0.3, 0.8, 2.0
-            self.length_min, self.length_mean, self.length_max = 0.04, 0.1, 0.5
-            self.velocity_max, self.acceleration_max = 10.0, 3.0
+            self.diameter_mu = log(0.7)
+            self.diameter_sigma = 0.25
+            self.velocity_max = 10.0
 
     def speed(self):
         return sqrt(self.vx**2.0 + self.vy**2.0 + self.vz**2.0)
@@ -351,6 +338,18 @@ class BoundingBox:
         if c1 or c2:
             return True
         return False
+
+    def radius(self):
+        """
+        Calculate the radius of enclosing circle
+        """
+        h = (self.y_max - self.y_min)/2.0
+        w = (self.x_max - self.x_min)/2.0
+        if h<=0:
+            return w
+        if w<=0:
+            return h
+        return sqrt(h*h+w*w)
 
     def set_border_behaviour(self, image_width, image_height):
         """
@@ -736,6 +735,9 @@ class Camera:
             cv2.rectangle(frame_video, (int(pattern.x_min), int(pattern.y_min)), 
                           (int(pattern.x_max), int(pattern.y_max)), 
                           pattern.bounding_box_color, 2)
+            x_center, y_center = pattern.center_point()
+            cv2.circle(frame_video, (int(x_center), int(y_center)),
+                       int(pattern.radius()), (255, 255, 255), 2)
             label = "{0:s}: {1:.2f}".format(CLASS_NAMES[pattern.class_id],
                      pattern.confidence)
             ytext = int(pattern.y_min) - 15 if int(pattern.y_min) - 15 > 15 \
@@ -744,7 +746,6 @@ class Camera:
                         cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
             
             if (pattern.is_reliable()):
-                x_center, y_center = pattern.center_point()
                 x_variance, y_variance = pattern.location_variance()
                 x_std2 = 2.0 * sqrt(x_variance)
                 y_std2 = 2.0 * sqrt(y_variance)
@@ -1049,10 +1050,13 @@ class PresentationMap(Presentation):
             color = (0,255,0) # green
             if body.status == "predicted":
                 color = (0,0,255) # red
-            cv2.ellipse(self.frame, (int(xc), int(yc)), (1,1), 0.0, 0, 360, 
-                        color, 2)
-            std = int(sqrt(body.location_variance()))
-            cv2.circle(self.frame, (int(xc), int(yc)), std, color, 1)
+            radius_pixels = int(body.mean_radius() * pixels_meter)
+            cv2.circle(self.frame, (int(xc), int(yc)), radius_pixels, color, 1)
+            color = (100,100,100)
+            sx = int(2.0*sqrt(body.sigma[0,0]))
+            sy = int(2.0*sqrt(body.sigma[2,2]))
+            cv2.ellipse(self.frame, (int(xc), int(yc)), (sx, sy), 0.0, 0.0, 
+                        360.0, color,1)
         
         cv2.imshow(self.window_name, self.frame)
                 
@@ -1496,35 +1500,35 @@ TEST_VIDEOS = ['videos/AWomanStandsOnTheSeashore-10058.mp4', # 0
                'videos/Sheep-12727.mp4', # 13
                'videos/Sofa-11294.mp4'] # 14
 
-TEST_FOCAL_LENGTHS = [0.040, # 0
-                      0.120, # 1
+TEST_FOCAL_LENGTHS = [0.050, # 0
+                      0.250, # 1
                       0.150, # 2
                       0.050, # 3
-                      0.200, # 4
+                      0.100, # 4
                       0.200, # 5 
-                      0.070, # 6
-                      0.040, # 7
-                      0.020, # 8
+                      0.090, # 6
+                      0.030, # 7
+                      0.050, # 8
                       0.050, # 9
-                      0.040, # 10
-                      0.150, # 11
-                      0.100, # 12
+                      0.050, # 10
+                      0.015, # 11
+                      0.150, # 12
                       0.050, # 13
-                      0.050] # 14
+                      0.035] # 14
 
 TEST_EXTENTS = [11.0, # 0
                 11.0, # 1
-                500.0, # 2
+                210.0, # 2
                 11.0, # 3
                 61.0, # 4
-                111.0, # 5
+                141.0, # 5
                 11.0, # 6
                 21.0, # 7
-                21.0, # 8
+                31.0, # 8
                 31.0, # 9
                 11.0, # 10
-                131.0, # 11
-                101.0, # 12
+                331.0, # 11
+                161.0, # 12
                 11.0, # 13
                 11.0] # 14
 
@@ -1532,7 +1536,7 @@ def run_application():
     """
     Example application
     """
-    test_video = 12
+    test_video = 5
 
     world = World()
     

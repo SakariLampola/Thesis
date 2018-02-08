@@ -1,6 +1,3 @@
-- appearance
-- map
-- 3d state estimation
+- collision forecast
 - bug fixes
-- distance metrics + probabilistic matching
 - class change
