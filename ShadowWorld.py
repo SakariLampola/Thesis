@@ -473,7 +473,7 @@ class Camera:
         self.size_ratio = 900.0 / self.image_width
         frame = np.zeros((self.image_height, self.image_width, 3), np.uint8)
         frame = cv2.resize(frame, (0, 0), None, self.size_ratio, self.size_ratio)
-        label = "Videofile: " + self.videofile
+        label = "Video file: " + self.videofile
         cv2.putText(frame, label, (10,20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, 
                     (255, 255, 255), 1)
         label = "Width: " + str(self.image_width)
