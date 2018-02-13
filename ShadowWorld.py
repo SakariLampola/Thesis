@@ -11,6 +11,7 @@ import cv2
 import time
 import random as rnd
 import pyttsx3
+import winsound
 from math import atan, cos, sqrt, tan, exp, log
 from scipy.optimize import linear_sum_assignment
 # Hyperparameters--------------------------------------------------------------
@@ -34,8 +35,20 @@ BODY_R = np.array([[0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
 #
 BORDER_WIDTH = 30 # Part of video window for special pattern behaviour
 #
+COLLISION_SAMPLES = 1000 # How many samples are drawn for the collision detection
+#
 CONFIDENFE_LEVEL_CREATE = 0.80 # How confident must be to create new pattern
 CONFIDENFE_LEVEL_UPDATE = 0.20 # How confident must be to update pattern
+#
+FORECAST_DELTA = 0.01 # Time step for the forecast
+FORECAST_A = np.array([[1.0, 0.0, 0.0, FORECAST_DELTA,            0.0,            0.0],
+                       [0.0, 1.0, 0.0,            0.0, FORECAST_DELTA,            0.0],
+                       [0.0, 0.0, 1.0,            0.0,            0.0, FORECAST_DELTA],
+                       [0.0, 0.0, 0.0,            1.0,            0.0,            0.0],
+                       [0.0, 0.0, 0.0,            0.0,            1.0,            0.0],
+                       [0.0, 0.0, 0.0,            0.0,            0.0,           1.0]])
+FORECAST_COUNT = 500 # How many time steps ahead a body forecast is made
+FORECAST_INTERVAL = 1.0 # How often forecast is made
 #
 PATTERN_ALFA = 200.0 # Pattern initial location error variance
 PATTERN_BETA = 10000.0 # Pattern initial velocity error variance
@@ -68,6 +81,7 @@ class Body:
         self.pattern = pattern
         self.events = []
         self.traces = []
+        self.forecast = None
         # Attributes
         self.set_class_attributes(pattern.class_id)
         self.frame_age = 0
@@ -82,8 +96,15 @@ class Body:
                                [0.0,       0.0,       0.0, BODY_BETA,       0.0,       0.0],
                                [0.0,       0.0,       0.0,       0.0, BODY_BETA,       0.0],
                                [0.0,       0.0,       0.0,       0.0,       0.0, BODY_BETA]])
+        self.forecast_color = pattern.bounding_box_color
+        self.collision_probability = 0.0
 
-
+    def add_trace(self, time):
+        """
+        Add a history trace
+        """
+        self.traces.append(Trace(time, self))
+    
     def coordinates_from_pattern(self):
         """
         Calculates world coordinates from pattern center point, pattern height,
@@ -136,6 +157,42 @@ class Body:
         self.vy = mu[4, 0]
         self.vz = mu[5, 0]
         self.sigma = (np.eye(6)-k.dot(BODY_C)).dot(self.sigma)
+
+    def detect_collision(self):
+        """
+        Calculate collision probability with the observer
+        """
+        if self.forecast is None:
+            self.collision_probability = 0.0
+            return
+        
+        mu = np.array([self.forecast.x_min_distance,
+                       self.forecast.y_min_distance,
+                       self.forecast.z_min_distance])
+        sigma = self.forecast.sigma_min_distance[0:3,0:3]
+        samples_location = np.random.multivariate_normal(mu, sigma, 
+                                                         COLLISION_SAMPLES)
+        samples_body_radius = np.random.lognormal(self.diameter_mu, 
+                                                  self.diameter_sigma, 
+                                                  COLLISION_SAMPLES)/2.0
+        
+        samples_observer_radius = np.random.lognormal(log(1.67), 
+                                                      0.07, 
+                                                      COLLISION_SAMPLES)/2.0 
+                                                      
+        count_collision = 0
+        for i in range (COLLISION_SAMPLES):
+            if np.linalg.norm(samples_location[i]) < (samples_observer_radius[i] +
+                             samples_body_radius[i]):
+                count_collision += 1
+                
+        self.collision_probability = count_collision / COLLISION_SAMPLES
+
+    def make_forecast(self, time):
+        """
+        Make a forcast of body movement and uncertanties
+        """
+        self.forecast = Forecast(time, self)
 
     def location_variance(self):
         """
@@ -887,6 +944,42 @@ class Event:
         self.text = text
 
 #------------------------------------------------------------------------------
+class Forecast:
+    """
+    Forecast of body movement
+    """
+    def __init__(self, time, body):
+        """
+        Initialization
+        """
+        # References
+        self.body = body
+        # Attributes
+        self.time = time
+        # Calculate forecast
+        min_distance = np.inf
+        self.mu = np.zeros((6, FORECAST_COUNT))
+        self.sigma = np.zeros((6, 6, FORECAST_COUNT))
+        self.mu[0,0] = body.x
+        self.mu[1,0] = body.y
+        self.mu[2,0] = body.z
+        self.mu[3,0] = body.vx
+        self.mu[4,0] = body.vy
+        self.mu[5,0] = body.vz
+        self.sigma[:,:,0] = body.sigma.copy()
+        for i in range(1, FORECAST_COUNT):
+            self.mu[:,i] = FORECAST_A.dot(self.mu[:,i-1])
+            self.sigma[:,:,i] = FORECAST_A.dot(self.sigma[:,:,i-1]).dot(FORECAST_A.T) + BODY_R
+            distance = np.linalg.norm(np.array([self.mu[0,i], self.mu[1,i], self.mu[2,i]]))
+            if distance < min_distance:
+                self.x_min_distance = self.mu[0,i]
+                self.y_min_distance = self.mu[1,i]
+                self.z_min_distance = self.mu[2,i]
+                self.sigma_min_distance = self.sigma[:,:,i].copy()
+                self.t_min_distance = time + i * FORECAST_DELTA
+                min_distance = distance
+
+#------------------------------------------------------------------------------
 class Pattern(BoundingBox):
     """
     Persistent pattern in image
@@ -1041,9 +1134,9 @@ class Presentation:
         pass
 
 #------------------------------------------------------------------------------
-class PresentationMap(Presentation):
+class PresentationForecast(Presentation):
     """
-    2D map presentation (looked from above)
+    2D map presentation for movement and collision forecast
     """
     def __init__(self, world, map_id, height_pixels, width_pixels, extent):
         """
@@ -1057,7 +1150,7 @@ class PresentationMap(Presentation):
         self.frame = np.zeros((height_pixels, width_pixels, 3), np.uint8)
         self.window_name = "Map " + str(map_id)
         cv2.imshow(self.window_name, self.frame)
-        cv2.moveWindow(self.window_name, 940, 20)
+        cv2.moveWindow(self.window_name, 940, self.height_pixels + 110)
         
     def close(self):
         """
@@ -1076,43 +1169,40 @@ class PresentationMap(Presentation):
         self.frame = np.zeros((self.height_pixels, self.width_pixels, 3), 
                               np.uint8)
 
-        # Radar circles
-        radius = 10.0
-        while radius < self.extent:
-            radius_pixels = int(radius * pixels_meter)
-            cv2.circle(self.frame, (int(self.width_pixels/2), 
-                                    int(self.height_pixels/2)), radius_pixels, 
-                                    (255,255,255), 1)
-            radius += 10.0
-
-        # Camera field of views
-        for camera in self.world.cameras:
-            x = self.height_pixels / 2.0 * tan(camera.field_of_view/2.0)
-            pt1 = (int(self.width_pixels/2), int(self.height_pixels/2))
-            pt2 = (int(self.width_pixels/2-x),0)
-            cv2.line(self.frame, pt1, pt2, (255,255,255), 1)
-            pt2 = (int(self.width_pixels/2+x),0)
-            cv2.line(self.frame, pt1, pt2, (255,255,255), 1)
-
         # No bodies, now update
         if len(self.world.bodies) == 0:
             return
+
+        # Observer
+        color = (255, 255, 255)
+        radius_pixels = int((1.63 + sqrt(0.234) )* pixels_meter/2.0)
+        cv2.circle(self.frame, (int(self.width_pixels/2), 
+                                int(self.height_pixels/2)), 
+                                radius_pixels, color, 1)
 
         # Draw
         for body in self.world.bodies:
             xc = self.width_pixels/2.0 + body.x * pixels_meter
             yc = self.height_pixels/2.0 + body.z * pixels_meter
-            color = (0,255,0) # green
-            if body.status == "predicted":
-                color = (0,0,255) # red
+            color = body.forecast_color
             radius_pixels = int(body.mean_radius() * pixels_meter)
             cv2.circle(self.frame, (int(xc), int(yc)), radius_pixels, color, 1)
-            color = (100,100,100)
-            sx = int(2.0*sqrt(body.sigma[0,0]))
-            sy = int(2.0*sqrt(body.sigma[2,2]))
-            cv2.ellipse(self.frame, (int(xc), int(yc)), (sx, sy), 0.0, 0.0, 
-                        360.0, color,1)
-        
+            if body.forecast is not None:
+                for i in range(1, FORECAST_COUNT):
+                    x1 = int(self.width_pixels/2.0 + body.forecast.mu[0,i-1] * pixels_meter)
+                    y1 = int(self.height_pixels/2.0 + body.forecast.mu[2,i-1] * pixels_meter)
+                    x2 = int(self.width_pixels/2.0 + body.forecast.mu[0,i] * pixels_meter)
+                    y2 = int(self.height_pixels/2.0 + body.forecast.mu[2,i] * pixels_meter)
+                    cv2.line(self.frame, (x1,y1), (x2,y2), color, 1)
+                xc = self.width_pixels/2.0 + body.forecast.x_min_distance * pixels_meter
+                yc = self.height_pixels/2.0 + body.forecast.z_min_distance * pixels_meter
+                cv2.circle(self.frame, (int(xc), int(yc)), 3, color, 1)
+                if body.collision_probability > 0.0:
+                    sx = int(sqrt(body.forecast.sigma_min_distance[0,0]))
+                    sy = int(sqrt(body.forecast.sigma_min_distance[2,2]))
+                    cv2.circle(self.frame, (int(xc), int(yc)), 3, color, 1)
+                    cv2.ellipse(self.frame, (int(xc), int(yc)), (sx, sy), 0.0, 0.0, 
+                            360.0, color,1)
         cv2.imshow(self.window_name, self.frame)
                 
 #------------------------------------------------------------------------------
@@ -1201,7 +1291,7 @@ class PresentationLog(Presentation):
             self.file.write("sigma_50,sigma_51,sigma_52,")
             self.file.write("sigma_53,sigma_54,sigma_55,")
             self.file.write("x_pattern,y_pattern,z_pattern,")
-            self.file.write("pattern,status")
+            self.file.write("pattern,status,collision_p")
             self.file.write("\n")
             f = "{0:.3f},{1:d},{2:d}," # time,id,class_id
             f += "{3:.3f},{4:.3f},{5:.3f}," # x,y,z
@@ -1219,7 +1309,7 @@ class PresentationLog(Presentation):
             f += "{39:.3f},{40:.3f},{41:.3f}," # sigma_50,sigma_51,sigma_52
             f += "{42:.3f},{43:.3f},{44:.3f}," # sigma_53,sigma_54,sigma_55
             f += "{45:.3f},{46:.3f},{47:.3f}," # x_pattern,y_pattern,z_pattern
-            f += "{48:d},{49:d}" # pattern, status
+            f += "{48:d},{49:d},{50:.3f}" # pattern, status, collision_p
             f += "\n"
             self.fmt = f
         elif self.category == "Event":
@@ -1376,9 +1466,85 @@ class PresentationLog(Presentation):
                                                 y_pattern,
                                                 z_pattern,
                                                 pattern_id,
-                                                status))
+                                                status,
+                                                body.collision_probability))
         else:
             pass
+                
+#------------------------------------------------------------------------------
+class PresentationMap(Presentation):
+    """
+    2D map presentation (looked from above)
+    """
+    def __init__(self, world, map_id, height_pixels, width_pixels, extent):
+        """
+        Initialization
+        """
+        super().__init__(world)
+        self.map_id =map_id
+        self.height_pixels = height_pixels
+        self.width_pixels = width_pixels
+        self.extent = extent
+        self.frame = np.zeros((height_pixels, width_pixels, 3), np.uint8)
+        self.window_name = "Map " + str(map_id)
+        cv2.imshow(self.window_name, self.frame)
+        cv2.moveWindow(self.window_name, 940, 20)
+        
+    def close(self):
+        """
+        Release resources
+        """
+        cv2.destroyWindow(self.window_name)
+
+    def update(self, current_time):
+        """
+        Update presentation at time t
+        """
+        extension_pixels = min(self.height_pixels, self.width_pixels)
+        pixels_meter = 0.5*extension_pixels / self.extent
+
+        # Empty frame
+        self.frame = np.zeros((self.height_pixels, self.width_pixels, 3), 
+                              np.uint8)
+
+        # Radar circles
+        radius = 10.0
+        while radius < self.extent:
+            radius_pixels = int(radius * pixels_meter)
+            cv2.circle(self.frame, (int(self.width_pixels/2), 
+                                    int(self.height_pixels/2)), radius_pixels, 
+                                    (255,255,255), 1)
+            radius += 10.0
+
+        # Camera field of views
+        for camera in self.world.cameras:
+            x = self.height_pixels / 2.0 * tan(camera.field_of_view/2.0)
+            pt1 = (int(self.width_pixels/2), int(self.height_pixels/2))
+            pt2 = (int(self.width_pixels/2-x),0)
+            cv2.line(self.frame, pt1, pt2, (255,255,255), 1)
+            pt2 = (int(self.width_pixels/2+x),0)
+            cv2.line(self.frame, pt1, pt2, (255,255,255), 1)
+
+        # No bodies, now update
+        if len(self.world.bodies) == 0:
+            return
+
+        # Draw
+        for body in self.world.bodies:
+            xc = self.width_pixels/2.0 + body.x * pixels_meter
+            yc = self.height_pixels/2.0 + body.z * pixels_meter
+            color = (0,255,0) # green
+            if body.status == "predicted":
+                color = (0,0,255) # red
+            radius_pixels = int(body.mean_radius() * pixels_meter)
+            cv2.circle(self.frame, (int(xc), int(yc)), radius_pixels, color, 1)
+            color = (100,100,100)
+            sx = int(sqrt(body.sigma[0,0]))
+            sy = int(sqrt(body.sigma[2,2]))
+            cv2.ellipse(self.frame, (int(xc), int(yc)), (sx, sy), 0.0, 0.0, 
+                        360.0, color,1)
+        
+        cv2.imshow(self.window_name, self.frame)
                 
 #------------------------------------------------------------------------------
 class SpeechSynthesizer:
@@ -1401,7 +1567,12 @@ class SpeechSynthesizer:
         """
         self.engine.say(text)
         self.engine.runAndWait()
-
+        
+    def alarm(self):
+        """
+        Make alarm sound
+        """
+        winsound.Beep(1500, 200)
 #------------------------------------------------------------------------------
 class Trace:
     """
@@ -1422,9 +1593,6 @@ class Trace:
         self.vx = body.vx
         self.vy = body.vy
         self.vz = body.vz
-        self.ax = body.ax
-        self.ay = body.ay
-        self.az = body.az
 
 #------------------------------------------------------------------------------
 class World:
@@ -1444,6 +1612,7 @@ class World:
         # Attributes
         self.current_time = 0.0
         self.delta_time = 1.0/30.0
+        self.last_forecast = -10.0
 
     def add_body(self, body):
         """
@@ -1464,7 +1633,9 @@ class World:
         Add an event
         """
         self.events.append(event)
-        if event.priority == 0:
+        if event.priority < 0:
+            self.speech_synthesizer.alarm()
+        if event.priority <= 0:
             self.speech_synthesizer.say(event.text)
 
     def add_presentation(self, presentation):
@@ -1534,8 +1705,29 @@ class World:
                     if body.pattern.is_reliable():
                         xo, yo, zo = body.coordinates_from_pattern()
                         body.correct(xo, yo, zo, self.delta_time)
+
+            for body in self.bodies:
+                body.add_trace(self.current_time)
+
+            if (self.current_time > self.last_forecast + FORECAST_INTERVAL):
+                for body in self.bodies:
+                    body.make_forecast(self.current_time)
+                    body.detect_collision()
+                    if body.collision_probability > 0:
+                        t_collision = int(10*(body.forecast.t_min_distance-self.current_time)/10)
+                        if t_collision > 0:
+                            text = CLASS_NAMES[body.class_id] + " may collide in "
+                            text += str(t_collision)
+                            text += " seconds with probability "
+                            text += str(int(1000*body.collision_probability)/10)
+                            text += " percent"
+                            self.add_event(Event(self, self.current_time, -1, id(body), text))
+                       
+                self.last_forecast = self.current_time
+
             for presentation in self.presentations:
                 presentation.update(self.current_time)
+
             self.current_time += self.delta_time
 
 #------------------------------------------------------------------------------
@@ -1604,6 +1796,11 @@ def run_application():
     world.add_presentation(PresentationMap(world, map_id=1, height_pixels=500, 
                                            width_pixels=500, 
                                            extent=TEST_EXTENTS[test_video]))
+
+    world.add_presentation(PresentationForecast(world, map_id=2, 
+                                                height_pixels=500, 
+                                                width_pixels=500, 
+                                                extent=TEST_EXTENTS[test_video]))
 
     world.add_presentation(PresentationLog(world, "Detection", "Detection.txt"))
     world.add_presentation(PresentationLog(world, "Pattern", "Pattern.txt"))
