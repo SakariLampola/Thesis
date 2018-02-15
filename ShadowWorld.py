@@ -15,8 +15,8 @@ import winsound
 from math import atan, cos, sqrt, tan, exp, log
 from scipy.optimize import linear_sum_assignment
 # Hyperparameters--------------------------------------------------------------
-BODY_ALFA = 100000.0 # Body initial location error variance 200
-BODY_BETA = 100000.0 # Body initial velocity error variance 10000
+BODY_ALFA = 100000.0 # Body initial location error variance
+BODY_BETA = 100000.0 # Body initial velocity error variance
 BODY_C = np.array([[1.0, 0.0, 0.0, 0.0, 0.0, 0.0],
                    [0.0, 1.0, 0.0, 0.0, 0.0, 0.0],
                    [0.0, 0.0, 1.0, 0.0, 0.0, 0.0]
@@ -110,6 +110,9 @@ class Body:
         Calculates world coordinates from pattern center point, pattern height,
         camera parameters and default body height
         """
+        if self.pattern is None:
+            return 0.0, 0.0, 0.0
+        
         sw = self.pattern.camera.sensor_width
         sh = self.pattern.camera.sensor_height
         pw = self.pattern.camera.image_width
@@ -1060,6 +1063,16 @@ class Pattern(BoundingBox):
         self.set_border_behaviour(self.camera.image_width, self.camera.image_height)
         self.matched = True
 
+    def detection(self):
+        """
+        Get latest detection
+        """
+        if len(self.detections) == 0:
+            return 0.0, 0.0, 0.0, 0.0
+
+        detection = self.detections[-1]
+        return detection.x_min, detection.x_max, detection.y_min, detection.y_max
+    
     def location_variance(self):
         """
         Calculate location variance by summing covariance matrix diagonal
@@ -1253,7 +1266,8 @@ class PresentationLog(Presentation):
             self.file.write("x_center,y_center,")
             self.file.write("vx_center,vy_center,")
             self.file.write("vx_center_var,vy_center_var,")
-            self.file.write("retention_count,body,matched")
+            self.file.write("retention_count,body,matched,")
+            self.file.write("x_min_d,x_max_d,y_min_d,y_max_d")
             self.file.write("\n")
             f = "{0:.3f},{1:d},{2:d},{3:.3f}," # time,id,class_id,confidence
             f += "{4:.3f},{5:.3f},{6:.3f},{7:.3f}," # x_min,x_max,y_min,y_max
@@ -1271,7 +1285,8 @@ class PresentationLog(Presentation):
             f += "{32:.3f},{33:.3f}," # x_center,y_center
             f += "{34:.3f},{35:.3f}," # vx_center,vy_center
             f += "{36:.3f},{37:.3f}," # vx_center_var,vy_center_var
-            f += "{38:d},{39:d},{40:s}" # retention_count,body,matched
+            f += "{38:d},{39:d},{40:s}," # retention_count,body,matched
+            f += "{41:.3f},{42:.3f},{43:.3f},{44:.3f}" # x_min_d,x_max_d,y_min_d,y_max_d
             f += "\n"
             self.fmt = f
         elif self.category == "Body":
@@ -1366,6 +1381,7 @@ class PresentationLog(Presentation):
                     x_center,y_center = pattern.center_point()
                     vx_center,vy_center = pattern.velocity()
                     vx_center_var,vy_center_var = pattern.location_variance()
+                    x_min_d, x_max_d, y_min_d, y_max_d = pattern.detection()
                     self.file.write(self.fmt.format(current_time,
                                                     id(pattern),
                                                     pattern.class_id,
@@ -1406,7 +1422,11 @@ class PresentationLog(Presentation):
                                                     vy_center_var,
                                                     pattern.retention_count,
                                                     body_id,
-                                                    str(pattern.matched)))
+                                                    str(pattern.matched),
+                                                    x_min_d,
+                                                    x_max_d,
+                                                    y_min_d,
+                                                    y_max_d))
         elif self.category == "Body":
             for body in self.world.bodies:
                 pattern_id = 0
@@ -1783,7 +1803,7 @@ def run_application():
     """
     Example application
     """
-    test_video = 5
+    test_video = 12
 
     world = World()
     
