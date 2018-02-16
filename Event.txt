@@ -1,0 +1,36 @@
+time,priority,object,text
+0.000,3,2458003236176,Detection created
+0.000,1,2458003236344,Body created
+0.000,2,2458003236288,Pattern created
+0.033,3,2458003236736,Detection created
+0.067,3,2458003236904,Detection created
+0.100,3,2458003237072,Detection created
+0.133,3,2458003237240,Detection created
+0.167,3,2458003237408,Detection created
+0.200,3,2458003237576,Detection created
+0.234,3,2458003237744,Detection created
+0.267,3,2458003237912,Detection created
+0.300,3,2458003238080,Detection created
+0.334,3,2458003238248,Detection created
+0.367,3,2458003238416,Detection created
+0.400,3,2458003235728,Detection created
+0.434,3,2458003238584,Detection created
+0.467,3,2458003238696,Detection created
+0.500,3,2457917673544,Detection created
+0.534,3,2457917673656,Detection created
+0.567,3,2457917673824,Detection created
+0.601,3,2457917673992,Detection created
+0.634,3,2457917674160,Detection created
+0.667,3,2457917674328,Detection created
+0.701,3,2457917674496,Detection created
+0.734,3,2457917674664,Detection created
+0.767,3,2457917674832,Detection created
+0.801,3,2457917675000,Detection created
+0.834,3,2458003127040,Detection created
+0.868,3,2457917675168,Detection created
+0.901,3,2457917675392,Detection created
+0.934,3,2457917675560,Detection created
+0.968,3,2457917675728,Detection created
+0.968,0,2458003236344,boat observed distance 84 meters moving away from us from left to right speed 7 kilometers per hour 
+1.001,3,2457917676008,Detection created
+1.034,3,2458003236624,Detection created

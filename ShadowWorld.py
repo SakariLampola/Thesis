@@ -1306,7 +1306,20 @@ class PresentationLog(Presentation):
             self.file.write("sigma_50,sigma_51,sigma_52,")
             self.file.write("sigma_53,sigma_54,sigma_55,")
             self.file.write("x_pattern,y_pattern,z_pattern,")
-            self.file.write("pattern,status,collision_p")
+            self.file.write("pattern,status,collision_p,")
+            self.file.write("c_time,c_x,c_y,c_z,")
+            self.file.write("c_sigma_00,c_sigma_01,c_sigma_02,")
+            self.file.write("c_sigma_03,c_sigma_04,c_sigma_05,")
+            self.file.write("c_sigma_10,c_sigma_11,c_sigma_12,")
+            self.file.write("c_sigma_13,c_sigma_14,c_sigma_15,")
+            self.file.write("c_sigma_20,c_sigma_21,c_sigma_22,")
+            self.file.write("c_sigma_23,c_sigma_24,c_sigma_25,")
+            self.file.write("c_sigma_30,c_sigma_31,c_sigma_32,")
+            self.file.write("c_sigma_33,c_sigma_34,c_sigma_35,")
+            self.file.write("c_sigma_40,c_sigma_41,c_sigma_42,")
+            self.file.write("c_sigma_43,c_sigma_44,c_sigma_45,")
+            self.file.write("c_sigma_50,c_sigma_51,c_sigma_52,")
+            self.file.write("c_sigma_53,c_sigma_54,c_sigma_55")
             self.file.write("\n")
             f = "{0:.3f},{1:d},{2:d}," # time,id,class_id
             f += "{3:.3f},{4:.3f},{5:.3f}," # x,y,z
@@ -1324,7 +1337,20 @@ class PresentationLog(Presentation):
             f += "{39:.3f},{40:.3f},{41:.3f}," # sigma_50,sigma_51,sigma_52
             f += "{42:.3f},{43:.3f},{44:.3f}," # sigma_53,sigma_54,sigma_55
             f += "{45:.3f},{46:.3f},{47:.3f}," # x_pattern,y_pattern,z_pattern
-            f += "{48:d},{49:d},{50:.3f}" # pattern, status, collision_p
+            f += "{48:d},{49:d},{50:.3f}," # pattern, status, collision_p
+            f += "{51:.3f},{52:.3f},{53:.3f},{54:.3f}," # collision time,x,y,z
+            f += "{55:.3f},{56:.3f},{57:.3f}," # collision sigma_00,sigma_01,sigma_02
+            f += "{58:.3f},{59:.3f},{60:.3f}," # collision sigma_03,sigma_04,sigma_05
+            f += "{61:.3f},{62:.3f},{63:.3f}," # collision sigma_10,sigma_11,sigma_12
+            f += "{64:.3f},{65:.3f},{66:.3f}," # collision sigma_13,sigma_14,sigma_15
+            f += "{67:.3f},{68:.3f},{69:.3f}," # collision sigma_20,sigma_21,sigma_22
+            f += "{70:.3f},{71:.3f},{72:.3f}," # collision sigma_23,sigma_24,sigma_25
+            f += "{73:.3f},{74:.3f},{75:.3f}," # collision sigma_30,sigma_31,sigma_42
+            f += "{76:.3f},{77:.3f},{78:.3f}," # collision sigma_33,sigma_34,sigma_45
+            f += "{79:.3f},{80:.3f},{81:.3f}," # collision sigma_40,sigma_41,sigma_42
+            f += "{82:.3f},{83:.3f},{84:.3f}," # collision sigma_43,sigma_44,sigma_45
+            f += "{85:.3f},{86:.3f},{87:.3f}," # collision sigma_50,sigma_51,sigma_52
+            f += "{88:.3f},{89:.3f},{90:.3f}" # collision sigma_53,sigma_54,sigma_55
             f += "\n"
             self.fmt = f
         elif self.category == "Event":
@@ -1437,6 +1463,88 @@ class PresentationLog(Presentation):
                 status = 0
                 if body.status == 'measured':
                     status = 1
+                if body.forecast is None:
+                    c_time = 0.0
+                    c_x = 0.0
+                    c_y = 0.0
+                    c_z = 0.0
+                    s_s_00 = 0.0
+                    s_s_01 = 0.0
+                    s_s_02 = 0.0
+                    s_s_03 = 0.0
+                    s_s_04 = 0.0
+                    s_s_05 = 0.0
+                    s_s_10 = 0.0
+                    s_s_11 = 0.0
+                    s_s_12 = 0.0
+                    s_s_13 = 0.0
+                    s_s_14 = 0.0
+                    s_s_15 = 0.0
+                    s_s_20 = 0.0
+                    s_s_21 = 0.0
+                    s_s_22 = 0.0
+                    s_s_23 = 0.0
+                    s_s_24 = 0.0
+                    s_s_25 = 0.0
+                    s_s_30 = 0.0
+                    s_s_31 = 0.0
+                    s_s_32 = 0.0
+                    s_s_33 = 0.0
+                    s_s_34 = 0.0
+                    s_s_35 = 0.0
+                    s_s_40 = 0.0
+                    s_s_41 = 0.0
+                    s_s_42 = 0.0
+                    s_s_43 = 0.0
+                    s_s_44 = 0.0
+                    s_s_45 = 0.0
+                    s_s_50 = 0.0
+                    s_s_51 = 0.0
+                    s_s_52 = 0.0
+                    s_s_53 = 0.0
+                    s_s_54 = 0.0
+                    s_s_55 = 0.0
+                else:
+                    c_time = body.forecast.t_min_distance
+                    c_x = body.forecast.x_min_distance
+                    c_y = body.forecast.y_min_distance
+                    c_z = body.forecast.z_min_distance
+                    s_s_00 = body.forecast.sigma_min_distance[0,0]
+                    s_s_01 = body.forecast.sigma_min_distance[0,1]
+                    s_s_02 = body.forecast.sigma_min_distance[0,2]
+                    s_s_03 = body.forecast.sigma_min_distance[0,3]
+                    s_s_04 = body.forecast.sigma_min_distance[0,4]
+                    s_s_05 = body.forecast.sigma_min_distance[0,5]
+                    s_s_10 = body.forecast.sigma_min_distance[1,0]
+                    s_s_11 = body.forecast.sigma_min_distance[1,1]
+                    s_s_12 = body.forecast.sigma_min_distance[1,2]
+                    s_s_13 = body.forecast.sigma_min_distance[1,3]
+                    s_s_14 = body.forecast.sigma_min_distance[1,4]
+                    s_s_15 = body.forecast.sigma_min_distance[1,5]
+                    s_s_20 = body.forecast.sigma_min_distance[2,0]
+                    s_s_21 = body.forecast.sigma_min_distance[2,1]
+                    s_s_22 = body.forecast.sigma_min_distance[2,2]
+                    s_s_23 = body.forecast.sigma_min_distance[2,3]
+                    s_s_24 = body.forecast.sigma_min_distance[2,4]
+                    s_s_25 = body.forecast.sigma_min_distance[2,5]
+                    s_s_30 = body.forecast.sigma_min_distance[3,0]
+                    s_s_31 = body.forecast.sigma_min_distance[3,1]
+                    s_s_32 = body.forecast.sigma_min_distance[3,2]
+                    s_s_33 = body.forecast.sigma_min_distance[3,3]
+                    s_s_34 = body.forecast.sigma_min_distance[3,4]
+                    s_s_35 = body.forecast.sigma_min_distance[3,5]
+                    s_s_40 = body.forecast.sigma_min_distance[4,0]
+                    s_s_41 = body.forecast.sigma_min_distance[4,1]
+                    s_s_42 = body.forecast.sigma_min_distance[4,2]
+                    s_s_43 = body.forecast.sigma_min_distance[4,3]
+                    s_s_44 = body.forecast.sigma_min_distance[4,4]
+                    s_s_45 = body.forecast.sigma_min_distance[4,5]
+                    s_s_50 = body.forecast.sigma_min_distance[5,0]
+                    s_s_51 = body.forecast.sigma_min_distance[5,1]
+                    s_s_52 = body.forecast.sigma_min_distance[5,2]
+                    s_s_53 = body.forecast.sigma_min_distance[5,3]
+                    s_s_54 = body.forecast.sigma_min_distance[5,4]
+                    s_s_55 = body.forecast.sigma_min_distance[5,5]
                 self.file.write(self.fmt.format(current_time,
                                                 id(body),
                                                 body.class_id,
@@ -1487,7 +1595,47 @@ class PresentationLog(Presentation):
                                                 z_pattern,
                                                 pattern_id,
                                                 status,
-                                                body.collision_probability))
+                                                body.collision_probability,
+                                                c_time,
+                                                c_x,
+                                                c_y,
+                                                c_z,
+                                                s_s_00,
+                                                s_s_01,
+                                                s_s_02,
+                                                s_s_03,
+                                                s_s_04,
+                                                s_s_05,
+                                                s_s_10,
+                                                s_s_11,
+                                                s_s_12,
+                                                s_s_13,
+                                                s_s_14,
+                                                s_s_15,
+                                                s_s_20,
+                                                s_s_21,
+                                                s_s_22,
+                                                s_s_23,
+                                                s_s_24,
+                                                s_s_25,
+                                                s_s_30,
+                                                s_s_31,
+                                                s_s_32,
+                                                s_s_33,
+                                                s_s_34,
+                                                s_s_35,
+                                                s_s_40,
+                                                s_s_41,
+                                                s_s_42,
+                                                s_s_43,
+                                                s_s_44,
+                                                s_s_45,
+                                                s_s_50,
+                                                s_s_51,
+                                                s_s_52,
+                                                s_s_53,
+                                                s_s_54,
+                                                s_s_55))
         else:
             pass
                 
@@ -1803,7 +1951,7 @@ def run_application():
     """
     Example application
     """
-    test_video = 12
+    test_video = 5
 
     world = World()
     
