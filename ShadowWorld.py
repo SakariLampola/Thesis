@@ -36,6 +36,7 @@ BODY_R = np.array([[0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
 BORDER_WIDTH = 30 # Part of video window for special pattern behaviour
 #
 COLLISION_SAMPLES = 1000 # How many samples are drawn for the collision detection
+COLLISION_MIN_LEVEL = 0.01 # Smallest collision level to be spelled out
 #
 CONFIDENFE_LEVEL_CREATE = 0.80 # How confident must be to create new pattern
 CONFIDENFE_LEVEL_UPDATE = 0.20 # How confident must be to update pattern
@@ -98,6 +99,7 @@ class Body:
                                [0.0,       0.0,       0.0,       0.0,       0.0, BODY_BETA]])
         self.forecast_color = pattern.bounding_box_color
         self.collision_probability = 0.0
+        self.collision_probability_max = 0.0
 
     def add_trace(self, time):
         """
@@ -1881,15 +1883,17 @@ class World:
                 for body in self.bodies:
                     body.make_forecast(self.current_time)
                     body.detect_collision()
-                    if body.collision_probability > 0:
-                        t_collision = int(10*(body.forecast.t_min_distance-self.current_time)/10)
-                        if t_collision > 0:
-                            text = CLASS_NAMES[body.class_id] + " may collide in "
-                            text += str(t_collision)
-                            text += " seconds with probability "
-                            text += str(int(1000*body.collision_probability)/10)
-                            text += " percent"
-                            self.add_event(Event(self, self.current_time, -1, id(body), text))
+                    if body.collision_probability > COLLISION_MIN_LEVEL:
+                        if body.collision_probability > body.collision_probability_max:
+                            t_collision = int(10*(body.forecast.t_min_distance-self.current_time)/10)
+                            if t_collision > 0:
+                                text = CLASS_NAMES[body.class_id] + " may collide in "
+                                text += str(t_collision)
+                                text += " seconds with probability "
+                                text += str(int(1000*body.collision_probability)/10)
+                                text += " percent"
+                                self.add_event(Event(self, self.current_time, -1, id(body), text))
+                            body.collision_probability_max = body.collision_probability
                        
                 self.last_forecast = self.current_time
 
@@ -1919,7 +1923,7 @@ TEST_FOCAL_LENGTHS = [0.050, # 0
                       0.250, # 1
                       0.150, # 2
                       0.050, # 3
-                      0.100, # 4
+                      0.200, # 4
                       0.200, # 5 
                       0.090, # 6
                       0.030, # 7
@@ -1935,7 +1939,7 @@ TEST_EXTENTS = [11.0, # 0
                 11.0, # 1
                 210.0, # 2
                 11.0, # 3
-                61.0, # 4
+                81.0, # 4
                 141.0, # 5
                 11.0, # 6
                 21.0, # 7
@@ -1951,7 +1955,7 @@ def run_application():
     """
     Example application
     """
-    test_video = 5
+    test_video = 10
 
     world = World()
     
