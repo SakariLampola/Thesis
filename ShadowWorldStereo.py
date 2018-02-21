@@ -507,7 +507,8 @@ class Camera:
     Camera observing surrounding, located and oriented in world
     """
     def __init__(self, world, focal_length, sensor_width, sensor_height,
-                 x, y, z, yaw, pitch, roll, videofile):
+                 x, y, z, yaw, pitch, roll, videofile,
+                 x_loc, y_loc, height_pixels, width_pixels):
         """
         Initialization
         """
@@ -528,6 +529,10 @@ class Camera:
         self.roll = roll
         self.videofile = videofile
         self.video = cv2.VideoCapture(videofile)
+        self.x_loc = x_loc
+        self.y_loc = y_loc
+        self.height_pixels = height_pixels
+        self.width_pixels = width_pixels
         self.image_width = int(self.video.get(3))
         self.image_height = int(self.video.get(4))
         self.fps = self.video.get(cv2.CAP_PROP_FPS)
@@ -1154,19 +1159,22 @@ class PresentationForecast(Presentation):
     """
     2D map presentation for movement and collision forecast
     """
-    def __init__(self, world, map_id, height_pixels, width_pixels, extent):
+    def __init__(self, world, map_id, x_loc, y_loc, height_pixels, 
+                 width_pixels, extent):
         """
         Initialization
         """
         super().__init__(world)
         self.map_id =map_id
+        self.x_loc = x_loc
+        self.y_loc = y_loc
         self.height_pixels = height_pixels
         self.width_pixels = width_pixels
         self.extent = extent
         self.frame = np.zeros((height_pixels, width_pixels, 3), np.uint8)
         self.window_name = "Map " + str(map_id)
         cv2.imshow(self.window_name, self.frame)
-        cv2.moveWindow(self.window_name, 940, self.height_pixels + 110)
+        cv2.moveWindow(self.window_name, self.x_loc, self.y_loc)
         
     def close(self):
         """
@@ -1647,19 +1655,22 @@ class PresentationMap(Presentation):
     """
     2D map presentation (looked from above)
     """
-    def __init__(self, world, map_id, height_pixels, width_pixels, extent):
+    def __init__(self, world, map_id, x_loc, y_loc, height_pixels, 
+                 width_pixels, extent):
         """
         Initialization
         """
         super().__init__(world)
         self.map_id =map_id
+        self.x_loc = x_loc
+        self.y_loc = y_loc
         self.height_pixels = height_pixels
         self.width_pixels = width_pixels
         self.extent = extent
         self.frame = np.zeros((height_pixels, width_pixels, 3), np.uint8)
         self.window_name = "Map " + str(map_id)
         cv2.imshow(self.window_name, self.frame)
-        cv2.moveWindow(self.window_name, 940, 20)
+        cv2.moveWindow(self.window_name, self.x_loc, self.y_loc)
         
     def close(self):
         """
@@ -1976,14 +1987,16 @@ def run_application():
                             sensor_width=0.0359, sensor_height=0.0240, 
                             x=0.0, y=0.0, z=0.0, 
                             yaw=0.0, pitch=0.0, roll=0.0, 
-                            videofile=TEST_VIDEOS[test_video]))
+                            videofile=TEST_VIDEOS[test_video],
+                            x_loc=20, y_loc=20, height_pixels=500, 
+                            width_pixels=500))
 
-    world.add_presentation(PresentationMap(world, map_id=1, height_pixels=500, 
-                                           width_pixels=500, 
+    world.add_presentation(PresentationMap(world, map_id=1, x_loc=940, y_loc=20,
+                                           height_pixels=500, width_pixels=500, 
                                            extent=TEST_EXTENTS[test_video]))
 
-    world.add_presentation(PresentationForecast(world, map_id=2, 
-                                                height_pixels=500, 
+    world.add_presentation(PresentationForecast(world, map_id=2, x_loc=940, 
+                                                y_loc=620, height_pixels=500, 
                                                 width_pixels=500, 
                                                 extent=TEST_EXTENTS[test_video]))
 

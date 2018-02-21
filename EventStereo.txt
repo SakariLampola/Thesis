@@ -1,0 +1,6 @@
+time,priority,object,text
+0.000,3,1312244431336,Detection created
+0.000,1,1312244431504,Body created
+0.000,2,1312244431448,Pattern created
+0.033,3,1312244431896,Detection created
+0.067,3,1312244432064,Detection created
