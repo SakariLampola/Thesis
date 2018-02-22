@@ -118,8 +118,8 @@ class Body:
         
         sw = self.pattern.camera.sensor_width
         sh = self.pattern.camera.sensor_height
-        pw = self.pattern.camera.image_width
-        ph = self.pattern.camera.image_height
+        pw = self.pattern.camera.sensor_width_pixels
+        ph = self.pattern.camera.sensor_height_pixels
         ri = self.pattern.radius()
         r = self.mean_radius()
         f = self.pattern.camera.focal_length
@@ -506,9 +506,10 @@ class Camera:
     """
     Camera observing surrounding, located and oriented in world
     """
-    def __init__(self, world, focal_length, sensor_width, sensor_height,
-                 x, y, z, yaw, pitch, roll, videofile,
-                 x_loc, y_loc, height_pixels, width_pixels):
+    def __init__(self, world, name, focal_length, sensor_width, sensor_height,
+                 sensor_width_pixels, sensor_height_pixels, 
+                 x, y, z, yaw, pitch, roll, frames,
+                 x_loc, y_loc, width_pixels, height_pixels):
         """
         Initialization
         """
@@ -517,9 +518,12 @@ class Camera:
         self.patterns = []
         self.detections = []
         # Attributes
+        self.name = name
         self.focal_length = focal_length
         self.sensor_width = sensor_width
         self.sensor_height = sensor_height
+        self.sensor_width_pixels = sensor_width_pixels
+        self.sensor_height_pixels = sensor_height_pixels
         self.field_of_view = 2.0*atan(sensor_width / (2.0*focal_length))
         self.x = x
         self.y = y
@@ -527,49 +531,32 @@ class Camera:
         self.yaw = yaw
         self.pitch = pitch
         self.roll = roll
-        self.videofile = videofile
-        self.video = cv2.VideoCapture(videofile)
+        self.frames = frames
+        self.frame_factory = iter(self.frames)
         self.x_loc = x_loc
         self.y_loc = y_loc
         self.height_pixels = height_pixels
         self.width_pixels = width_pixels
-        self.image_width = int(self.video.get(3))
-        self.image_height = int(self.video.get(4))
-        self.fps = self.video.get(cv2.CAP_PROP_FPS)
-        world.delta_time = 1.0 / self.fps
-        self.current_frame = 0
-        self.size_ratio = 900.0 / self.image_width
-        frame = np.zeros((self.image_height, self.image_width, 3), np.uint8)
-        frame = cv2.resize(frame, (0, 0), None, self.size_ratio, self.size_ratio)
-        label = "Video file: " + self.videofile
+        self.current_frame_count = 0
+        self.size_ratio = self.width_pixels/ self.sensor_width_pixels
+
+        frame = np.zeros((self.height_pixels, self.width_pixels, 3), np.uint8)
+        self.current_frame = frame.copy()
+        label = "Commands:"
         cv2.putText(frame, label, (10,20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, 
                     (255, 255, 255), 1)
-        label = "Width: " + str(self.image_width)
+        label = "   s: step one frame"
         cv2.putText(frame, label, (10,40), cv2.FONT_HERSHEY_SIMPLEX, 0.5, 
                     (255, 255, 255), 1)
-        label = "Height: " + str(self.image_height)
+        label = "   c: continuous mode"
         cv2.putText(frame, label, (10,60), cv2.FONT_HERSHEY_SIMPLEX, 0.5, 
                     (255, 255, 255), 1)
-        label = "Fps: " + str(self.fps)
+        label = "   q: quit"
         cv2.putText(frame, label, (10,80), cv2.FONT_HERSHEY_SIMPLEX, 0.5, 
                     (255, 255, 255), 1)
-        label = "Commands:"
-        cv2.putText(frame, label, (10,100), cv2.FONT_HERSHEY_SIMPLEX, 0.5, 
-                    (255, 255, 255), 1)
-        label = "   s: step one frame"
-        cv2.putText(frame, label, (10,120), cv2.FONT_HERSHEY_SIMPLEX, 0.5, 
-                    (255, 255, 255), 1)
-        label = "   c: continuous mode"
-        cv2.putText(frame, label, (10,140), cv2.FONT_HERSHEY_SIMPLEX, 0.5, 
-                    (255, 255, 255), 1)
-        label = "   q: quit"
-        cv2.putText(frame, label, (10,160), cv2.FONT_HERSHEY_SIMPLEX, 0.5, 
-                    (255, 255, 255), 1)
 
-        cv2.imshow(self.videofile, frame)
-        cv2.moveWindow(self.videofile, 20, 20)
-        self.mode = "step"
-        self.check_keyboard_command()
+        cv2.imshow(self.name, frame)
+        cv2.moveWindow(self.name,self.x_loc,self.y_loc)
 
     def add_pattern(self, detection):
         """
@@ -606,35 +593,11 @@ class Camera:
 
         return True
     
-    def check_keyboard_command(self):
-        """
-        Wait for keyboard command and set the required mode
-        """
-        if self.mode == "step":
-            found = False
-            while not found: # Discard everything except n, q, c
-                key_pushed = cv2.waitKey(0) & 0xFF
-                if key_pushed in [ord('s'), ord('q'), ord('c')]:
-                    found = True
-            if key_pushed == ord('q'):
-                self.mode = "quit"
-            if key_pushed == ord('s'):
-                self.mode = "step"
-            if key_pushed == ord('c'):
-                self.mode = "continuous"
-        else:
-            key_pushed = cv2.waitKey(1) & 0xFF
-            if key_pushed == ord('q'):
-                self.mode = "quit"
-            if key_pushed == ord('s'):
-                self.mode = "step"
-
     def close(self):
         """
         Release resources
         """
-        self.video.release()
-        cv2.destroyWindow(self.videofile)
+        cv2.destroyWindow(self.name)
     
     def detect(self, image, current_time):
         """
@@ -682,10 +645,15 @@ class Camera:
         recently.
         """
         # Read in new frame
-        ret, frame_video = self.video.read()
-        if not ret:
+        try:
+            frame_video_in = next(self.frame_factory)
+        except StopIteration:
             return False # end of video file
-        self.current_frame += 1
+
+        frame_video = frame_video_in.copy()
+        self.current_frame = frame_video.copy()
+
+        self.current_frame_count += 1
 
         self.detections = self.detect(frame_video, current_time)
         for detection in self.detections:
@@ -840,7 +808,7 @@ class Camera:
                     self.add_pattern(detection)
 
         # Draw heading
-        label = "Time {0:<.2f}, frame {1:d}".format(current_time, self.current_frame)
+        label = "Time {0:<.2f}, frame {1:d}".format(current_time, self.current_frame_count)
         cv2.putText(frame_video, label, (10,20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, 255, 2)
 
         # Draw detections
@@ -879,12 +847,8 @@ class Camera:
         # Resize frame and display
         frame_display = cv2.resize(frame_video, (0, 0), None, self.size_ratio, 
                            self.size_ratio)
-        cv2.imshow(self.videofile, frame_display)
-
-        self.check_keyboard_command()
-
-        if self.mode == "quit":
-            return False
+        cv2.imshow(self.name, frame_display)
+        cv2.waitKey(10)
 
         return True
 
@@ -1000,8 +964,8 @@ class Pattern(BoundingBox):
         Initialization based on Detection
         """
         super().__init__(detection.x_min, detection.x_max, detection.y_min,
-                         detection.y_max, camera.image_width, 
-                         camera.image_height)
+                         detection.y_max, camera.sensor_width_pixels, 
+                         camera.sensor_height_pixels)
         # References
         self.camera = camera
         self.detections = []
@@ -1068,7 +1032,7 @@ class Pattern(BoundingBox):
         self.vy_max = mu_ymax[1, 0]
         self.sigma_y_max = (np.eye(2)-k_y_max.dot(PATTERN_C)).dot(self.sigma_y_max)
         #
-        self.set_border_behaviour(self.camera.image_width, self.camera.image_height)
+        self.set_border_behaviour(self.camera.sensor_width_pixels, self.camera.sensor_height_pixels)
         self.matched = True
 
     def detection(self):
@@ -1117,8 +1081,8 @@ class Pattern(BoundingBox):
         self.vy_max = mu_ymax[1, 0]
         self.sigma_y_max = a.dot(self.sigma_y_max).dot(a.T) + PATTERN_R
         #
-        self.set_border_behaviour(self.camera.image_width, 
-                                  self.camera.image_height)
+        self.set_border_behaviour(self.camera.sensor_width_pixels, 
+                                  self.camera.sensor_height_pixels)
         self.matched = False
 
     def velocity(self):
@@ -1154,6 +1118,51 @@ class Presentation:
         """
         pass
 
+class PresentationDisparity(Presentation):
+    """
+    Disparity map for two cameras
+    """
+    def __init__(self, world, x_loc, y_loc, height_pixels, width_pixels, 
+                 camera1, camera2):
+        """
+        Initialization
+        """
+        super().__init__(world)
+        self.x_loc = x_loc
+        self.y_loc = y_loc
+        self.height_pixels = height_pixels
+        self.width_pixels = width_pixels
+        self.camera1 = camera1
+        self.camera2 = camera2
+        self.frame = np.zeros((height_pixels, width_pixels, 3), np.uint8)
+        self.window_name = "Disparity for " + camera1.name + " " + camera2.name
+        cv2.imshow(self.window_name, self.frame)
+        cv2.moveWindow(self.window_name, self.x_loc, self.y_loc)
+        
+    def close(self):
+        """
+        Release resources
+        """
+        cv2.destroyWindow(self.window_name)
+
+    def update(self, current_time):
+        """
+        Update presentation at time t
+        """
+        self.frame = self.camera1.current_frame
+        
+        stereo = cv2.StereoBM_create()
+        disp_rgb = stereo.compute(
+            cv2.cvtColor(self.camera1.current_frame, cv2.COLOR_BGR2GRAY),
+            cv2.cvtColor(self.camera2.current_frame, cv2.COLOR_BGR2GRAY))
+        
+        minValue = disp_rgb.min()
+        maxValue = disp_rgb.max()
+        disp_rgb = np.uint8(255 * (disp_rgb - minValue) / (maxValue - minValue))
+        disp = cv2.applyColorMap(disp_rgb, cv2.COLORMAP_RAINBOW)
+        cv2.imshow(self.window_name, disp)
+        cv2.waitKey(1)
+                
 #------------------------------------------------------------------------------
 class PresentationForecast(Presentation):
     """
@@ -1795,6 +1804,7 @@ class World:
         self.current_time = 0.0
         self.delta_time = 1.0/30.0
         self.last_forecast = -10.0
+        self.mode = "step"
 
     def add_body(self, body):
         """
@@ -1826,6 +1836,29 @@ class World:
         """
         self.presentations.append(presentation)
         
+    def check_keyboard_command(self):
+        """
+        Wait for keyboard command and set the required mode
+        """
+        if self.mode == "step":
+            found = False
+            while not found: # Discard everything except n, q, c
+                key_pushed = cv2.waitKey(0) & 0xFF
+                if key_pushed in [ord('s'), ord('q'), ord('c')]:
+                    found = True
+            if key_pushed == ord('q'):
+                self.mode = "quit"
+            if key_pushed == ord('s'):
+                self.mode = "step"
+            if key_pushed == ord('c'):
+                self.mode = "continuous"
+        else:
+            key_pushed = cv2.waitKey(1) & 0xFF
+            if key_pushed == ord('q'):
+                self.mode = "quit"
+            if key_pushed == ord('s'):
+                self.mode = "step"
+
     def close(self):
         """
         Release resources
@@ -1839,16 +1872,10 @@ class World:
         """
         Run the world
         """
-        more = True
-        while more:
-            more = self.update()
-        self.close()
-        
-    def update(self):
-        """
-        Each camera is asked to update their patterns. Patterns are projected
-        into bodies. This is repeated until cameras have no more frames.
-        """
+        self.check_keyboard_command()
+        if self.mode == "quit":
+            return False
+
         more = True
         while more:
             more = True
@@ -1914,6 +1941,87 @@ class World:
 
             self.current_time += self.delta_time
 
+            self.check_keyboard_command()
+            if self.mode == "quit":
+                self.close()
+                break
+        
+    def update(self):
+        """
+        Each camera is asked to update their patterns. Patterns are projected
+        into bodies. This is repeated until cameras have no more frames.
+        """
+        self.check_keyboard_command()
+        if self.mode == "quit":
+            return False
+
+        more = True
+        while more:
+            more = True
+            for camera in self.cameras:
+                more_camera = camera.update(self.current_time, self.delta_time)
+                if not more_camera:
+                    more = False
+            for body in self.bodies:
+                body.predict(self.delta_time)
+                    
+                if body.frame_age == BODY_DATA_COLLECTION_COUNT:
+                    text = CLASS_NAMES[body.class_id]+" observed "
+                    speed = int(3.6*body.speed())
+                    distance = int(abs(body.z))
+                    text += "distance " + str(distance) + " meters "
+                    if (speed < 4):
+                        text += "hanging around "
+                    else:
+                        if body.z <= 0 and body.vz >= 0:
+                            text += "moving towards us "
+                        elif body.z <= 0 and body.vz < 0:
+                            text += "moving away from us "
+                        if body.z > 0 and body.vz >= 0:
+                            text += "moving away from us "
+                        elif body.z > 0 and body.vz < 0:
+                            text += "moving towards us "
+                        if body.vx <= 0:
+                            text += "from right to left "
+                        else:
+                            text += "from left to right "
+                        text += "speed " + str(speed) + " kilometers per hour "
+
+                    self.add_event(Event(self, self.current_time, 0, id(body),
+                                         text))
+                if body.pattern is not None:
+                    if body.pattern.is_reliable():
+                        xo, yo, zo = body.coordinates_from_pattern()
+                        body.correct(xo, yo, zo, self.delta_time)
+
+            for body in self.bodies:
+                body.add_trace(self.current_time)
+
+            if (self.current_time > self.last_forecast + FORECAST_INTERVAL):
+                for body in self.bodies:
+                    body.make_forecast(self.current_time)
+                    body.detect_collision()
+                    if body.collision_probability > COLLISION_MIN_LEVEL:
+                        if body.collision_probability > body.collision_probability_max:
+                            t_collision = int(10*(body.forecast.t_min_distance-self.current_time)/10)
+                            if t_collision > 0:
+                                text = CLASS_NAMES[body.class_id] + " may collide in "
+                                text += str(t_collision)
+                                text += " seconds with probability "
+                                text += str(int(1000*body.collision_probability)/10)
+                                text += " percent"
+                                self.add_event(Event(self, self.current_time, -1, id(body), text))
+                            body.collision_probability_max = body.collision_probability
+                       
+                self.last_forecast = self.current_time
+
+            for presentation in self.presentations:
+                presentation.update(self.current_time)
+
+            self.current_time += self.delta_time
+
+        return True
+
 #------------------------------------------------------------------------------
 TEST_VIDEOS = ['videos/AWomanStandsOnTheSeashore-10058.mp4', # 0
                'videos/BlueTit2975.mp4', # 1
@@ -1968,28 +2076,41 @@ def run_application():
     Example application
     """
 
-    # Change this to the directory where you store KITTI data
+    # Load KITTI data
     basedir = 'D:\Thesis\Kitti\Raw'
-    
-    # Specify the dataset to load
     date = '2011_09_26'
     drive = '0001'
-
     dataset = pykitti.raw(basedir, date, drive, imformat='cv2')
 
     test_video = 10
-    
-    
 
     world = World()
     
-    world.add_camera(Camera(world, focal_length=TEST_FOCAL_LENGTHS[test_video],
-                            sensor_width=0.0359, sensor_height=0.0240, 
-                            x=0.0, y=0.0, z=0.0, 
-                            yaw=0.0, pitch=0.0, roll=0.0, 
-                            videofile=TEST_VIDEOS[test_video],
-                            x_loc=20, y_loc=20, height_pixels=500, 
-                            width_pixels=500))
+    camera1 = Camera(world, name="Left camera", focal_length=TEST_FOCAL_LENGTHS[test_video],
+                     sensor_width=0.0359, sensor_height=0.0240, 
+                     sensor_width_pixels=1280, sensor_height_pixels=720,
+                     x=0.0, y=0.0, z=0.0, 
+                     yaw=0.0, pitch=0.0, roll=0.0, 
+                     frames=dataset.cam2,
+                     x_loc=20, y_loc=20, width_pixels=900, 
+                     height_pixels=int(900*720/1280))
+    world.add_camera(camera1)
+
+    camera2 = Camera(world, name="Right camera", focal_length=TEST_FOCAL_LENGTHS[test_video],
+              sensor_width=0.0359, sensor_height=0.0240, 
+              sensor_width_pixels=1280, sensor_height_pixels=720,
+              x=0.0, y=0.0, z=0.0, 
+              yaw=0.0, pitch=0.0, roll=0.0, 
+              frames=dataset.cam3,
+              x_loc=20, y_loc=380, width_pixels=900, 
+              height_pixels=int(900*720/1280))
+    world.add_camera(camera2)
+
+    world.add_presentation(PresentationDisparity(world, x_loc=20, y_loc=740, 
+                                                 height_pixels=int(900*720/1280), 
+                                                 width_pixels=900, 
+                                                 camera1=camera1, 
+                                                 camera2=camera2))
 
     world.add_presentation(PresentationMap(world, map_id=1, x_loc=940, y_loc=20,
                                            height_pixels=500, width_pixels=500, 
