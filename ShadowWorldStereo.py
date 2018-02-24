@@ -1135,6 +1135,7 @@ class PresentationDisparity(Presentation):
         self.camera1 = camera1
         self.camera2 = camera2
         self.frame = np.zeros((height_pixels, width_pixels, 3), np.uint8)
+        self.size_ratio = self.width_pixels/camera1.sensor_width_pixels
         self.window_name = "Disparity for " + camera1.name + " " + camera2.name
         cv2.imshow(self.window_name, self.frame)
         cv2.moveWindow(self.window_name, self.x_loc, self.y_loc)
@@ -1160,8 +1161,11 @@ class PresentationDisparity(Presentation):
         maxValue = disp_rgb.max()
         disp_rgb = np.uint8(255 * (disp_rgb - minValue) / (maxValue - minValue))
         disp = cv2.applyColorMap(disp_rgb, cv2.COLORMAP_RAINBOW)
-        cv2.imshow(self.window_name, disp)
-        cv2.waitKey(1)
+        # Resize frame and display
+        frame_display = cv2.resize(disp, (0, 0), None, self.size_ratio, 
+                           self.size_ratio)
+        cv2.imshow(self.window_name, frame_display)
+        cv2.waitKey(10)
                 
 #------------------------------------------------------------------------------
 class PresentationForecast(Presentation):
@@ -2078,8 +2082,8 @@ def run_application():
 
     # Load KITTI data
     basedir = 'D:\Thesis\Kitti\Raw'
-    date = '2011_09_26'
-    drive = '0001'
+    date = '2011_09_28'
+    drive = '0016'
     dataset = pykitti.raw(basedir, date, drive, imformat='cv2')
 
     test_video = 10
@@ -2127,6 +2131,8 @@ def run_application():
     world.add_presentation(PresentationLog(world, "Event", "EventStereo.txt"))
 
     world.run()
+    
+    world.close()
 
 if __name__ == "__main__":
     run_application()
