@@ -2083,7 +2083,7 @@ def run_application():
     # Load KITTI data
     basedir = 'D:\Thesis\Kitti\Raw'
     date = '2011_09_28'
-    drive = '0016'
+    drive = '0171'
     dataset = pykitti.raw(basedir, date, drive, imformat='cv2')
 
     test_video = 10
