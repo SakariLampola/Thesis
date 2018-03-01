@@ -15,6 +15,17 @@ import winsound
 from math import atan, cos, sqrt, tan, exp, log
 from scipy.optimize import linear_sum_assignment
 import pykitti
+import os
+import six.moves.urllib as urllib
+import sys
+import tensorflow as tf
+from collections import defaultdict
+from io import StringIO
+sys.path.append("..")
+from object_detection.utils import ops as utils_ops
+from utils import label_map_util
+from utils import visualization_utils as vis_util
+
 # Hyperparameters--------------------------------------------------------------
 BODY_ALFA = 100000.0 # Body initial location error variance
 BODY_BETA = 100000.0 # Body initial velocity error variance
@@ -51,6 +62,8 @@ FORECAST_A = np.array([[1.0, 0.0, 0.0, FORECAST_DELTA,            0.0,          
                        [0.0, 0.0, 0.0,            0.0,            0.0,           1.0]])
 FORECAST_COUNT = 500 # How many time steps ahead a body forecast is made
 FORECAST_INTERVAL = 1.0 # How often forecast is made
+# Path to frozen detection graph. This is the actual model that is used for the object detection.
+PATH_TO_CKPT = 'faster_rcnn_resnet101_kitti_2018_01_28' + '/frozen_inference_graph.pb'
 #
 PATTERN_ALFA = 200.0 # Pattern initial location error variance
 PATTERN_BETA = 10000.0 # Pattern initial velocity error variance
@@ -67,8 +80,8 @@ CLASS_NAMES = ["background", "aeroplane", "bicycle", "bird", "boat",
                "bottle", "bus", "car", "cat", "chair", "cow", "dining table",
                "dog", "horse", "motorbike", "person", "potted plant", "sheep",
                "sofa", "train", "tv monitor"]
-NET = cv2.dnn.readNetFromCaffe("MobileNetSSD_deploy.prototxt.txt", \
-                               "MobileNetSSD_deploy.caffemodel")
+#NET = cv2.dnn.readNetFromCaffe("MobileNetSSD_deploy.prototxt.txt", \
+#                               "MobileNetSSD_deploy.caffemodel")
 # Classes----------------------------------------------------------------------
 class Body:
     """
@@ -601,33 +614,57 @@ class Camera:
     
     def detect(self, image, current_time):
         """
-        Detection of objects based on MobileNet and SSD
+        Detection of objects based on World object detector
         """
         (height, width) = image.shape[:2]
-        blob = cv2.dnn.blobFromImage(cv2.resize(image, (300, 300)), 0.007843, \
-                                     (300, 300), 127.5)
-        # Pass the blob through the network and obtain the detections
-        NET.setInput(blob)
-        detections = NET.forward()
         objects = []
-        # Loop over the detections
-        for i in np.arange(0, detections.shape[2]):
-            # Extract the confidence (i.e., probability) associated with the
-            # prediction
-            confidence = detections[0, 0, i, 2]
-            # Filter out weak detections by ensuring the `confidence` is
-            # greater than the minimum confidence
-            if confidence > CONFIDENFE_LEVEL_UPDATE:
-                # Extract the index of the class label from the detections,
-                # then compute the (x, y)-coordinates of the bounding box for
-                # the object
-                class_id = int(detections[0, 0, i, 1])
-                box = detections[0, 0, i, 3:7] * np.array([width, height, width, height])
-                (x_min, y_min, x_max, y_max) = box.astype("int")
-                objects.append(Detection(time, class_id, x_min, x_max, y_min, 
-                                         y_max, confidence, width, height))
+        # Expand dimensions since the model expects images to have shape: [1, None, None, 3]
+#        image_expanded = np.expand_dims(image, axis=0)
+        # Actual detection.
+        output_dict = self.world.object_detector.detect(image)        
+        boxes = output_dict['detection_boxes']
+        classes = output_dict['detection_classes']
+        scores = output_dict['detection_scores']
+        for i in range(boxes.shape[0]):
+            if scores[i] >= CONFIDENFE_LEVEL_UPDATE:
+                class_id = 7 # Car
+                if classes[i] == 2:
+                    class_id = 15 # Person
+                x_min = int(width*boxes[i,1])
+                x_max = int(width*boxes[i,3])
+                y_min = int(height*boxes[i,0])
+                y_max = int(height*boxes[i,2])
+                objects.append(Detection(time, class_id, x_min, x_max,
+                                         y_min, y_max, scores[i], 
+                                         width, height))
+        
 
         return objects
+#        (height, width) = image.shape[:2]
+#        blob = cv2.dnn.blobFromImage(cv2.resize(image, (300, 300)), 0.007843, \
+#                                     (300, 300), 127.5)
+#        # Pass the blob through the network and obtain the detections
+#        NET.setInput(blob)
+#        detections = NET.forward()
+#        objects = []
+#        # Loop over the detections
+#        for i in np.arange(0, detections.shape[2]):
+#            # Extract the confidence (i.e., probability) associated with the
+#            # prediction
+#            confidence = detections[0, 0, i, 2]
+#            # Filter out weak detections by ensuring the `confidence` is
+#            # greater than the minimum confidence
+#            if confidence > CONFIDENFE_LEVEL_UPDATE:
+#                # Extract the index of the class label from the detections,
+#                # then compute the (x, y)-coordinates of the bounding box for
+#                # the object
+#                class_id = int(detections[0, 0, i, 1])
+#                box = detections[0, 0, i, 3:7] * np.array([width, height, width, height])
+#                (x_min, y_min, x_max, y_max) = box.astype("int")
+#                objects.append(Detection(time, class_id, x_min, x_max, y_min, 
+#                                         y_max, confidence, width, height))
+#
+#        return objects
 
     def remove_pattern(self, pattern):
         """
@@ -953,6 +990,83 @@ class Forecast:
                 self.sigma_min_distance = self.sigma[:,:,i].copy()
                 self.t_min_distance = time + i * FORECAST_DELTA
                 min_distance = distance
+
+#------------------------------------------------------------------------------
+class ObjectDetector:
+    """
+    Deep network object detector for extracting class, bounding box and
+    confidence level
+    """
+    def __init__(self, world, model_file, label_file):
+        """
+        Initialization
+        """
+        # References
+        self.world = world
+        # Attributes
+        self.detection_graph = tf.Graph()
+        with self.detection_graph.as_default():
+          od_graph_def = tf.GraphDef()
+          with tf.gfile.GFile(model_file, 'rb') as fid:
+            serialized_graph = fid.read()
+            od_graph_def.ParseFromString(serialized_graph)
+            tf.import_graph_def(od_graph_def, name='')        
+            
+#        self.detection_graph.as_default()
+        self.session = tf.Session(graph=self.detection_graph)
+        
+    def close(self):
+        """
+        Release resources
+        """
+        self.session.close()
+
+    def detect(self, image):
+        """
+        Run inference for single image and return dictionary
+        """
+#        with self.detection_graph.as_default():
+#            with tf.Session() as sess:
+        # Get handles to input and output tensors
+#        self.detection_graph.as_default()
+#        with self.detection_graph.as_default():
+#            with tf.Session() as sess:
+        with self.detection_graph.as_default():
+            ops = tf.get_default_graph().get_operations()
+            all_tensor_names = {output.name for op in ops for output in op.outputs}
+            tensor_dict = {}
+            for key in ['num_detections', 'detection_boxes', 'detection_scores',
+                'detection_classes', 'detection_masks']:
+                tensor_name = key + ':0'
+                if tensor_name in all_tensor_names:
+                    tensor_dict[key] = tf.get_default_graph().get_tensor_by_name(tensor_name)
+            if 'detection_masks' in tensor_dict:
+                # The following processing is only for single image
+                detection_boxes = tf.squeeze(tensor_dict['detection_boxes'], [0])
+                detection_masks = tf.squeeze(tensor_dict['detection_masks'], [0])
+                # Reframe is required to translate mask from box coordinates to image coordinates and fit the image size.
+                real_num_detection = tf.cast(tensor_dict['num_detections'][0], tf.int32)
+                detection_boxes = tf.slice(detection_boxes, [0, 0], [real_num_detection, -1])
+                detection_masks = tf.slice(detection_masks, [0, 0, 0], [real_num_detection, -1, -1])
+                detection_masks_reframed = utils_ops.reframe_box_masks_to_image_masks(
+                    detection_masks, detection_boxes, image.shape[0], image.shape[1])
+                detection_masks_reframed = tf.cast(tf.greater(detection_masks_reframed, 0.5), tf.uint8)
+                # Follow the convention by adding back the batch dimension
+                tensor_dict['detection_masks'] = tf.expand_dims(detection_masks_reframed, 0)
+                
+            image_tensor = tf.get_default_graph().get_tensor_by_name('image_tensor:0')
+            
+            # Run inference
+            output_dict = self.session.run(tensor_dict, feed_dict={image_tensor: np.expand_dims(image, 0)})
+            
+            # all outputs are float32 numpy arrays, so convert types as appropriate
+            output_dict['num_detections'] = int(output_dict['num_detections'][0])
+            output_dict['detection_classes'] = output_dict['detection_classes'][0].astype(np.uint8)
+            output_dict['detection_boxes'] = output_dict['detection_boxes'][0]
+            output_dict['detection_scores'] = output_dict['detection_scores'][0]
+            if 'detection_masks' in output_dict:
+                output_dict['detection_masks'] = output_dict['detection_masks'][0]
+            return output_dict
 
 #------------------------------------------------------------------------------
 class Pattern(BoundingBox):
@@ -1804,6 +1918,7 @@ class World:
         self.presentations = []
         self.events = []
         self.speech_synthesizer = SpeechSynthesizer(self)
+        self.object_detector = ObjectDetector(self, PATH_TO_CKPT, '')
         # Attributes
         self.current_time = 0.0
         self.delta_time = 1.0/30.0
@@ -1867,6 +1982,7 @@ class World:
         """
         Release resources
         """
+        self.object_detector.close()
         for camera in self.cameras:
             camera.close()
         for presentation in self.presentations:
