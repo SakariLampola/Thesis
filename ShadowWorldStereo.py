@@ -2086,7 +2086,7 @@ def run_application():
     drive = '0171'
     dataset = pykitti.raw(basedir, date, drive, imformat='cv2')
 
-    test_video = 10
+    test_video = 5
 
     world = World()
     
