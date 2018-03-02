@@ -63,7 +63,7 @@ FORECAST_A = np.array([[1.0, 0.0, 0.0, FORECAST_DELTA,            0.0,          
 FORECAST_COUNT = 500 # How many time steps ahead a body forecast is made
 FORECAST_INTERVAL = 1.0 # How often forecast is made
 # Path to frozen detection graph. This is the actual model that is used for the object detection.
-PATH_TO_CKPT = 'faster_rcnn_resnet101_kitti_2018_01_28' + '/frozen_inference_graph.pb'
+PATH_TO_CKPT = r'D:\Thesis\Models\faster_rcnn_resnet101_kitti_2018_01_28' + '/frozen_inference_graph.pb'
 #
 PATTERN_ALFA = 200.0 # Pattern initial location error variance
 PATTERN_BETA = 10000.0 # Pattern initial velocity error variance
@@ -2198,8 +2198,8 @@ def run_application():
 
     # Load KITTI data
     basedir = 'D:\Thesis\Kitti\Raw'
-    date = '2011_09_28'
-    drive = '0171'
+    date = '2011_09_26'
+    drive = '0001'
     dataset = pykitti.raw(basedir, date, drive, imformat='cv2')
 
     test_video = 5
