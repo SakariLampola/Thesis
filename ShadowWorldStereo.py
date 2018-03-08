@@ -80,8 +80,9 @@ CLASS_NAMES = ["background", "aeroplane", "bicycle", "bird", "boat",
                "bottle", "bus", "car", "cat", "chair", "cow", "dining table",
                "dog", "horse", "motorbike", "person", "potted plant", "sheep",
                "sofa", "train", "tv monitor"]
-#NET = cv2.dnn.readNetFromCaffe("MobileNetSSD_deploy.prototxt.txt", \
-#                               "MobileNetSSD_deploy.caffemodel")
+MAP_EXTENT = 100.0
+VIDEO_WIDTH = 1242
+VIDEO_HEIGHT = 375
 # Classes----------------------------------------------------------------------
 class Body:
     """
@@ -521,8 +522,8 @@ class Camera:
     """
     def __init__(self, world, name, focal_length, sensor_width, sensor_height,
                  sensor_width_pixels, sensor_height_pixels, 
-                 x, y, z, yaw, pitch, roll, frames,
-                 x_loc, y_loc, width_pixels, height_pixels):
+                 x, y, z, yaw, pitch, roll, frames):
+#                 x_loc, y_loc, width_pixels, height_pixels):
         """
         Initialization
         """
@@ -546,30 +547,8 @@ class Camera:
         self.roll = roll
         self.frames = frames
         self.frame_factory = iter(self.frames)
-        self.x_loc = x_loc
-        self.y_loc = y_loc
-        self.height_pixels = height_pixels
-        self.width_pixels = width_pixels
         self.current_frame_count = 0
-        self.size_ratio = self.width_pixels/ self.sensor_width_pixels
-
-        frame = np.zeros((self.height_pixels, self.width_pixels, 3), np.uint8)
-        self.current_frame = frame.copy()
-        label = "Commands:"
-        cv2.putText(frame, label, (10,20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, 
-                    (255, 255, 255), 1)
-        label = "   s: step one frame"
-        cv2.putText(frame, label, (10,40), cv2.FONT_HERSHEY_SIMPLEX, 0.5, 
-                    (255, 255, 255), 1)
-        label = "   c: continuous mode"
-        cv2.putText(frame, label, (10,60), cv2.FONT_HERSHEY_SIMPLEX, 0.5, 
-                    (255, 255, 255), 1)
-        label = "   q: quit"
-        cv2.putText(frame, label, (10,80), cv2.FONT_HERSHEY_SIMPLEX, 0.5, 
-                    (255, 255, 255), 1)
-
-        cv2.imshow(self.name, frame)
-        cv2.moveWindow(self.name,self.x_loc,self.y_loc)
+        self.current_frame = None
 
     def add_pattern(self, detection):
         """
@@ -610,7 +589,7 @@ class Camera:
         """
         Release resources
         """
-        cv2.destroyWindow(self.name)
+#        cv2.destroyWindow(self.name)
     
     def detect(self, image, current_time):
         """
@@ -640,31 +619,6 @@ class Camera:
         
 
         return objects
-#        (height, width) = image.shape[:2]
-#        blob = cv2.dnn.blobFromImage(cv2.resize(image, (300, 300)), 0.007843, \
-#                                     (300, 300), 127.5)
-#        # Pass the blob through the network and obtain the detections
-#        NET.setInput(blob)
-#        detections = NET.forward()
-#        objects = []
-#        # Loop over the detections
-#        for i in np.arange(0, detections.shape[2]):
-#            # Extract the confidence (i.e., probability) associated with the
-#            # prediction
-#            confidence = detections[0, 0, i, 2]
-#            # Filter out weak detections by ensuring the `confidence` is
-#            # greater than the minimum confidence
-#            if confidence > CONFIDENFE_LEVEL_UPDATE:
-#                # Extract the index of the class label from the detections,
-#                # then compute the (x, y)-coordinates of the bounding box for
-#                # the object
-#                class_id = int(detections[0, 0, i, 1])
-#                box = detections[0, 0, i, 3:7] * np.array([width, height, width, height])
-#                (x_min, y_min, x_max, y_max) = box.astype("int")
-#                objects.append(Detection(time, class_id, x_min, x_max, y_min, 
-#                                         y_max, confidence, width, height))
-#
-#        return objects
 
     def remove_pattern(self, pattern):
         """
@@ -685,7 +639,7 @@ class Camera:
         try:
             frame_video_in = next(self.frame_factory)
         except StopIteration:
-            return False # end of video file
+            return False, None # end of video file
 
         frame_video = frame_video_in.copy()
         self.current_frame = frame_video.copy()
@@ -844,10 +798,6 @@ class Camera:
                 if not found: # Only if there is no other pattern near
                     self.add_pattern(detection)
 
-        # Draw heading
-        label = "Time {0:<.2f}, frame {1:d}".format(current_time, self.current_frame_count)
-        cv2.putText(frame_video, label, (10,20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, 255, 2)
-
         # Draw detections
         for detection in self.detections:
             cv2.rectangle(frame_video, (detection.x_min, detection.y_min), \
@@ -857,16 +807,16 @@ class Camera:
         for pattern in self.patterns:
             cv2.rectangle(frame_video, (int(pattern.x_min), int(pattern.y_min)), 
                           (int(pattern.x_max), int(pattern.y_max)), 
-                          pattern.bounding_box_color, 2)
+                          pattern.bounding_box_color, 1)
             x_center, y_center = pattern.center_point()
             cv2.circle(frame_video, (int(x_center), int(y_center)),
-                       int(pattern.radius()), (255, 255, 255), 2)
+                       int(pattern.radius()), (255, 255, 255), 1)
             label = "{0:s}: {1:.2f}".format(CLASS_NAMES[pattern.class_id],
                      pattern.confidence)
             ytext = int(pattern.y_min) - 15 if int(pattern.y_min) - 15 > 15 \
                 else int(pattern.y_min) + 15
             cv2.putText(frame_video, label, (int(pattern.x_min), ytext), \
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255, 255, 255), 1)
             
             if (pattern.is_reliable()):
                 x_variance, y_variance = pattern.location_variance()
@@ -874,20 +824,15 @@ class Camera:
                 y_std2 = 2.0 * sqrt(y_variance)
                 cv2.ellipse(frame_video, (int(x_center), int(y_center)), 
                             (int(x_std2),int(y_std2)), 0.0, 0, 360, 
-                            pattern.bounding_box_color, 2)
+                            pattern.bounding_box_color, 1)
                 x_center_velocity, y_center_velocity = pattern.velocity()
                 cv2.arrowedLine(frame_video, (int(x_center), int(y_center)), 
                                 (int(x_center+x_center_velocity), 
                                  int(y_center+y_center_velocity)), 
-                                 pattern.bounding_box_color, 2)
+                                 pattern.bounding_box_color, 1)
 
-        # Resize frame and display
-        frame_display = cv2.resize(frame_video, (0, 0), None, self.size_ratio, 
-                           self.size_ratio)
-        cv2.imshow(self.name, frame_display)
-        cv2.waitKey(10)
 
-        return True
+        return True, frame_video
 
 #------------------------------------------------------------------------------
 class Detection(BoundingBox):
@@ -1025,12 +970,6 @@ class ObjectDetector:
         """
         Run inference for single image and return dictionary
         """
-#        with self.detection_graph.as_default():
-#            with tf.Session() as sess:
-        # Get handles to input and output tensors
-#        self.detection_graph.as_default()
-#        with self.detection_graph.as_default():
-#            with tf.Session() as sess:
         with self.detection_graph.as_default():
             ops = tf.get_default_graph().get_operations()
             all_tensor_names = {output.name for op in ops for output in op.outputs}
@@ -1232,55 +1171,6 @@ class Presentation:
         """
         pass
 
-class PresentationDisparity(Presentation):
-    """
-    Disparity map for two cameras
-    """
-    def __init__(self, world, x_loc, y_loc, height_pixels, width_pixels, 
-                 camera1, camera2):
-        """
-        Initialization
-        """
-        super().__init__(world)
-        self.x_loc = x_loc
-        self.y_loc = y_loc
-        self.height_pixels = height_pixels
-        self.width_pixels = width_pixels
-        self.camera1 = camera1
-        self.camera2 = camera2
-        self.frame = np.zeros((height_pixels, width_pixels, 3), np.uint8)
-        self.size_ratio = self.width_pixels/camera1.sensor_width_pixels
-        self.window_name = "Disparity for " + camera1.name + " " + camera2.name
-        cv2.imshow(self.window_name, self.frame)
-        cv2.moveWindow(self.window_name, self.x_loc, self.y_loc)
-        
-    def close(self):
-        """
-        Release resources
-        """
-        cv2.destroyWindow(self.window_name)
-
-    def update(self, current_time):
-        """
-        Update presentation at time t
-        """
-        self.frame = self.camera1.current_frame
-        
-        stereo = cv2.StereoBM_create()
-        disp_rgb = stereo.compute(
-            cv2.cvtColor(self.camera1.current_frame, cv2.COLOR_BGR2GRAY),
-            cv2.cvtColor(self.camera2.current_frame, cv2.COLOR_BGR2GRAY))
-        
-        minValue = disp_rgb.min()
-        maxValue = disp_rgb.max()
-        disp_rgb = np.uint8(255 * (disp_rgb - minValue) / (maxValue - minValue))
-        disp = cv2.applyColorMap(disp_rgb, cv2.COLORMAP_RAINBOW)
-        # Resize frame and display
-        frame_display = cv2.resize(disp, (0, 0), None, self.size_ratio, 
-                           self.size_ratio)
-        cv2.imshow(self.window_name, frame_display)
-        cv2.waitKey(10)
-                
 #------------------------------------------------------------------------------
 class PresentationForecast(Presentation):
     """
@@ -1778,84 +1668,6 @@ class PresentationLog(Presentation):
             pass
                 
 #------------------------------------------------------------------------------
-class PresentationMap(Presentation):
-    """
-    2D map presentation (looked from above)
-    """
-    def __init__(self, world, map_id, x_loc, y_loc, height_pixels, 
-                 width_pixels, extent):
-        """
-        Initialization
-        """
-        super().__init__(world)
-        self.map_id =map_id
-        self.x_loc = x_loc
-        self.y_loc = y_loc
-        self.height_pixels = height_pixels
-        self.width_pixels = width_pixels
-        self.extent = extent
-        self.frame = np.zeros((height_pixels, width_pixels, 3), np.uint8)
-        self.window_name = "Map " + str(map_id)
-        cv2.imshow(self.window_name, self.frame)
-        cv2.moveWindow(self.window_name, self.x_loc, self.y_loc)
-        
-    def close(self):
-        """
-        Release resources
-        """
-        cv2.destroyWindow(self.window_name)
-
-    def update(self, current_time):
-        """
-        Update presentation at time t
-        """
-        extension_pixels = min(self.height_pixels, self.width_pixels)
-        pixels_meter = 0.5*extension_pixels / self.extent
-
-        # Empty frame
-        self.frame = np.zeros((self.height_pixels, self.width_pixels, 3), 
-                              np.uint8)
-
-        # Radar circles
-        radius = 10.0
-        while radius < self.extent:
-            radius_pixels = int(radius * pixels_meter)
-            cv2.circle(self.frame, (int(self.width_pixels/2), 
-                                    int(self.height_pixels/2)), radius_pixels, 
-                                    (255,255,255), 1)
-            radius += 10.0
-
-        # Camera field of views
-        for camera in self.world.cameras:
-            x = self.height_pixels / 2.0 * tan(camera.field_of_view/2.0)
-            pt1 = (int(self.width_pixels/2), int(self.height_pixels/2))
-            pt2 = (int(self.width_pixels/2-x),0)
-            cv2.line(self.frame, pt1, pt2, (255,255,255), 1)
-            pt2 = (int(self.width_pixels/2+x),0)
-            cv2.line(self.frame, pt1, pt2, (255,255,255), 1)
-
-        # No bodies, now update
-        if len(self.world.bodies) == 0:
-            return
-
-        # Draw
-        for body in self.world.bodies:
-            xc = self.width_pixels/2.0 + body.x * pixels_meter
-            yc = self.height_pixels/2.0 + body.z * pixels_meter
-            color = (0,255,0) # green
-            if body.status == "predicted":
-                color = (0,0,255) # red
-            radius_pixels = int(body.mean_radius() * pixels_meter)
-            cv2.circle(self.frame, (int(xc), int(yc)), radius_pixels, color, 1)
-            color = (100,100,100)
-            sx = int(sqrt(body.sigma[0,0]))
-            sy = int(sqrt(body.sigma[2,2]))
-            cv2.ellipse(self.frame, (int(xc), int(yc)), (sx, sy), 0.0, 0.0, 
-                        360.0, color,1)
-        
-        cv2.imshow(self.window_name, self.frame)
-                
-#------------------------------------------------------------------------------
 class SpeechSynthesizer:
     """
     Class for spelling out text. Relies on pyttsc3 package and currently
@@ -1874,8 +1686,8 @@ class SpeechSynthesizer:
         """
         Say the text
         """
-        self.engine.say(text)
-        self.engine.runAndWait()
+#        self.engine.say(text)
+#        self.engine.runAndWait()
         
     def alarm(self):
         """
@@ -1921,9 +1733,27 @@ class World:
         self.object_detector = ObjectDetector(self, PATH_TO_CKPT, '')
         # Attributes
         self.current_time = 0.0
-        self.delta_time = 1.0/30.0
+        self.current_frame = 0
+        self.delta_time = 1.0/10.0
         self.last_forecast = -10.0
         self.mode = "step"
+
+        self.frame = np.zeros((3*VIDEO_HEIGHT, VIDEO_WIDTH+3*VIDEO_HEIGHT, 3), np.uint8)
+        label = "Commands:"
+        cv2.putText(self.frame, label, (10,20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, 
+                    (255, 255, 255), 1)
+        label = "   s: step one frame"
+        cv2.putText(self.frame, label, (10,40), cv2.FONT_HERSHEY_SIMPLEX, 0.5, 
+                    (255, 255, 255), 1)
+        label = "   c: continuous mode"
+        cv2.putText(self.frame, label, (10,60), cv2.FONT_HERSHEY_SIMPLEX, 0.5, 
+                    (255, 255, 255), 1)
+        label = "   q: quit"
+        cv2.putText(self.frame, label, (10,80), cv2.FONT_HERSHEY_SIMPLEX, 0.5, 
+                    (255, 255, 255), 1)
+
+        cv2.imshow("ShadowWorld", self.frame)
+        cv2.moveWindow("ShadowWorld", 10, 10)
 
     def add_body(self, body):
         """
@@ -1987,6 +1817,7 @@ class World:
             camera.close()
         for presentation in self.presentations:
             presentation.close()
+        cv2.destroyWindow("ShadowWorld")
 
     def run(self):
         """
@@ -1994,15 +1825,41 @@ class World:
         """
         self.check_keyboard_command()
         if self.mode == "quit":
-            return False
+            return
 
         more = True
         while more:
             more = True
+            frame_offset = 0
             for camera in self.cameras:
-                more_camera = camera.update(self.current_time, self.delta_time)
+                more_camera, camera_frame = camera.update(self.current_time, 
+                                                          self.delta_time)
                 if not more_camera:
-                    more = False
+                    return
+                else:
+                    cxmin = 0
+                    cxmax = VIDEO_WIDTH
+                    cymin = frame_offset
+                    cymax = frame_offset + VIDEO_HEIGHT
+                    self.frame[cymin:cymax, cxmin:cxmax, :] = camera_frame
+                    frame_offset += VIDEO_HEIGHT
+
+            camera1 = self.cameras[0]
+            camera2 = self.cameras[1]
+            stereo = cv2.StereoBM_create(numDisparities=1*16)
+            disp_rgb = stereo.compute(
+                cv2.cvtColor(camera1.current_frame, cv2.COLOR_BGR2GRAY),
+                cv2.cvtColor(camera2.current_frame, cv2.COLOR_BGR2GRAY))
+            minValue = disp_rgb.min()
+            maxValue = disp_rgb.max()
+            disp_rgb = np.uint8(255 * (disp_rgb - minValue) / (maxValue - minValue))
+            disp = cv2.applyColorMap(disp_rgb, cv2.COLORMAP_WINTER)
+            cxmin = 0
+            cxmax = VIDEO_WIDTH
+            cymin = frame_offset
+            cymax = frame_offset + VIDEO_HEIGHT
+            self.frame[cymin:cymax, cxmin:cxmax, :] = disp
+            
             for body in self.bodies:
                 body.predict(self.delta_time)
                     
@@ -2056,141 +1913,66 @@ class World:
                        
                 self.last_forecast = self.current_time
 
-            for presentation in self.presentations:
-                presentation.update(self.current_time)
+
+            """
+            Update map
+            """
+            pixels_meter = 0.5*3.0*VIDEO_HEIGHT / MAP_EXTENT
+    
+            # Empty frame
+            map_frame = np.zeros((3*VIDEO_HEIGHT, 3*VIDEO_HEIGHT, 3), np.uint8)
+            # Draw heading
+            label = "Time {0:<.2f}, frame {1:d}".format(self.current_time, self.current_frame)
+            cv2.putText(map_frame, label, (10,3*VIDEO_HEIGHT-15), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255,255,255), 1)
+            # Radar circles
+            radius = 10.0
+            while radius < MAP_EXTENT:
+                radius_pixels = int(radius * pixels_meter)
+                cv2.circle(map_frame, (int(3*VIDEO_HEIGHT/2), 
+                                       int(3*VIDEO_HEIGHT/2)), radius_pixels, 
+                                       (255,255,255), 1)
+                radius += 10.0
+            # Camera field of views
+            for camera in self.cameras:
+                x_offset = int(camera.x * pixels_meter)
+                x = 3*VIDEO_HEIGHT / 2.0 * tan(camera.field_of_view/2.0)
+                pt1 = (int(3*VIDEO_HEIGHT/2+x_offset), int(3*VIDEO_HEIGHT/2))
+                pt2 = (int(3*VIDEO_HEIGHT/2-x+x_offset),0)
+                cv2.line(map_frame, pt1, pt2, (255,255,255), 1)
+                pt2 = (int(3*VIDEO_HEIGHT/2+x+x_offset),0)
+                cv2.line(map_frame, pt1, pt2, (255,255,255), 1)
+            # Draw
+            for body in self.bodies:
+                xc = 3*VIDEO_HEIGHT/2.0 + body.x * pixels_meter
+                yc = 3*VIDEO_HEIGHT/2.0 + body.z * pixels_meter
+                color = (0,255,0) # green
+                if body.status == "predicted":
+                    color = (0,0,255) # red
+                radius_pixels = int(body.mean_radius() * pixels_meter)
+                cv2.circle(map_frame, (int(xc), int(yc)), radius_pixels, color, 1)
+                color = (100,100,100)
+                sx = int(sqrt(body.sigma[0,0]))
+                sy = int(sqrt(body.sigma[2,2]))
+                cv2.ellipse(map_frame, (int(xc), int(yc)), (sx, sy), 0.0, 0.0, 
+                            360.0, color,1)
+
+            cxmin = VIDEO_WIDTH
+            cxmax = VIDEO_WIDTH + 3*VIDEO_HEIGHT
+            cymin = 0
+            cymax = 3*VIDEO_HEIGHT
+            self.frame[cymin:cymax, cxmin:cxmax, :] = map_frame
 
             self.current_time += self.delta_time
+            self.current_frame += 1
+
+            cv2.imshow("ShadowWorld", self.frame)
 
             self.check_keyboard_command()
             if self.mode == "quit":
                 self.close()
                 break
-        
-    def update(self):
-        """
-        Each camera is asked to update their patterns. Patterns are projected
-        into bodies. This is repeated until cameras have no more frames.
-        """
-        self.check_keyboard_command()
-        if self.mode == "quit":
-            return False
-
-        more = True
-        while more:
-            more = True
-            for camera in self.cameras:
-                more_camera = camera.update(self.current_time, self.delta_time)
-                if not more_camera:
-                    more = False
-            for body in self.bodies:
-                body.predict(self.delta_time)
-                    
-                if body.frame_age == BODY_DATA_COLLECTION_COUNT:
-                    text = CLASS_NAMES[body.class_id]+" observed "
-                    speed = int(3.6*body.speed())
-                    distance = int(abs(body.z))
-                    text += "distance " + str(distance) + " meters "
-                    if (speed < 4):
-                        text += "hanging around "
-                    else:
-                        if body.z <= 0 and body.vz >= 0:
-                            text += "moving towards us "
-                        elif body.z <= 0 and body.vz < 0:
-                            text += "moving away from us "
-                        if body.z > 0 and body.vz >= 0:
-                            text += "moving away from us "
-                        elif body.z > 0 and body.vz < 0:
-                            text += "moving towards us "
-                        if body.vx <= 0:
-                            text += "from right to left "
-                        else:
-                            text += "from left to right "
-                        text += "speed " + str(speed) + " kilometers per hour "
-
-                    self.add_event(Event(self, self.current_time, 0, id(body),
-                                         text))
-                if body.pattern is not None:
-                    if body.pattern.is_reliable():
-                        xo, yo, zo = body.coordinates_from_pattern()
-                        body.correct(xo, yo, zo, self.delta_time)
-
-            for body in self.bodies:
-                body.add_trace(self.current_time)
-
-            if (self.current_time > self.last_forecast + FORECAST_INTERVAL):
-                for body in self.bodies:
-                    body.make_forecast(self.current_time)
-                    body.detect_collision()
-                    if body.collision_probability > COLLISION_MIN_LEVEL:
-                        if body.collision_probability > body.collision_probability_max:
-                            t_collision = int(10*(body.forecast.t_min_distance-self.current_time)/10)
-                            if t_collision > 0:
-                                text = CLASS_NAMES[body.class_id] + " may collide in "
-                                text += str(t_collision)
-                                text += " seconds with probability "
-                                text += str(int(1000*body.collision_probability)/10)
-                                text += " percent"
-                                self.add_event(Event(self, self.current_time, -1, id(body), text))
-                            body.collision_probability_max = body.collision_probability
-                       
-                self.last_forecast = self.current_time
-
-            for presentation in self.presentations:
-                presentation.update(self.current_time)
-
-            self.current_time += self.delta_time
-
-        return True
 
 #------------------------------------------------------------------------------
-TEST_VIDEOS = ['videos/AWomanStandsOnTheSeashore-10058.mp4', # 0
-               'videos/BlueTit2975.mp4', # 1
-               'videos/Boat-10876.mp4', # 2
-               'videos/Calf-2679.mp4', # 3
-               'videos/Cars133.mp4', # 4
-               'videos/CarsOnHighway001.mp4', # 5
-               'videos/Cat-3740.mp4', # 6
-               'videos/Dog-4028.mp4', # 7
-               'videos/Dunes-7238.mp4', # 8
-               'videos/Hiker1010.mp4', # 9
-               'videos/Horse-2980.mp4', # 10
-               'videos/Railway-4106.mp4', # 11
-               'videos/SailingBoat6415.mp4', # 12
-               'videos/Sheep-12727.mp4', # 13
-               'videos/Sofa-11294.mp4'] # 14
-
-TEST_FOCAL_LENGTHS = [0.050, # 0
-                      0.250, # 1
-                      0.150, # 2
-                      0.050, # 3
-                      0.200, # 4
-                      0.200, # 5 
-                      0.090, # 6
-                      0.030, # 7
-                      0.050, # 8
-                      0.050, # 9
-                      0.050, # 10
-                      0.015, # 11
-                      0.150, # 12
-                      0.050, # 13
-                      0.035] # 14
-
-TEST_EXTENTS = [11.0, # 0
-                11.0, # 1
-                210.0, # 2
-                11.0, # 3
-                81.0, # 4
-                141.0, # 5
-                11.0, # 6
-                21.0, # 7
-                31.0, # 8
-                31.0, # 9
-                11.0, # 10
-                331.0, # 11
-                161.0, # 12
-                11.0, # 13
-                11.0] # 14
-
 def run_application():
     """
     Example application
@@ -2202,49 +1984,39 @@ def run_application():
     drive = '0001'
     dataset = pykitti.raw(basedir, date, drive, imformat='cv2')
 
-    test_video = 5
-
     world = World()
     
-    camera1 = Camera(world, name="Left camera", focal_length=TEST_FOCAL_LENGTHS[test_video],
-                     sensor_width=0.0359, sensor_height=0.0240, 
-                     sensor_width_pixels=1280, sensor_height_pixels=720,
+    sensor_width = VIDEO_WIDTH * 4.65 / 1000000 # ICX267, cropped
+    sensor_height = VIDEO_HEIGHT * 4.65 / 1000000 # ICX267, cropped
+    camera1 = Camera(world, name="Left", focal_length=0.003,
+                     sensor_width=sensor_width, sensor_height=sensor_height, 
+                     sensor_width_pixels=VIDEO_WIDTH, sensor_height_pixels=VIDEO_HEIGHT,
                      x=0.0, y=0.0, z=0.0, 
                      yaw=0.0, pitch=0.0, roll=0.0, 
-                     frames=dataset.cam2,
-                     x_loc=20, y_loc=20, width_pixels=900, 
-                     height_pixels=int(900*720/1280))
+                     frames=dataset.cam2)
+#                     x_loc=20, y_loc=20, width_pixels=900, 
+#                     height_pixels=int(900*720/1280))
     world.add_camera(camera1)
-
-    camera2 = Camera(world, name="Right camera", focal_length=TEST_FOCAL_LENGTHS[test_video],
-              sensor_width=0.0359, sensor_height=0.0240, 
-              sensor_width_pixels=1280, sensor_height_pixels=720,
-              x=0.0, y=0.0, z=0.0, 
-              yaw=0.0, pitch=0.0, roll=0.0, 
-              frames=dataset.cam3,
-              x_loc=20, y_loc=380, width_pixels=900, 
-              height_pixels=int(900*720/1280))
+    camera2 = Camera(world, name="Right", focal_length=0.003,
+                     sensor_width=sensor_width, sensor_height=sensor_height, 
+                     sensor_width_pixels=VIDEO_WIDTH, sensor_height_pixels=VIDEO_HEIGHT,
+                     x=0.54, y=0.0, z=0.0, 
+                     yaw=0.0, pitch=0.0, roll=0.0, 
+                     frames=dataset.cam3)
+#                     x_loc=20, y_loc=20, width_pixels=900, 
+#                     height_pixels=int(900*720/1280))
     world.add_camera(camera2)
 
-    world.add_presentation(PresentationDisparity(world, x_loc=20, y_loc=740, 
-                                                 height_pixels=int(900*720/1280), 
-                                                 width_pixels=900, 
-                                                 camera1=camera1, 
-                                                 camera2=camera2))
+#
+#    world.add_presentation(PresentationForecast(world, map_id=2, x_loc=940, 
+#                                                y_loc=620, height_pixels=500, 
+#                                                width_pixels=500, 
+#                                                extent=TEST_EXTENTS[test_video]))
 
-    world.add_presentation(PresentationMap(world, map_id=1, x_loc=940, y_loc=20,
-                                           height_pixels=500, width_pixels=500, 
-                                           extent=TEST_EXTENTS[test_video]))
-
-    world.add_presentation(PresentationForecast(world, map_id=2, x_loc=940, 
-                                                y_loc=620, height_pixels=500, 
-                                                width_pixels=500, 
-                                                extent=TEST_EXTENTS[test_video]))
-
-    world.add_presentation(PresentationLog(world, "Detection", "DetectionStereo.txt"))
-    world.add_presentation(PresentationLog(world, "Pattern", "PatternStereo.txt"))
-    world.add_presentation(PresentationLog(world, "Body", "BodyStereo.txt"))
-    world.add_presentation(PresentationLog(world, "Event", "EventStereo.txt"))
+    world.add_presentation(PresentationLog(world, "Detection", "logs/DetectionStereo.txt"))
+    world.add_presentation(PresentationLog(world, "Pattern", "logs/PatternStereo.txt"))
+    world.add_presentation(PresentationLog(world, "Body", "logs/BodyStereo.txt"))
+    world.add_presentation(PresentationLog(world, "Event", "logs/EventStereo.txt"))
 
     world.run()
     
