@@ -25,6 +25,7 @@ sys.path.append("..")
 from object_detection.utils import ops as utils_ops
 from utils import label_map_util
 from utils import visualization_utils as vis_util
+import matplotlib as plt
 
 # Hyperparameters--------------------------------------------------------------
 BODY_ALFA = 100000.0 # Body initial location error variance
@@ -80,7 +81,7 @@ CLASS_NAMES = ["background", "aeroplane", "bicycle", "bird", "boat",
                "bottle", "bus", "car", "cat", "chair", "cow", "dining table",
                "dog", "horse", "motorbike", "person", "potted plant", "sheep",
                "sofa", "train", "tv monitor"]
-MAP_EXTENT = 100.0
+MAP_EXTENT = 101.0
 VIDEO_WIDTH = 1242
 VIDEO_HEIGHT = 375
 # Classes----------------------------------------------------------------------
@@ -353,7 +354,8 @@ class BoundingBox:
     """
     Base class for detections and patterns
     """
-    def __init__(self, x_min, x_max, y_min, y_max, image_width, image_height):
+    def __init__(self, x_min, x_max, y_min, y_max, image_width, image_height,
+                 patch, confidence):
         """
         Initialization based on coordinates
         """
@@ -368,6 +370,20 @@ class BoundingBox:
         self.border_top = 1
         self.border_bottom = 1
         self.set_border_behaviour(image_width, image_height)
+        self.confidence = confidence
+        self.x = (x_min + x_max) / 2
+        self.y = (y_min + y_max) / 2
+        self.width = x_max - x_min
+        self.height = y_max - y_min
+        patch_hsv = plt.colors.rgb_to_hsv(patch)
+        histo, bins = np.histogram(patch_hsv[:,:,0], 3)
+        histo = histo / sum(histo)
+        self.hue0 = histo[0]
+        self.hue1 = histo[1]
+        self.hue2 = histo[2]
+        self.saturation = np.mean(patch_hsv[:,:,1])
+        self.value = np.mean(patch_hsv[:,:,2])
+        self.patch = patch
 
     def border_count(self):
         """
@@ -615,7 +631,8 @@ class Camera:
                 y_max = int(height*boxes[i,2])
                 objects.append(Detection(time, class_id, x_min, x_max,
                                          y_min, y_max, scores[i], 
-                                         width, height))
+                                         width, height, image[y_min:y_max,
+                                                              x_min:x_max,:]))
         
 
         return objects
@@ -840,17 +857,17 @@ class Detection(BoundingBox):
     Output from object detector, measurement
     """
     def __init__(self, current_time, class_id, x_min, x_max, y_min, y_max, 
-                 confidence, image_width, image_height):
+                 confidence, image_width, image_height, patch):
         """
         Initialization
         """
-        super().__init__(x_min, x_max, y_min, y_max, image_width, image_height)
+        super().__init__(x_min, x_max, y_min, y_max, image_width, image_height,
+             patch, confidence)
         # References
         self.pattern = None
         # Attributes
         self.time = current_time
         self.class_id = class_id
-        self.confidence = confidence
         self.matched = False
 
     def pattern_distance(self, pattern):
@@ -1018,7 +1035,8 @@ class Pattern(BoundingBox):
         """
         super().__init__(detection.x_min, detection.x_max, detection.y_min,
                          detection.y_max, camera.sensor_width_pixels, 
-                         camera.sensor_height_pixels)
+                         camera.sensor_height_pixels, detection.patch,
+                         detection.confidence)
         # References
         self.camera = camera
         self.detections = []
@@ -1041,6 +1059,18 @@ class Pattern(BoundingBox):
         self.confidence = detection.confidence
         self.bounding_box_color = (rnd.randint(0,255), rnd.randint(0,255), 
                                    rnd.randint(0,255))
+
+        self.x = detection.x
+        self.y = detection.y
+        self.width = detection.width
+        self.height = detection.height
+        self.hue0 = detection.hue0
+        self.hue1 = detection.hue1
+        self.hue2 = detection.hue2
+        self.saturation = detection.saturation
+        self.value = detection.value
+        self.patch = detection.patch
+
         self.retention_count = 0
         self.matched = False
 
@@ -1738,7 +1768,7 @@ class World:
         self.last_forecast = -10.0
         self.mode = "step"
 
-        self.frame = np.zeros((3*VIDEO_HEIGHT, VIDEO_WIDTH+3*VIDEO_HEIGHT, 3), np.uint8)
+        self.frame = np.zeros((int(3.0*VIDEO_HEIGHT), int(VIDEO_WIDTH+2.5*VIDEO_HEIGHT), 3), np.uint8)
         label = "Commands:"
         cv2.putText(self.frame, label, (10,20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, 
                     (255, 255, 255), 1)
@@ -1754,6 +1784,11 @@ class World:
 
         cv2.imshow("ShadowWorld", self.frame)
         cv2.moveWindow("ShadowWorld", 10, 10)
+
+        self.check_keyboard_command()
+        if self.mode == "quit":
+            self.close()
+
 
     def add_body(self, body):
         """
@@ -1823,9 +1858,9 @@ class World:
         """
         Run the world
         """
-        self.check_keyboard_command()
-        if self.mode == "quit":
-            return
+#        self.check_keyboard_command()
+#        if self.mode == "quit":
+#            return
 
         more = True
         while more:
@@ -1915,36 +1950,36 @@ class World:
 
 
             """
-            Update map
+            Update map (from above)
             """
-            pixels_meter = 0.5*3.0*VIDEO_HEIGHT / MAP_EXTENT
+            pixels_meter = 0.5*2.5*VIDEO_HEIGHT / MAP_EXTENT
     
             # Empty frame
-            map_frame = np.zeros((3*VIDEO_HEIGHT, 3*VIDEO_HEIGHT, 3), np.uint8)
+            map_frame = np.zeros((int(2.5*VIDEO_HEIGHT), int(2.5*VIDEO_HEIGHT), 3), np.uint8)
             # Draw heading
             label = "Time {0:<.2f}, frame {1:d}".format(self.current_time, self.current_frame)
-            cv2.putText(map_frame, label, (10,3*VIDEO_HEIGHT-15), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255,255,255), 1)
+            cv2.putText(map_frame, label, (10,int(2.5*VIDEO_HEIGHT)-15), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255,255,255), 1)
             # Radar circles
             radius = 10.0
             while radius < MAP_EXTENT:
                 radius_pixels = int(radius * pixels_meter)
-                cv2.circle(map_frame, (int(3*VIDEO_HEIGHT/2), 
-                                       int(3*VIDEO_HEIGHT/2)), radius_pixels, 
+                cv2.circle(map_frame, (int(2.5*VIDEO_HEIGHT/2), 
+                                       int(2.5*VIDEO_HEIGHT/2)), radius_pixels, 
                                        (255,255,255), 1)
                 radius += 10.0
             # Camera field of views
             for camera in self.cameras:
                 x_offset = int(camera.x * pixels_meter)
-                x = 3*VIDEO_HEIGHT / 2.0 * tan(camera.field_of_view/2.0)
-                pt1 = (int(3*VIDEO_HEIGHT/2+x_offset), int(3*VIDEO_HEIGHT/2))
-                pt2 = (int(3*VIDEO_HEIGHT/2-x+x_offset),0)
+                x = 2.5*VIDEO_HEIGHT / 2.0 * tan(camera.field_of_view/2.0)
+                pt1 = (int(2.5*VIDEO_HEIGHT/2+x_offset), int(2.5*VIDEO_HEIGHT/2))
+                pt2 = (int(2.5*VIDEO_HEIGHT/2-x+x_offset),0)
                 cv2.line(map_frame, pt1, pt2, (255,255,255), 1)
-                pt2 = (int(3*VIDEO_HEIGHT/2+x+x_offset),0)
+                pt2 = (int(2.5*VIDEO_HEIGHT/2+x+x_offset),0)
                 cv2.line(map_frame, pt1, pt2, (255,255,255), 1)
-            # Draw
+            #Bodies
             for body in self.bodies:
-                xc = 3*VIDEO_HEIGHT/2.0 + body.x * pixels_meter
-                yc = 3*VIDEO_HEIGHT/2.0 + body.z * pixels_meter
+                xc = 2.5*VIDEO_HEIGHT/2.0 + body.x * pixels_meter
+                yc = 2.5*VIDEO_HEIGHT/2.0 + body.z * pixels_meter
                 color = (0,255,0) # green
                 if body.status == "predicted":
                     color = (0,0,255) # red
@@ -1957,10 +1992,48 @@ class World:
                             360.0, color,1)
 
             cxmin = VIDEO_WIDTH
-            cxmax = VIDEO_WIDTH + 3*VIDEO_HEIGHT
+            cxmax = VIDEO_WIDTH + int(2.5*VIDEO_HEIGHT)
             cymin = 0
-            cymax = 3*VIDEO_HEIGHT
+            cymax = int(2.5*VIDEO_HEIGHT)
             self.frame[cymin:cymax, cxmin:cxmax, :] = map_frame
+
+            """
+            Update map (side view)
+            """
+            pixels_meter = 0.5*2.5*VIDEO_HEIGHT / MAP_EXTENT
+    
+            # Empty frame
+            map_frame = np.zeros((int(0.5*VIDEO_HEIGHT), int(2.5*VIDEO_HEIGHT), 3), np.uint8)
+            # Horizontal lines
+            cv2.line(map_frame, (0, 0), (VIDEO_WIDTH, 0), (255,0,0), 3) 
+            y = int(0.0 * pixels_meter + 0.5*VIDEO_HEIGHT/2)
+            cv2.line(map_frame, (0, y), (VIDEO_WIDTH, y), (255,255,255), 1) 
+            y = int(-10.0 * pixels_meter + 0.5*VIDEO_HEIGHT/2)
+            cv2.line(map_frame, (0, y), (VIDEO_WIDTH, y), (255,255,255), 1) 
+            y = int(10.0 * pixels_meter + 0.5*VIDEO_HEIGHT/2)
+            cv2.line(map_frame, (0, y), (VIDEO_WIDTH, y), (255,255,255), 1) 
+
+            #Bodies
+            for body in self.bodies:
+                xc = 2.5*VIDEO_HEIGHT/2.0 + body.x * pixels_meter
+                yc = 0.5*VIDEO_HEIGHT/2.0 - body.y * pixels_meter
+                color = (0,255,0) # green
+                if body.status == "predicted":
+                    color = (0,0,255) # red
+                radius_pixels = int(body.mean_radius() * pixels_meter)
+                cv2.circle(map_frame, (int(xc), int(yc)), radius_pixels, color, 1)
+                color = (100,100,100)
+                sx = int(sqrt(body.sigma[0,0]))
+                sy = int(sqrt(body.sigma[2,2]))
+                cv2.ellipse(map_frame, (int(xc), int(yc)), (sx, sy), 0.0, 0.0, 
+                            360.0, color,1)
+
+            cxmin = VIDEO_WIDTH
+            cxmax = VIDEO_WIDTH + int(2.5*VIDEO_HEIGHT)
+            cymin = int(2.5*VIDEO_HEIGHT)
+            cymax = int(3.0*VIDEO_HEIGHT)-1
+            self.frame[cymin:cymax, cxmin:cxmax, :] = map_frame
+
 
             self.current_time += self.delta_time
             self.current_frame += 1
@@ -1969,7 +2042,7 @@ class World:
 
             self.check_keyboard_command()
             if self.mode == "quit":
-                self.close()
+                return
                 break
 
 #------------------------------------------------------------------------------
@@ -1981,7 +2054,7 @@ def run_application():
     # Load KITTI data
     basedir = 'D:\Thesis\Kitti\Raw'
     date = '2011_09_26'
-    drive = '0001'
+    drive = '0009'
     dataset = pykitti.raw(basedir, date, drive, imformat='cv2')
 
     world = World()
