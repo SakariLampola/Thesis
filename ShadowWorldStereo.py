@@ -9,11 +9,13 @@ Created on Mon Jan 29 08:30:49 2018
 import numpy as np
 import cv2
 import time
+import pandas as pd
 import random as rnd
 import pyttsx3
 import winsound
 from math import atan, cos, sqrt, tan, exp, log
 from scipy.optimize import linear_sum_assignment
+from scipy.stats import multivariate_normal
 import pykitti
 import os
 import six.moves.urllib as urllib
@@ -76,11 +78,12 @@ PATTERN_R = np.array([[0.1, 0.0],
 RETENTION_COUNT_MAX = 30 # How many frames pattern is kept untedected
 #
 SIMILARITY_DISTANCE = 0.4 # Max distance for detection-pattern similarity
+STEREO_MATCH_MEAN = pd.read_pickle("stereo/stereomatch_mean.pkl").as_matrix()
+STEREO_MATCH_COVARIANCE = pd.read_pickle("stereo/stereomatch_covariance.pkl").as_matrix()
+STEREO_MAX_DISTANCE = 20.0 # Max distance to stereo vision to be accurate
+STEREO_MIN_LOG_PROBABILITY = 9 # Mimimun negative log probability for matching
 # Other constants--------------------------------------------------------------
-CLASS_NAMES = ["background", "aeroplane", "bicycle", "bird", "boat",
-               "bottle", "bus", "car", "cat", "chair", "cow", "dining table",
-               "dog", "horse", "motorbike", "person", "potted plant", "sheep",
-               "sofa", "train", "tv monitor"]
+CLASS_NAMES = ["background", "car", "person"]
 MAP_EXTENT = 101.0
 VIDEO_WIDTH = 1242
 VIDEO_HEIGHT = 375
@@ -89,20 +92,21 @@ class Body:
     """
     A physical entity in the world
     """
-    def __init__(self, world, pattern):
+    def __init__(self, world, pattern_left, pattern_right):
         """
         Initialization
         """
         # References
         self.world = world
-        self.pattern = pattern
+        self.pattern_left = pattern_left
+        self.pattern_right = pattern_right
         self.events = []
         self.traces = []
         self.forecast = None
         # Attributes
-        self.set_class_attributes(pattern.class_id)
+        self.set_class_attributes(pattern_left.class_id)
         self.frame_age = 0
-        self.x, self.y, self.z = self.coordinates_from_pattern()
+        self.x, self.y, self.z = self.coordinates_from_patterns()
         self.status = "measured"
         self.vx = 0.0
         self.vy = 0.0
@@ -113,7 +117,7 @@ class Body:
                                [0.0,       0.0,       0.0, BODY_BETA,       0.0,       0.0],
                                [0.0,       0.0,       0.0,       0.0, BODY_BETA,       0.0],
                                [0.0,       0.0,       0.0,       0.0,       0.0, BODY_BETA]])
-        self.forecast_color = pattern.bounding_box_color
+        self.forecast_color = pattern_left.bounding_box_color
         self.collision_probability = 0.0
         self.collision_probability_max = 0.0
 
@@ -123,22 +127,22 @@ class Body:
         """
         self.traces.append(Trace(time, self))
     
-    def coordinates_from_pattern(self):
+    def coordinates_from_patterns(self):
         """
         Calculates world coordinates from pattern center point, pattern height,
         camera parameters and default body height
         """
-        if self.pattern is None:
+        if (self.pattern_left is None) or (self.pattern_left is None):
             return 0.0, 0.0, 0.0
         
-        sw = self.pattern.camera.sensor_width
-        sh = self.pattern.camera.sensor_height
-        pw = self.pattern.camera.sensor_width_pixels
-        ph = self.pattern.camera.sensor_height_pixels
-        ri = self.pattern.radius()
+        sw = self.pattern_left.camera.sensor_width
+        sh = self.pattern_left.camera.sensor_height
+        pw = self.pattern_left.camera.sensor_width_pixels
+        ph = self.pattern_left.camera.sensor_height_pixels
+        ri = self.pattern_left.radius()
         r = self.mean_radius()
-        f = self.pattern.camera.focal_length
-        xp, yp = self.pattern.center_point()
+        f = self.pattern_left.camera.focal_length
+        xp, yp = self.pattern_left.center_point()
 
         xc = -sw/2.0 + xp*sw/pw
         yc = sh/2.0 - yp*sh/ph
@@ -147,7 +151,32 @@ class Body:
         alfa = atan(yc/f)
         beta = atan(xc/f)
 
-        d = f*r/(cos(alfa)*cos(beta)*ri*sh/ph)
+        d_size = f*r/(cos(alfa)*cos(beta)*ri*sh/ph)
+        
+        disparity = (self.pattern_left.x_min+self.pattern_left.x_max)*0.5       
+        disparity -= (self.pattern_right.x_min+self.pattern_right.x_max)*0.5       
+        base = self.pattern_right.camera.x - self.pattern_left.camera.x
+
+        if disparity > 0:
+            d_stereo = f*base/(cos(alfa)*cos(beta)*disparity*sw/pw)
+        else:
+            d_stereo = d_size
+        
+        estimated_distance = (d_stereo + d_size)*0.5
+        fraction = 0.25
+        if estimated_distance < (1-fraction) * STEREO_MAX_DISTANCE:
+            k_size = 0.0
+            k_stereo = 1.0
+        elif estimated_distance > (1+fraction) * STEREO_MAX_DISTANCE:
+            k_size = 1.0
+            k_stereo = 0.0
+        else:
+            l1 = estimated_distance - (1-fraction) * STEREO_MAX_DISTANCE
+            l2 = (1+fraction)*STEREO_MAX_DISTANCE - (1-fraction)*STEREO_MAX_DISTANCE
+            k_size = l1/l2
+            k_stereo = 1 - k_size
+        
+        d = k_size* d_size + k_stereo * d_stereo
         t = d / sqrt(xc**2.0 + yc**2.0 + zc**2.0)
 
         xo = t*xc
@@ -265,85 +294,13 @@ class Body:
         Sets class specific attributes
         """
         self.class_id = class_id
-        if class_id == 1: # Aeroplane
-            self.diameter_mu = log(20.0)
-            self.diameter_sigma = 0.35
-            self.velocity_max= 300.0
-        if class_id == 2: # Bicycle
-            self.diameter_mu = log(1.5)
-            self.diameter_sigma = 0.04
-            self.velocity_max = 13.0
-        if class_id == 3: # Bird
-            self.diameter_mu = log(0.15)
-            self.diameter_sigma = 0.35
-            self.velocity_max = 80.0
-        if class_id == 4: # Boat
-            self.diameter_mu = log(6.0)
-            self.diameter_sigma = 0.35
-            self.velocity_max = 20.0
-        if class_id == 5: # Bottle
-            self.diameter_mu = log(0.2)
-            self.diameter_sigma = 0.25
-            self.velocity_max = 10.0
-        if class_id == 6: # Bus
-            self.diameter_mu = log(15.0)
-            self.diameter_sigma = 0.3
-            self.velocity_max = 30.0
-        if class_id == 7: # Car
+        if class_id == 1: # Car
             self.diameter_mu = log(3.6)
             self.diameter_sigma = 0.25
             self.velocity_max = 50.0
-        if class_id == 8: # Cat
-            self.diameter_mu = log(0.3)
-            self.diameter_sigma = 0.2
-            self.velocity_max = 13.0
-        if class_id == 9: # Chair
-            self.diameter_mu = log(1.0)
-            self.diameter_sigma = 0.15
-            self.velocity_max = 10.0
-        if class_id == 10: # Cow
-            self.diameter_mu = log(2.0)
-            self.diameter_sigma = 0.1
-            self.velocity_max = 10.0
-        if class_id == 11: # Dining table
-            self.diameter_mu = log(1.7)
-            self.diameter_sigma = 0.3
-            self.velocity_max = 10.0
-        if class_id == 12: # Dog
-            self.diameter_mu = log(0.4)
-            self.diameter_sigma = 0.3
-            self.velocity_max = 13.0
-        if class_id == 13: # Horse
-            self.diameter_mu = log(2.0)
-            self.diameter_sigma = 0.07
-            self.velocity_max = 13.0
-        if class_id == 14: # Motorbike
-            self.diameter_mu = log(1.6)
-            self.diameter_sigma = 0.07
-            self.velocity_max = 50.0
-        if class_id == 15: # Person
+        if class_id == 2: # Person
             self.diameter_mu = log(1.67)
             self.diameter_sigma = 0.07
-            self.velocity_max = 10.0
-        if class_id == 16: # Potted plant
-            self.diameter_mu = log(0.3)
-            self.diameter_sigma = 0.25
-            self.velocity_max = 10.0
-        if class_id == 17: # Sheep
-            self.diameter_mu = log(1.3)
-            self.diameter_sigma = 0.07
-            self.velocity_max = 10.0
-        if class_id == 18: # Sofa
-            self.diameter_mu = log(2.3)
-            self.diameter_sigma = 0.15
-            self.velocity_max = 10.0
-        if class_id == 19: # Train
-            self.diameter_mu = log(140.0)
-            self.diameter_sigma = 0.45
-            self.velocity_max = 50.0
-        if class_id == 20: # TV Monitor
-            self.diameter_mu = log(0.7)
-            self.diameter_sigma = 0.25
             self.velocity_max = 10.0
 
     def speed(self):
@@ -539,7 +496,6 @@ class Camera:
     def __init__(self, world, name, focal_length, sensor_width, sensor_height,
                  sensor_width_pixels, sensor_height_pixels, 
                  x, y, z, yaw, pitch, roll, frames):
-#                 x_loc, y_loc, width_pixels, height_pixels):
         """
         Initialization
         """
@@ -592,9 +548,10 @@ class Camera:
             return False
 
         new_pattern = Pattern(self, detection)
-        new_body = Body(self.world, new_pattern)
-        new_pattern.body = new_body
-        self.world.add_body(new_body)
+
+#        new_body = Body(self.world, new_pattern)
+#        new_pattern.body = new_body
+#        self.world.add_body(new_body)
         self.patterns.append(new_pattern)
         self.world.add_event(Event(self.world, self.world.current_time, 2,
                                    id(new_pattern), "Pattern created"))
@@ -622,14 +579,11 @@ class Camera:
         scores = output_dict['detection_scores']
         for i in range(boxes.shape[0]):
             if scores[i] >= CONFIDENFE_LEVEL_UPDATE:
-                class_id = 7 # Car
-                if classes[i] == 2:
-                    class_id = 15 # Person
                 x_min = int(width*boxes[i,1])
                 x_max = int(width*boxes[i,3])
                 y_min = int(height*boxes[i,0])
                 y_max = int(height*boxes[i,2])
-                objects.append(Detection(time, class_id, x_min, x_max,
+                objects.append(Detection(time, classes[i], x_min, x_max,
                                          y_min, y_max, scores[i], 
                                          width, height, image[y_min:y_max,
                                                               x_min:x_max,:]))
@@ -644,7 +598,9 @@ class Camera:
         self.world.add_event(Event(self.world, self.world.current_time, 2,
                                    id(pattern), "Pattern removed"))
         self.patterns.remove(pattern)
-        pattern.body.pattern = None
+        if pattern.body is not None:
+            pattern.body.pattern_left = None
+            pattern.body.pattern_right = None
 
     def update(self, current_time, delta_time):
         """
@@ -1756,7 +1712,8 @@ class World:
         """
         # References
         self.bodies = []
-        self.cameras = []
+        self.camera_left = None
+        self.camera_right = None
         self.presentations = []
         self.events = []
         self.speech_synthesizer = SpeechSynthesizer(self)
@@ -1798,12 +1755,18 @@ class World:
         self.add_event(Event(self, self.current_time, 1, id(body),
                              "Body created"))
 
-    def add_camera(self, camera):
+    def add_camera_left(self, camera):
         """
         Adds a camera
         """
-        self.cameras.append(camera)
+        self.camera_left = camera
         
+    def add_camera_right(self, camera):
+        """
+        Adds a camera
+        """
+        self.camera_right = camera
+
     def add_event(self, event):
         """
         Add an event
@@ -1843,12 +1806,70 @@ class World:
             if key_pushed == ord('s'):
                 self.mode = "step"
 
+    def check_patterns_for_bodies(self):
+        """
+        Match camera patterns and create bodies for (new) matches
+        """
+        patterns_left = self.camera_left.patterns
+        n_left = len(patterns_left)
+        l_features = np.zeros((n_left, 10))
+        for i in range(0, n_left):
+            pat = patterns_left[i]
+            l_features[i, 0] = pat.confidence
+            l_features[i, 1] = pat.x
+            l_features[i, 2] = pat.y
+            l_features[i, 3] = pat.width
+            l_features[i, 4] = pat.height
+            l_features[i, 5] = pat.hue0
+            l_features[i, 6] = pat.hue1
+            l_features[i, 7] = pat.hue2
+            l_features[i, 8] = pat.saturation
+            l_features[i, 9] = pat.value
+            
+        patterns_right = self.camera_right.patterns
+        n_right = len(patterns_right)
+        r_features = np.zeros((n_right, 10))
+        for i in range(0, n_right):
+            pat = patterns_right[i]
+            r_features[i, 0] = pat.confidence
+            r_features[i, 1] = pat.x
+            r_features[i, 2] = pat.y
+            r_features[i, 3] = pat.width
+            r_features[i, 4] = pat.height
+            r_features[i, 5] = pat.hue0
+            r_features[i, 6] = pat.hue1
+            r_features[i, 7] = pat.hue2
+            r_features[i, 8] = pat.saturation
+            r_features[i, 9] = pat.value
+        
+        cost = np.zeros((n_left, n_right))
+        for row in range(0, n_left):
+            for col in range(0, n_right):
+                p = multivariate_normal.pdf(l_features[row]-r_features[col],
+                                            mean=STEREO_MATCH_MEAN, 
+                                            cov=STEREO_MATCH_COVARIANCE)
+                p = -np.log(p)
+                if np.isinf(p):
+                    p = 999.0
+                cost[row][col] = p
+
+        row_ind, col_ind = linear_sum_assignment(cost)
+        for i in range(len(row_ind)):
+            lpat = patterns_left[row_ind[i]]
+            rpat = patterns_right[col_ind[i]]
+            if lpat.body is None and rpat.body is None:
+                if cost[row_ind[i]][col_ind[i]]>STEREO_MIN_LOG_PROBABILITY:
+                    new_body = Body(self, lpat, rpat)
+                    lpat.body = new_body
+                    rpat.body = new_body
+                    self.add_body(new_body)
+
     def close(self):
         """
         Release resources
         """
         self.object_detector.close()
-        for camera in self.cameras:
+        for camera in [self.camera_left, self.camera_right]:
             camera.close()
         for presentation in self.presentations:
             presentation.close()
@@ -1866,7 +1887,7 @@ class World:
         while more:
             more = True
             frame_offset = 0
-            for camera in self.cameras:
+            for camera in [self.camera_left, self.camera_right]:
                 more_camera, camera_frame = camera.update(self.current_time, 
                                                           self.delta_time)
                 if not more_camera:
@@ -1879,8 +1900,8 @@ class World:
                     self.frame[cymin:cymax, cxmin:cxmax, :] = camera_frame
                     frame_offset += VIDEO_HEIGHT
 
-            camera1 = self.cameras[0]
-            camera2 = self.cameras[1]
+            camera1 = self.camera_left
+            camera2 = self.camera_right
             stereo = cv2.StereoBM_create(numDisparities=1*16)
             disp_rgb = stereo.compute(
                 cv2.cvtColor(camera1.current_frame, cv2.COLOR_BGR2GRAY),
@@ -1894,6 +1915,8 @@ class World:
             cymin = frame_offset
             cymax = frame_offset + VIDEO_HEIGHT
             self.frame[cymin:cymax, cxmin:cxmax, :] = disp
+
+            self.check_patterns_for_bodies()
             
             for body in self.bodies:
                 body.predict(self.delta_time)
@@ -1922,9 +1945,9 @@ class World:
 
                     self.add_event(Event(self, self.current_time, 0, id(body),
                                          text))
-                if body.pattern is not None:
-                    if body.pattern.is_reliable():
-                        xo, yo, zo = body.coordinates_from_pattern()
+                if body.pattern_left is not None:
+                    if body.pattern_left.is_reliable() and body.pattern_right.is_reliable():
+                        xo, yo, zo = body.coordinates_from_patterns()
                         body.correct(xo, yo, zo, self.delta_time)
 
             for body in self.bodies:
@@ -1968,7 +1991,7 @@ class World:
                                        (255,255,255), 1)
                 radius += 10.0
             # Camera field of views
-            for camera in self.cameras:
+            for camera in [self.camera_left, self.camera_right]:
                 x_offset = int(camera.x * pixels_meter)
                 x = 2.5*VIDEO_HEIGHT / 2.0 * tan(camera.field_of_view/2.0)
                 pt1 = (int(2.5*VIDEO_HEIGHT/2+x_offset), int(2.5*VIDEO_HEIGHT/2))
@@ -2069,7 +2092,8 @@ def run_application():
                      frames=dataset.cam2)
 #                     x_loc=20, y_loc=20, width_pixels=900, 
 #                     height_pixels=int(900*720/1280))
-    world.add_camera(camera1)
+    world.add_camera_left(camera1)
+
     camera2 = Camera(world, name="Right", focal_length=0.003,
                      sensor_width=sensor_width, sensor_height=sensor_height, 
                      sensor_width_pixels=VIDEO_WIDTH, sensor_height_pixels=VIDEO_HEIGHT,
@@ -2078,7 +2102,7 @@ def run_application():
                      frames=dataset.cam3)
 #                     x_loc=20, y_loc=20, width_pixels=900, 
 #                     height_pixels=int(900*720/1280))
-    world.add_camera(camera2)
+    world.add_camera_right(camera2)
 
 #
 #    world.add_presentation(PresentationForecast(world, map_id=2, x_loc=940, 
