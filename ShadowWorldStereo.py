@@ -17,16 +17,10 @@ from math import atan, cos, sqrt, tan, exp, log
 from scipy.optimize import linear_sum_assignment
 from scipy.stats import multivariate_normal
 import pykitti
-import os
-import six.moves.urllib as urllib
 import sys
 import tensorflow as tf
-from collections import defaultdict
-from io import StringIO
 sys.path.append("..")
 from object_detection.utils import ops as utils_ops
-from utils import label_map_util
-from utils import visualization_utils as vis_util
 import matplotlib as plt
 
 # Hyperparameters--------------------------------------------------------------
@@ -85,8 +79,18 @@ STEREO_MIN_LOG_PROBABILITY = 9 # Mimimun negative log probability for matching
 # Other constants--------------------------------------------------------------
 CLASS_NAMES = ["background", "car", "person"]
 MAP_EXTENT = 101.0
-VIDEO_WIDTH = 1242
-VIDEO_HEIGHT = 375
+SENSOR_WIDTH = 1392
+SENSOR_HEIGHT = 512
+UI_VIDEO_SCALE = 0.8
+UI_X0 = 0
+UI_X1 = 1114
+UI_X2 = 2037
+UI_X3 = 2400
+UI_Y0 = 0
+UI_Y1 = 410
+UI_Y2 = 820
+UI_Y3 = 923
+UI_Y4 = 1230
 # Classes----------------------------------------------------------------------
 class Body:
     """
@@ -510,6 +514,8 @@ class Camera:
         self.sensor_height = sensor_height
         self.sensor_width_pixels = sensor_width_pixels
         self.sensor_height_pixels = sensor_height_pixels
+        self.image_width_pixels = sensor_width_pixels
+        self.image_height_pixels = sensor_height_pixels
         self.field_of_view = 2.0*atan(sensor_width / (2.0*focal_length))
         self.x = x
         self.y = y
@@ -549,9 +555,6 @@ class Camera:
 
         new_pattern = Pattern(self, detection)
 
-#        new_body = Body(self.world, new_pattern)
-#        new_pattern.body = new_body
-#        self.world.add_body(new_body)
         self.patterns.append(new_pattern)
         self.world.add_event(Event(self.world, self.world.current_time, 2,
                                    id(new_pattern), "Pattern created"))
@@ -562,7 +565,7 @@ class Camera:
         """
         Release resources
         """
-#        cv2.destroyWindow(self.name)
+        pass
     
     def detect(self, image, current_time):
         """
@@ -570,19 +573,20 @@ class Camera:
         """
         (height, width) = image.shape[:2]
         objects = []
-        # Expand dimensions since the model expects images to have shape: [1, None, None, 3]
-#        image_expanded = np.expand_dims(image, axis=0)
-        # Actual detection.
         output_dict = self.world.object_detector.detect(image)        
         boxes = output_dict['detection_boxes']
         classes = output_dict['detection_classes']
         scores = output_dict['detection_scores']
+        
+        xi = int((self.sensor_width_pixels - width)/2)
+        yi = int((self.sensor_height_pixels - height)/2)
+        
         for i in range(boxes.shape[0]):
             if scores[i] >= CONFIDENFE_LEVEL_UPDATE:
-                x_min = int(width*boxes[i,1])
-                x_max = int(width*boxes[i,3])
-                y_min = int(height*boxes[i,0])
-                y_max = int(height*boxes[i,2])
+                x_min = int(width*boxes[i,1]) + xi
+                x_max = int(width*boxes[i,3]) + xi
+                y_min = int(height*boxes[i,0]) + yi
+                y_max = int(height*boxes[i,2]) + yi
                 objects.append(Detection(time, classes[i], x_min, x_max,
                                          y_min, y_max, scores[i], 
                                          width, height, image[y_min:y_max,
@@ -615,8 +619,9 @@ class Camera:
             return False, None # end of video file
 
         frame_video = frame_video_in.copy()
-        self.current_frame = frame_video.copy()
+        self.image_height_pixels, self.image_width_pixels  = frame_video.shape[:2]
 
+        self.current_frame = frame_video.copy()
         self.current_frame_count += 1
 
         self.detections = self.detect(frame_video, current_time)
@@ -771,41 +776,49 @@ class Camera:
                 if not found: # Only if there is no other pattern near
                     self.add_pattern(detection)
 
+        # Create and gather UI frame
+        frame_out = np.zeros((int(SENSOR_HEIGHT), int(SENSOR_WIDTH), 3), np.uint8)
+        xi = int((self.sensor_width_pixels - self.image_width_pixels)/2)
+        yi = int((self.sensor_height_pixels - self.image_height_pixels)/2)
+        iw = self.image_width_pixels
+        ih = self.image_height_pixels
+        frame_out[yi:yi+ih, xi:xi+iw, :] = frame_video
+
         # Draw detections
         for detection in self.detections:
-            cv2.rectangle(frame_video, (detection.x_min, detection.y_min), \
+            cv2.rectangle(frame_out, (detection.x_min, detection.y_min), \
                           (detection.x_max, detection.y_max), (255,255,255), 1)
 
         # Draw patterns
         for pattern in self.patterns:
-            cv2.rectangle(frame_video, (int(pattern.x_min), int(pattern.y_min)), 
+            cv2.rectangle(frame_out, (int(pattern.x_min), int(pattern.y_min)), 
                           (int(pattern.x_max), int(pattern.y_max)), 
                           pattern.bounding_box_color, 1)
             x_center, y_center = pattern.center_point()
-            cv2.circle(frame_video, (int(x_center), int(y_center)),
+            cv2.circle(frame_out, (int(x_center), int(y_center)),
                        int(pattern.radius()), (255, 255, 255), 1)
             label = "{0:s}: {1:.2f}".format(CLASS_NAMES[pattern.class_id],
                      pattern.confidence)
             ytext = int(pattern.y_min) - 15 if int(pattern.y_min) - 15 > 15 \
                 else int(pattern.y_min) + 15
-            cv2.putText(frame_video, label, (int(pattern.x_min), ytext), \
+            cv2.putText(frame_out, label, (int(pattern.x_min), ytext), \
                         cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255, 255, 255), 1)
             
             if (pattern.is_reliable()):
                 x_variance, y_variance = pattern.location_variance()
                 x_std2 = 2.0 * sqrt(x_variance)
                 y_std2 = 2.0 * sqrt(y_variance)
-                cv2.ellipse(frame_video, (int(x_center), int(y_center)), 
+                cv2.ellipse(frame_out, (int(x_center), int(y_center)), 
                             (int(x_std2),int(y_std2)), 0.0, 0, 360, 
                             pattern.bounding_box_color, 1)
                 x_center_velocity, y_center_velocity = pattern.velocity()
-                cv2.arrowedLine(frame_video, (int(x_center), int(y_center)), 
+                cv2.arrowedLine(frame_out, (int(x_center), int(y_center)), 
                                 (int(x_center+x_center_velocity), 
                                  int(y_center+y_center_velocity)), 
                                  pattern.bounding_box_color, 1)
 
 
-        return True, frame_video
+        return True, frame_out
 
 #------------------------------------------------------------------------------
 class Detection(BoundingBox):
@@ -1071,7 +1084,7 @@ class Pattern(BoundingBox):
         self.vy_max = mu_ymax[1, 0]
         self.sigma_y_max = (np.eye(2)-k_y_max.dot(PATTERN_C)).dot(self.sigma_y_max)
         #
-        self.set_border_behaviour(self.camera.sensor_width_pixels, self.camera.sensor_height_pixels)
+        self.set_border_behaviour(self.camera.image_width_pixels, self.camera.image_height_pixels)
         self.matched = True
 
     def detection(self):
@@ -1120,8 +1133,8 @@ class Pattern(BoundingBox):
         self.vy_max = mu_ymax[1, 0]
         self.sigma_y_max = a.dot(self.sigma_y_max).dot(a.T) + PATTERN_R
         #
-        self.set_border_behaviour(self.camera.sensor_width_pixels, 
-                                  self.camera.sensor_height_pixels)
+        self.set_border_behaviour(self.camera.image_width_pixels, 
+                                  self.camera.image_height_pixels)
         self.matched = False
 
     def velocity(self):
@@ -1725,7 +1738,7 @@ class World:
         self.last_forecast = -10.0
         self.mode = "step"
 
-        self.frame = np.zeros((int(3.0*VIDEO_HEIGHT), int(VIDEO_WIDTH+2.5*VIDEO_HEIGHT), 3), np.uint8)
+        self.frame = np.zeros((UI_Y4+1, UI_X3+1, 3), np.uint8)
         label = "Commands:"
         cv2.putText(self.frame, label, (10,20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, 
                     (255, 255, 255), 1)
@@ -1745,7 +1758,6 @@ class World:
         self.check_keyboard_command()
         if self.mode == "quit":
             self.close()
-
 
     def add_body(self, body):
         """
@@ -1882,24 +1894,31 @@ class World:
 #        self.check_keyboard_command()
 #        if self.mode == "quit":
 #            return
-
+        # Empty frame
+        self.frame = np.zeros((UI_Y4+1, UI_X3+1, 3), np.uint8)
+        
         more = True
         while more:
             more = True
             frame_offset = 0
+            # Camera views
             for camera in [self.camera_left, self.camera_right]:
                 more_camera, camera_frame = camera.update(self.current_time, 
                                                           self.delta_time)
                 if not more_camera:
                     return
                 else:
+                    camera_frame = cv2.resize(camera_frame, (0,0), 
+                                              fx=UI_VIDEO_SCALE, 
+                                              fy=UI_VIDEO_SCALE)
                     cxmin = 0
-                    cxmax = VIDEO_WIDTH
+                    cxmax = UI_X1
                     cymin = frame_offset
-                    cymax = frame_offset + VIDEO_HEIGHT
+                    cymax = frame_offset + (UI_Y1-UI_Y0)
                     self.frame[cymin:cymax, cxmin:cxmax, :] = camera_frame
-                    frame_offset += VIDEO_HEIGHT
+                    frame_offset += (UI_Y1-UI_Y0)
 
+            # Stereo view
             camera1 = self.camera_left
             camera2 = self.camera_right
             stereo = cv2.StereoBM_create(numDisparities=1*16)
@@ -1910,11 +1929,12 @@ class World:
             maxValue = disp_rgb.max()
             disp_rgb = np.uint8(255 * (disp_rgb - minValue) / (maxValue - minValue))
             disp = cv2.applyColorMap(disp_rgb, cv2.COLORMAP_WINTER)
-            cxmin = 0
-            cxmax = VIDEO_WIDTH
-            cymin = frame_offset
-            cymax = frame_offset + VIDEO_HEIGHT
-            self.frame[cymin:cymax, cxmin:cxmax, :] = disp
+            cxmin = int(UI_VIDEO_SCALE*(camera1.sensor_width_pixels-camera1.image_width_pixels)/2)
+            cxmax = UI_X1 -cxmin
+            cymin = UI_Y2+int(UI_VIDEO_SCALE*(camera1.sensor_height_pixels-camera1.image_height_pixels)/2)
+            cymax = UI_Y4 - (cymin-UI_Y2)
+            camera_frame = cv2.resize(disp, (cxmax-cxmin,cymax-cymin))
+            self.frame[cymin:cymax, cxmin:cxmax, :] = camera_frame
 
             self.check_patterns_for_bodies()
             
@@ -1975,92 +1995,112 @@ class World:
             """
             Update map (from above)
             """
-            pixels_meter = 0.5*2.5*VIDEO_HEIGHT / MAP_EXTENT
-    
             # Empty frame
-            map_frame = np.zeros((int(2.5*VIDEO_HEIGHT), int(2.5*VIDEO_HEIGHT), 3), np.uint8)
-            # Draw heading
-            label = "Time {0:<.2f}, frame {1:d}".format(self.current_time, self.current_frame)
-            cv2.putText(map_frame, label, (10,int(2.5*VIDEO_HEIGHT)-15), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255,255,255), 1)
+            map_frame = np.zeros((UI_Y3-UI_Y0, UI_X2-UI_X1, 3), np.uint8)
+            xc = int((UI_X2-UI_X1)/2)
+            yc = int((UI_Y3-UI_Y0)/2)
+            pixels_meter = xc / MAP_EXTENT
             # Radar circles
             radius = 10.0
             while radius < MAP_EXTENT:
                 radius_pixels = int(radius * pixels_meter)
-                cv2.circle(map_frame, (int(2.5*VIDEO_HEIGHT/2), 
-                                       int(2.5*VIDEO_HEIGHT/2)), radius_pixels, 
-                                       (255,255,255), 1)
+                cv2.circle(map_frame, (xc, yc), radius_pixels, (200,200,200), 1)
                 radius += 10.0
             # Camera field of views
             for camera in [self.camera_left, self.camera_right]:
                 x_offset = int(camera.x * pixels_meter)
-                x = 2.5*VIDEO_HEIGHT / 2.0 * tan(camera.field_of_view/2.0)
-                pt1 = (int(2.5*VIDEO_HEIGHT/2+x_offset), int(2.5*VIDEO_HEIGHT/2))
-                pt2 = (int(2.5*VIDEO_HEIGHT/2-x+x_offset),0)
-                cv2.line(map_frame, pt1, pt2, (255,255,255), 1)
-                pt2 = (int(2.5*VIDEO_HEIGHT/2+x+x_offset),0)
-                cv2.line(map_frame, pt1, pt2, (255,255,255), 1)
+                x = xc * tan(camera.field_of_view/2.0)
+                pt1 = (int(xc+x_offset), int(yc))
+                pt2 = (int(xc-x+x_offset),0)
+                cv2.line(map_frame, pt1, pt2, (200,200,200), 1)
+                pt2 = (int(xc+x+x_offset),0)
+                cv2.line(map_frame, pt1, pt2, (200,200,200), 1)
             #Bodies
             for body in self.bodies:
-                xc = 2.5*VIDEO_HEIGHT/2.0 + body.x * pixels_meter
-                yc = 2.5*VIDEO_HEIGHT/2.0 + body.z * pixels_meter
+                xcc = xc + body.x * pixels_meter
+                ycc = yc + body.z * pixels_meter
                 color = (0,255,0) # green
                 if body.status == "predicted":
                     color = (0,0,255) # red
                 radius_pixels = int(body.mean_radius() * pixels_meter)
-                cv2.circle(map_frame, (int(xc), int(yc)), radius_pixels, color, 1)
+                cv2.circle(map_frame, (int(xcc), int(ycc)), radius_pixels, color, 1)
                 color = (100,100,100)
                 sx = int(sqrt(body.sigma[0,0]))
                 sy = int(sqrt(body.sigma[2,2]))
-                cv2.ellipse(map_frame, (int(xc), int(yc)), (sx, sy), 0.0, 0.0, 
+                cv2.ellipse(map_frame, (int(xcc), int(ycc)), (sx, sy), 0.0, 0.0, 
                             360.0, color,1)
-
-            cxmin = VIDEO_WIDTH
-            cxmax = VIDEO_WIDTH + int(2.5*VIDEO_HEIGHT)
-            cymin = 0
-            cymax = int(2.5*VIDEO_HEIGHT)
-            self.frame[cymin:cymax, cxmin:cxmax, :] = map_frame
+            self.frame[UI_Y0:UI_Y3, UI_X1:UI_X2, :] = map_frame
 
             """
-            Update map (side view)
+            Update map (from side)
             """
-            pixels_meter = 0.5*2.5*VIDEO_HEIGHT / MAP_EXTENT
-    
             # Empty frame
-            map_frame = np.zeros((int(0.5*VIDEO_HEIGHT), int(2.5*VIDEO_HEIGHT), 3), np.uint8)
-            # Horizontal lines
-            cv2.line(map_frame, (0, 0), (VIDEO_WIDTH, 0), (255,0,0), 3) 
-            y = int(0.0 * pixels_meter + 0.5*VIDEO_HEIGHT/2)
-            cv2.line(map_frame, (0, y), (VIDEO_WIDTH, y), (255,255,255), 1) 
-            y = int(-10.0 * pixels_meter + 0.5*VIDEO_HEIGHT/2)
-            cv2.line(map_frame, (0, y), (VIDEO_WIDTH, y), (255,255,255), 1) 
-            y = int(10.0 * pixels_meter + 0.5*VIDEO_HEIGHT/2)
-            cv2.line(map_frame, (0, y), (VIDEO_WIDTH, y), (255,255,255), 1) 
-
+            map_frame = np.zeros((UI_Y4-UI_Y3, UI_X2-UI_X1, 3), np.uint8)
+            xc = int((UI_X2-UI_X1)/2)
+            yc = int((UI_Y4-UI_Y3)/2)
+            pixels_meter = xc / MAP_EXTENT
+            # Radar circles
+            radius = 10.0
+            while radius < MAP_EXTENT:
+                radius_pixels = int(radius * pixels_meter)
+                cv2.circle(map_frame, (xc, yc), radius_pixels, (200,200,200), 1)
+                radius += 10.0
+            # Ground
+            cv2.line(map_frame,(0,yc), (2*xc,yc), (200,200,200), 1)
             #Bodies
             for body in self.bodies:
-                xc = 2.5*VIDEO_HEIGHT/2.0 + body.x * pixels_meter
-                yc = 0.5*VIDEO_HEIGHT/2.0 - body.y * pixels_meter
+                xcc = xc + body.x * pixels_meter
+                ycc = yc - body.y * pixels_meter
                 color = (0,255,0) # green
                 if body.status == "predicted":
                     color = (0,0,255) # red
                 radius_pixels = int(body.mean_radius() * pixels_meter)
-                cv2.circle(map_frame, (int(xc), int(yc)), radius_pixels, color, 1)
+                cv2.circle(map_frame, (int(xcc), int(ycc)), radius_pixels, color, 1)
                 color = (100,100,100)
                 sx = int(sqrt(body.sigma[0,0]))
                 sy = int(sqrt(body.sigma[2,2]))
-                cv2.ellipse(map_frame, (int(xc), int(yc)), (sx, sy), 0.0, 0.0, 
+                cv2.ellipse(map_frame, (int(xcc), int(ycc)), (sx, sy), 0.0, 0.0, 
                             360.0, color,1)
+            self.frame[UI_Y3:UI_Y4, UI_X1:UI_X2, :] = map_frame
 
-            cxmin = VIDEO_WIDTH
-            cxmax = VIDEO_WIDTH + int(2.5*VIDEO_HEIGHT)
-            cymin = int(2.5*VIDEO_HEIGHT)
-            cymax = int(3.0*VIDEO_HEIGHT)-1
-            self.frame[cymin:cymax, cxmin:cxmax, :] = map_frame
+            """
+            Report
+            """
+            # Empty frame
+            rep_frame = np.zeros((UI_Y4-UI_Y0, UI_X3-UI_X2, 3), np.uint8)
+            irow = 15
+            offset = 15
+            # Draw heading
+            label = "Time {0:<.2f}, frame {1:d}".format(self.current_time, self.current_frame)
+            cv2.putText(rep_frame, label, (10,irow), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255,255,255), 1)
+            irow += offset
+            #Bodies
+            label = "Bodies:"
+            cv2.putText(rep_frame, label, (10,irow), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255,255,255), 1)
+            irow += offset
+            for body in self.bodies:
+                label = "{0:6s} {1:5.1f} {2:5.1f} {3:5.1f} {4:5.1f} {5:5.1f} {6:5.1f}".format(
+                        CLASS_NAMES[body.class_id], 
+                        body.x, body.y, body.z,
+                        body.vx, body.vy, body.vz)
+                cv2.putText(rep_frame, label, (10,irow), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255,255,255), 1)
+                irow += offset
+            
+            self.frame[UI_Y0:UI_Y4, UI_X2:UI_X3, :] = rep_frame
+            
 
-
-            self.current_time += self.delta_time
-            self.current_frame += 1
-
+            line_color = 60
+            # Horizontal lines
+            self.frame[UI_Y0, UI_X0:UI_X3, :] = line_color
+            self.frame[UI_Y1, UI_X0:UI_X1, :] = line_color
+            self.frame[UI_Y2, UI_X0:UI_X1, :] = line_color
+            self.frame[UI_Y3, UI_X1:UI_X2, :] = line_color
+            self.frame[UI_Y4, UI_X0:UI_X3, :] = line_color
+            # Vertical lines
+            self.frame[UI_Y0:UI_Y4, UI_X0, :] = line_color
+            self.frame[UI_Y0:UI_Y4, UI_X1, :] = line_color
+            self.frame[UI_Y0:UI_Y4, UI_X2, :] = line_color
+            self.frame[UI_Y0:UI_Y4, UI_X3, :] = line_color
             cv2.imshow("ShadowWorld", self.frame)
 
             self.check_keyboard_command()
@@ -2082,11 +2122,13 @@ def run_application():
 
     world = World()
     
-    sensor_width = VIDEO_WIDTH * 4.65 / 1000000 # ICX267, cropped
-    sensor_height = VIDEO_HEIGHT * 4.65 / 1000000 # ICX267, cropped
+    sensor_width = SENSOR_WIDTH * 4.65 / 1000000 # ICX267
+    sensor_height = SENSOR_HEIGHT * 4.65 / 1000000 # ICX267
+
     camera1 = Camera(world, name="Left", focal_length=0.003,
                      sensor_width=sensor_width, sensor_height=sensor_height, 
-                     sensor_width_pixels=VIDEO_WIDTH, sensor_height_pixels=VIDEO_HEIGHT,
+                     sensor_width_pixels=SENSOR_WIDTH, 
+                     sensor_height_pixels=SENSOR_HEIGHT,
                      x=0.0, y=0.0, z=0.0, 
                      yaw=0.0, pitch=0.0, roll=0.0, 
                      frames=dataset.cam2)
@@ -2096,14 +2138,14 @@ def run_application():
 
     camera2 = Camera(world, name="Right", focal_length=0.003,
                      sensor_width=sensor_width, sensor_height=sensor_height, 
-                     sensor_width_pixels=VIDEO_WIDTH, sensor_height_pixels=VIDEO_HEIGHT,
+                     sensor_width_pixels=SENSOR_WIDTH, 
+                     sensor_height_pixels=SENSOR_HEIGHT,
                      x=0.54, y=0.0, z=0.0, 
                      yaw=0.0, pitch=0.0, roll=0.0, 
                      frames=dataset.cam3)
 #                     x_loc=20, y_loc=20, width_pixels=900, 
 #                     height_pixels=int(900*720/1280))
     world.add_camera_right(camera2)
-
 #
 #    world.add_presentation(PresentationForecast(world, map_id=2, x_loc=940, 
 #                                                y_loc=620, height_pixels=500, 
