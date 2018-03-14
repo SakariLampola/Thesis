@@ -77,7 +77,7 @@ STEREO_MATCH_COVARIANCE = pd.read_pickle("stereo/stereomatch_covariance.pkl").as
 STEREO_MAX_DISTANCE = 20.0 # Max distance to stereo vision to be accurate
 STEREO_MIN_LOG_PROBABILITY = 9 # Mimimun negative log probability for matching
 # Other constants--------------------------------------------------------------
-CLASS_NAMES = ["background", "car", "person"]
+CLASS_NAMES = ["Background", "Car", "Person"]
 MAP_EXTENT = 101.0
 SENSOR_WIDTH = 1392
 SENSOR_HEIGHT = 512
@@ -110,6 +110,8 @@ class Body:
         # Attributes
         self.set_class_attributes(pattern_left.class_id)
         self.frame_age = 0
+        self.distance_stereo = 0.0
+        self.distance_size = 0.0
         self.x, self.y, self.z = self.coordinates_from_patterns()
         self.status = "measured"
         self.vx = 0.0
@@ -124,6 +126,7 @@ class Body:
         self.forecast_color = pattern_left.bounding_box_color
         self.collision_probability = 0.0
         self.collision_probability_max = 0.0
+        self.color = (255,255,255)
 
     def add_trace(self, time):
         """
@@ -179,6 +182,9 @@ class Body:
             l2 = (1+fraction)*STEREO_MAX_DISTANCE - (1-fraction)*STEREO_MAX_DISTANCE
             k_size = l1/l2
             k_stereo = 1 - k_size
+
+        self.distance_stereo = d_stereo
+        self.distance_size = d_size
         
         d = k_size* d_size + k_stereo * d_stereo
         t = d / sqrt(xc**2.0 + yc**2.0 + zc**2.0)
@@ -595,6 +601,55 @@ class Camera:
 
         return objects
 
+    def get_frame(self):
+        """
+        Get the frame for UI
+        """
+        # Create and copy current frame
+        frame_out = np.zeros((int(SENSOR_HEIGHT), int(SENSOR_WIDTH), 3), np.uint8)
+        xi = int((self.sensor_width_pixels - self.image_width_pixels)/2)
+        yi = int((self.sensor_height_pixels - self.image_height_pixels)/2)
+        iw = self.image_width_pixels
+        ih = self.image_height_pixels
+        frame_out[yi:yi+ih, xi:xi+iw, :] = self.current_frame
+
+        line = 2
+        # Draw detections
+        for detection in self.detections:
+            cv2.rectangle(frame_out, (detection.x_min, detection.y_min), \
+                          (detection.x_max, detection.y_max), (255,255,255), line)
+
+        # Draw patterns
+        for pattern in self.patterns:
+            cv2.rectangle(frame_out, (int(pattern.x_min), int(pattern.y_min)), 
+                          (int(pattern.x_max), int(pattern.y_max)), 
+                          pattern.bounding_box_color, line)
+            x_center, y_center = pattern.center_point()
+            cv2.circle(frame_out, (int(x_center), int(y_center)),
+                       int(pattern.radius()), (255, 255, 255), line)
+            label = "{0:s}: {1:.2f}".format(CLASS_NAMES[pattern.class_id],
+                     pattern.confidence)
+            ytext = int(pattern.y_min) - 15 if int(pattern.y_min) - 15 > 15 \
+                else int(pattern.y_min) + 15
+            cv2.putText(frame_out, label, (int(pattern.x_min), ytext), \
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.45, (255, 255, 255), 2)
+            
+            if (pattern.is_reliable()):
+                x_variance, y_variance = pattern.location_variance()
+                x_std2 = 2.0 * sqrt(x_variance)
+                y_std2 = 2.0 * sqrt(y_variance)
+                cv2.ellipse(frame_out, (int(x_center), int(y_center)), 
+                            (int(x_std2),int(y_std2)), 0.0, 0, 360, 
+                            pattern.bounding_box_color, line)
+                x_center_velocity, y_center_velocity = pattern.velocity()
+                cv2.arrowedLine(frame_out, (int(x_center), int(y_center)), 
+                                (int(x_center+x_center_velocity), 
+                                 int(y_center+y_center_velocity)), 
+                                 pattern.bounding_box_color, line)
+
+
+        return frame_out
+
     def remove_pattern(self, pattern):
         """
         Remove pattern and clear references
@@ -616,15 +671,14 @@ class Camera:
         try:
             frame_video_in = next(self.frame_factory)
         except StopIteration:
-            return False, None # end of video file
+            return False # end of video file
 
-        frame_video = frame_video_in.copy()
-        self.image_height_pixels, self.image_width_pixels  = frame_video.shape[:2]
+        self.current_frame = frame_video_in.copy()
+        self.image_height_pixels, self.image_width_pixels  = self.current_frame.shape[:2]
 
-        self.current_frame = frame_video.copy()
         self.current_frame_count += 1
 
-        self.detections = self.detect(frame_video, current_time)
+        self.detections = self.detect(self.current_frame, current_time)
         for detection in self.detections:
             self.world.add_event(Event(self.world, current_time, 3,
                                        id(detection), "Detection created"))
@@ -776,49 +830,7 @@ class Camera:
                 if not found: # Only if there is no other pattern near
                     self.add_pattern(detection)
 
-        # Create and gather UI frame
-        frame_out = np.zeros((int(SENSOR_HEIGHT), int(SENSOR_WIDTH), 3), np.uint8)
-        xi = int((self.sensor_width_pixels - self.image_width_pixels)/2)
-        yi = int((self.sensor_height_pixels - self.image_height_pixels)/2)
-        iw = self.image_width_pixels
-        ih = self.image_height_pixels
-        frame_out[yi:yi+ih, xi:xi+iw, :] = frame_video
-
-        # Draw detections
-        for detection in self.detections:
-            cv2.rectangle(frame_out, (detection.x_min, detection.y_min), \
-                          (detection.x_max, detection.y_max), (255,255,255), 1)
-
-        # Draw patterns
-        for pattern in self.patterns:
-            cv2.rectangle(frame_out, (int(pattern.x_min), int(pattern.y_min)), 
-                          (int(pattern.x_max), int(pattern.y_max)), 
-                          pattern.bounding_box_color, 1)
-            x_center, y_center = pattern.center_point()
-            cv2.circle(frame_out, (int(x_center), int(y_center)),
-                       int(pattern.radius()), (255, 255, 255), 1)
-            label = "{0:s}: {1:.2f}".format(CLASS_NAMES[pattern.class_id],
-                     pattern.confidence)
-            ytext = int(pattern.y_min) - 15 if int(pattern.y_min) - 15 > 15 \
-                else int(pattern.y_min) + 15
-            cv2.putText(frame_out, label, (int(pattern.x_min), ytext), \
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255, 255, 255), 1)
-            
-            if (pattern.is_reliable()):
-                x_variance, y_variance = pattern.location_variance()
-                x_std2 = 2.0 * sqrt(x_variance)
-                y_std2 = 2.0 * sqrt(y_variance)
-                cv2.ellipse(frame_out, (int(x_center), int(y_center)), 
-                            (int(x_std2),int(y_std2)), 0.0, 0, 360, 
-                            pattern.bounding_box_color, 1)
-                x_center_velocity, y_center_velocity = pattern.velocity()
-                cv2.arrowedLine(frame_out, (int(x_center), int(y_center)), 
-                                (int(x_center+x_center_velocity), 
-                                 int(y_center+y_center_velocity)), 
-                                 pattern.bounding_box_color, 1)
-
-
-        return True, frame_out
+        return True
 
 #------------------------------------------------------------------------------
 class Detection(BoundingBox):
@@ -1026,8 +1038,8 @@ class Pattern(BoundingBox):
         self.sigma_y_max = np.array([[PATTERN_ALFA, 0],
                                      [0.0, PATTERN_BETA]])
         self.confidence = detection.confidence
-        self.bounding_box_color = (rnd.randint(0,255), rnd.randint(0,255), 
-                                   rnd.randint(0,255))
+        self.bounding_box_color = (rnd.randint(120,240), rnd.randint(80,200), 
+                                   rnd.randint(100,220))
 
         self.x = detection.x
         self.y = detection.y
@@ -1870,10 +1882,12 @@ class World:
             lpat = patterns_left[row_ind[i]]
             rpat = patterns_right[col_ind[i]]
             if lpat.body is None and rpat.body is None:
-                if cost[row_ind[i]][col_ind[i]]>STEREO_MIN_LOG_PROBABILITY:
+                if cost[row_ind[i]][col_ind[i]]<STEREO_MIN_LOG_PROBABILITY:
                     new_body = Body(self, lpat, rpat)
                     lpat.body = new_body
                     rpat.body = new_body
+                    rpat.bounding_box_color = lpat.bounding_box_color
+                    new_body.color = lpat.bounding_box_color
                     self.add_body(new_body)
 
     def close(self):
@@ -1891,53 +1905,16 @@ class World:
         """
         Run the world
         """
-#        self.check_keyboard_command()
-#        if self.mode == "quit":
-#            return
-        # Empty frame
         self.frame = np.zeros((UI_Y4+1, UI_X3+1, 3), np.uint8)
-        
         more = True
         while more:
+            # Update cameras, bodies
             more = True
-            frame_offset = 0
-            # Camera views
             for camera in [self.camera_left, self.camera_right]:
-                more_camera, camera_frame = camera.update(self.current_time, 
-                                                          self.delta_time)
+                more_camera = camera.update(self.current_time, self.delta_time)
                 if not more_camera:
                     return
-                else:
-                    camera_frame = cv2.resize(camera_frame, (0,0), 
-                                              fx=UI_VIDEO_SCALE, 
-                                              fy=UI_VIDEO_SCALE)
-                    cxmin = 0
-                    cxmax = UI_X1
-                    cymin = frame_offset
-                    cymax = frame_offset + (UI_Y1-UI_Y0)
-                    self.frame[cymin:cymax, cxmin:cxmax, :] = camera_frame
-                    frame_offset += (UI_Y1-UI_Y0)
-
-            # Stereo view
-            camera1 = self.camera_left
-            camera2 = self.camera_right
-            stereo = cv2.StereoBM_create(numDisparities=1*16)
-            disp_rgb = stereo.compute(
-                cv2.cvtColor(camera1.current_frame, cv2.COLOR_BGR2GRAY),
-                cv2.cvtColor(camera2.current_frame, cv2.COLOR_BGR2GRAY))
-            minValue = disp_rgb.min()
-            maxValue = disp_rgb.max()
-            disp_rgb = np.uint8(255 * (disp_rgb - minValue) / (maxValue - minValue))
-            disp = cv2.applyColorMap(disp_rgb, cv2.COLORMAP_WINTER)
-            cxmin = int(UI_VIDEO_SCALE*(camera1.sensor_width_pixels-camera1.image_width_pixels)/2)
-            cxmax = UI_X1 -cxmin
-            cymin = UI_Y2+int(UI_VIDEO_SCALE*(camera1.sensor_height_pixels-camera1.image_height_pixels)/2)
-            cymax = UI_Y4 - (cymin-UI_Y2)
-            camera_frame = cv2.resize(disp, (cxmax-cxmin,cymax-cymin))
-            self.frame[cymin:cymax, cxmin:cxmax, :] = camera_frame
-
-            self.check_patterns_for_bodies()
-            
+            # Update existing bodies
             for body in self.bodies:
                 body.predict(self.delta_time)
                     
@@ -1991,9 +1968,64 @@ class World:
                        
                 self.last_forecast = self.current_time
 
+            # Check for new bodies
+            self.check_patterns_for_bodies()
 
             """
-            Update map (from above)
+            Create UI, first camera views
+            """
+            # Create UI
+            frame_offset = 0
+            # Camera views
+            for camera in [self.camera_left, self.camera_right]:
+                camera_frame = camera.get_frame()
+                camera_frame = cv2.resize(camera_frame, (0,0), 
+                                          fx=UI_VIDEO_SCALE, 
+                                          fy=UI_VIDEO_SCALE)
+                cxmin = 0
+                cxmax = UI_X1
+                cymin = frame_offset
+                cymax = frame_offset + (UI_Y1-UI_Y0)
+                self.frame[cymin:cymax, cxmin:cxmax, :] = camera_frame
+                frame_offset += (UI_Y1-UI_Y0)
+
+            """
+            Stereo view
+            """
+            camera1 = self.camera_left
+            camera2 = self.camera_right
+            stereo = cv2.StereoBM_create(numDisparities=6*16, blockSize=17)
+            disp = stereo.compute(
+                cv2.cvtColor(camera1.current_frame, cv2.COLOR_BGR2GRAY),
+                cv2.cvtColor(camera2.current_frame, cv2.COLOR_BGR2GRAY))
+#            minValue = disp.min()
+#            maxValue = disp.max()
+#            disp_rgb = np.uint8(255 * (disp - minValue) / (maxValue - minValue))
+#            disp_rgb = cv2.applyColorMap(disp, cv2.COLORMAP_WINTER)
+            
+            # Draw patterns
+            disp_rgb = np.zeros((disp.shape[0], disp.shape[1], 3), dtype = np.uint8)
+            disp_rgb[:,:,0] = disp
+            disp_rgb[:,:,1] = disp
+            disp_rgb[:,:,2] = disp
+            xi = int((camera1.sensor_width_pixels - camera1.image_width_pixels)/2)
+            yi = int((camera1.sensor_height_pixels - camera1.image_height_pixels)/2)
+            for camera in [self.camera_left, self.camera_right]:
+                for pattern in camera.patterns:
+                    x_min = int(pattern.x_min-xi)
+                    x_max = int(pattern.x_max-xi)
+                    y_min = int(pattern.y_min-yi)
+                    y_max = int(pattern.y_max-yi)
+                    cv2.rectangle(disp_rgb, (x_min, y_min), (x_max, y_max), 
+                                  pattern.bounding_box_color, 1)
+            cxmin = int(UI_VIDEO_SCALE*(camera1.sensor_width_pixels-camera1.image_width_pixels)/2)
+            cxmax = UI_X1 -cxmin
+            cymin = UI_Y2+int(UI_VIDEO_SCALE*(camera1.sensor_height_pixels-camera1.image_height_pixels)/2)
+            cymax = UI_Y4 - (cymin-UI_Y2)
+            camera_frame = cv2.resize(disp_rgb, (cxmax-cxmin,cymax-cymin))
+            self.frame[cymin:cymax, cxmin:cxmax, :] = camera_frame
+            """
+            Map (from above)
             """
             # Empty frame
             map_frame = np.zeros((UI_Y3-UI_Y0, UI_X2-UI_X1, 3), np.uint8)
@@ -2030,9 +2062,8 @@ class World:
                 cv2.ellipse(map_frame, (int(xcc), int(ycc)), (sx, sy), 0.0, 0.0, 
                             360.0, color,1)
             self.frame[UI_Y0:UI_Y3, UI_X1:UI_X2, :] = map_frame
-
             """
-            Update map (from side)
+            Map (from side)
             """
             # Empty frame
             map_frame = np.zeros((UI_Y4-UI_Y3, UI_X2-UI_X1, 3), np.uint8)
@@ -2062,9 +2093,8 @@ class World:
                 cv2.ellipse(map_frame, (int(xcc), int(ycc)), (sx, sy), 0.0, 0.0, 
                             360.0, color,1)
             self.frame[UI_Y3:UI_Y4, UI_X1:UI_X2, :] = map_frame
-
             """
-            Report
+            Report panel
             """
             # Empty frame
             rep_frame = np.zeros((UI_Y4-UI_Y0, UI_X3-UI_X2, 3), np.uint8)
@@ -2079,11 +2109,20 @@ class World:
             cv2.putText(rep_frame, label, (10,irow), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255,255,255), 1)
             irow += offset
             for body in self.bodies:
+                col = body.color
                 label = "{0:6s} {1:5.1f} {2:5.1f} {3:5.1f} {4:5.1f} {5:5.1f} {6:5.1f}".format(
                         CLASS_NAMES[body.class_id], 
                         body.x, body.y, body.z,
                         body.vx, body.vy, body.vz)
-                cv2.putText(rep_frame, label, (10,irow), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255,255,255), 1)
+                cv2.putText(rep_frame, label, (10,irow), cv2.FONT_HERSHEY_SIMPLEX, 0.4, col, 1)
+                irow += offset
+                label = "   Distance/stereo: {0:5.1f} Distance/size:{1:5.1f}".format(body.distance_stereo, body.distance_size)
+                cv2.putText(rep_frame, label, (10,irow), cv2.FONT_HERSHEY_SIMPLEX, 0.4, col, 1)
+                irow += offset
+                distance = sqrt(body.x**2.0 + body.y**2.0 + body.z**2.0)
+                speed = sqrt(body.vx**2.0 + body.vy**2.0 + body.vz**2.0)*3.6
+                label = "   Distance: {0:5.1f} Speed{1:5.1f} km/h".format(distance, speed)
+                cv2.putText(rep_frame, label, (10,irow), cv2.FONT_HERSHEY_SIMPLEX, 0.4, col, 1)
                 irow += offset
             
             self.frame[UI_Y0:UI_Y4, UI_X2:UI_X3, :] = rep_frame
@@ -2107,6 +2146,10 @@ class World:
             if self.mode == "quit":
                 return
                 break
+            
+            self.current_time += self.delta_time
+            self.current_frame += 1
+
 
 #------------------------------------------------------------------------------
 def run_application():
@@ -2116,8 +2159,8 @@ def run_application():
 
     # Load KITTI data
     basedir = 'D:\Thesis\Kitti\Raw'
-    date = '2011_09_26'
-    drive = '0009'
+    date = '2011_09_28'
+    drive = '0171'
     dataset = pykitti.raw(basedir, date, drive, imformat='cv2')
 
     world = World()
