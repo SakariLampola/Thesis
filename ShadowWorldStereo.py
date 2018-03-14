@@ -58,7 +58,7 @@ FORECAST_A = np.array([[1.0, 0.0, 0.0, FORECAST_DELTA,            0.0,          
                        [0.0, 0.0, 0.0,            0.0,            1.0,            0.0],
                        [0.0, 0.0, 0.0,            0.0,            0.0,           1.0]])
 FORECAST_COUNT = 500 # How many time steps ahead a body forecast is made
-FORECAST_INTERVAL = 1.0 # How often forecast is made
+#FORECAST_INTERVAL = 1.0 # How often forecast is made
 # Path to frozen detection graph. This is the actual model that is used for the object detection.
 PATH_TO_CKPT = r'D:\Thesis\Models\faster_rcnn_resnet101_kitti_2018_01_28' + '/frozen_inference_graph.pb'
 #
@@ -75,10 +75,10 @@ SIMILARITY_DISTANCE = 0.4 # Max distance for detection-pattern similarity
 STEREO_MATCH_MEAN = pd.read_pickle("stereo/stereomatch_mean.pkl").as_matrix()
 STEREO_MATCH_COVARIANCE = pd.read_pickle("stereo/stereomatch_covariance.pkl").as_matrix()
 STEREO_MAX_DISTANCE = 20.0 # Max distance to stereo vision to be accurate
-STEREO_MIN_LOG_PROBABILITY = 9 # Mimimun negative log probability for matching
+STEREO_MIN_LOG_PROBABILITY = 100 # Mimimun negative log probability for matching
 # Other constants--------------------------------------------------------------
 CLASS_NAMES = ["Background", "Car", "Person"]
-MAP_EXTENT = 101.0
+MAP_EXTENT = 41.0
 SENSOR_WIDTH = 1392
 SENSOR_HEIGHT = 512
 UI_VIDEO_SCALE = 0.8
@@ -322,7 +322,7 @@ class BoundingBox:
     Base class for detections and patterns
     """
     def __init__(self, x_min, x_max, y_min, y_max, image_width, image_height,
-                 patch, confidence):
+                 patch, confidence, xbase, ybase):
         """
         Initialization based on coordinates
         """
@@ -336,7 +336,7 @@ class BoundingBox:
         self.border_right = 1
         self.border_top = 1
         self.border_bottom = 1
-        self.set_border_behaviour(image_width, image_height)
+        self.set_border_behaviour(image_width, image_height, xbase, ybase)
         self.confidence = confidence
         self.x = (x_min + x_max) / 2
         self.y = (y_min + y_max) / 2
@@ -411,7 +411,8 @@ class BoundingBox:
             return h
         return sqrt(h*h+w*w)
 
-    def set_border_behaviour(self, image_width, image_height):
+    def set_border_behaviour(self, image_width, image_height,
+                             xbase, ybase):
         """
         Sets the border information according to:
             1 = in normal area
@@ -421,81 +422,86 @@ class BoundingBox:
             5 = in border + out of window area
             6 = out of window area
         """
+        x_min = self.x_min - xbase
+        x_max = self.x_max - xbase
+        y_min = self.y_min - xbase
+        y_max = self.y_max - xbase
+        
         # Left
         self.border_left = 1
-        if self.x_max >= BORDER_WIDTH and \
-           self.x_min <= BORDER_WIDTH and \
-           self.x_min >= 0:
+        if x_max >= BORDER_WIDTH and \
+           x_min <= BORDER_WIDTH and \
+           x_min >= 0:
             self.border_left = 2
-        if self.x_max >= BORDER_WIDTH and \
-           self.x_min <= 0:
+        if x_max >= BORDER_WIDTH and \
+           x_min <= 0:
             self.border_left = 3
-        if self.x_max <= BORDER_WIDTH and \
-           self.x_min <= BORDER_WIDTH and \
-           self.x_min >= 0:
+        if x_max <= BORDER_WIDTH and \
+           x_min <= BORDER_WIDTH and \
+           x_min >= 0:
             self.border_left = 4
-        if self.x_max <= BORDER_WIDTH and \
-           self.x_min <= 0:
+        if x_max <= BORDER_WIDTH and \
+           x_min <= 0:
             self.border_left = 5
-        if self.x_min <= 0 and \
-           self.x_max <= 0:
+        if x_min <= 0 and \
+           x_max <= 0:
             self.border_left = 6
         # Right
         self.border_right = 1
-        if self.x_min <= (image_width - BORDER_WIDTH) and \
-           self.x_max >= (image_width - BORDER_WIDTH) and \
-           self.x_max <= image_width:
+        if x_min <= (image_width - BORDER_WIDTH) and \
+           x_max >= (image_width - BORDER_WIDTH) and \
+           x_max <= image_width:
             self.border_right = 2
-        if self.x_min <= (image_width - BORDER_WIDTH) and \
-           self.x_max >= image_width:
+        if x_min <= (image_width - BORDER_WIDTH) and \
+           x_max >= image_width:
             self.border_right = 3
-        if self.x_min >= (image_width - BORDER_WIDTH) and \
-           self.x_max >= (image_width - BORDER_WIDTH) and \
-           self.x_max <= image_width:
+        if x_min >= (image_width - BORDER_WIDTH) and \
+           x_max >= (image_width - BORDER_WIDTH) and \
+           x_max <= image_width:
             self.border_right = 4
-        if self.x_min >= (image_width - BORDER_WIDTH) and \
-           self.x_max >= image_width:
+        if x_min >= (image_width - BORDER_WIDTH) and \
+           x_max >= image_width:
             self.border_right = 5
-        if self.x_min >= image_width and \
-           self.x_max >= image_width:
+        if x_min >= image_width and \
+           x_max >= image_width:
             self.border_right = 6
         # Top
         self.border_top = 1
-        if self.y_max >= BORDER_WIDTH and \
-           self.y_min <= BORDER_WIDTH and \
-            self.y_min >= 0:
+        if y_max >= BORDER_WIDTH and \
+           y_min <= BORDER_WIDTH and \
+           y_min >= 0:
             self.border_top = 2
-        if self.y_max >= BORDER_WIDTH and \
-           self.y_min <= 0:
+        if y_max >= BORDER_WIDTH and \
+           y_min <= 0:
             self.border_top = 3
-        if self.y_max <= BORDER_WIDTH and \
-            self.y_min <= BORDER_WIDTH and \
-            self.y_min >= 0:
+        if y_max <= BORDER_WIDTH and \
+           y_min <= BORDER_WIDTH and \
+           y_min >= 0:
             self.border_top = 4
-        if self.y_max <= BORDER_WIDTH and \
-           self.y_min <= 0:
+        if y_max <= BORDER_WIDTH and \
+           y_min <= 0:
             self.border_top = 5
-        if self.y_min <= 0 and \
-           self.y_max <= 0:
+        if y_min <= 0 and \
+           y_max <= 0:
             self.border_top = 6
         # Bottom
         self.border_bottom = 1
-        if self.y_min <= (image_height - BORDER_WIDTH) and \
-           self.y_max >= (image_height - BORDER_WIDTH) and \
-           self.y_max <= image_height:
+        if y_min <= (image_height - BORDER_WIDTH) and \
+           y_max >= (image_height - BORDER_WIDTH) and \
+           y_max <= image_height:
             self.border_bottom = 2
-        if self.y_min <= (image_height - BORDER_WIDTH) and \
-           self.y_max >= image_height:
+        if y_min <= (image_height - BORDER_WIDTH) and \
+           y_max >= image_height:
             self.border_bottom = 3
-        if self.y_min >= (image_height - BORDER_WIDTH) and \
-           self.y_max >= (image_height - BORDER_WIDTH) and \
-            self.y_max <= image_height:
+        if y_min >= (image_height - BORDER_WIDTH) and \
+           y_max >= (image_height - BORDER_WIDTH) and \
+           y_max <= image_height:
             self.border_bottom = 4
-        if self.y_min >= (image_height - BORDER_WIDTH) and \
-           self.y_max >= image_height:
+        if y_min >= (image_height - BORDER_WIDTH) and \
+           y_max >= image_height:
             self.border_bottom = 5
-        if self.y_min >= image_height and \
-           self.y_max >= image_height:
+        if y_min >= image_height and \
+           y_max >= image_height:
             self.border_bottom = 6
 
 #------------------------------------------------------------------------------
@@ -559,7 +565,9 @@ class Camera:
         if detection.is_vanished():
             return False
 
-        new_pattern = Pattern(self, detection)
+        xbase = int((self.sensor_width_pixels-self.image_width_pixels)/2)
+        ybase = int((self.sensor_height_pixels-self.image_height_pixels)/2)
+        new_pattern = Pattern(self, detection, xbase, ybase)
 
         self.patterns.append(new_pattern)
         self.world.add_event(Event(self.world, self.world.current_time, 2,
@@ -593,10 +601,13 @@ class Camera:
                 x_max = int(width*boxes[i,3]) + xi
                 y_min = int(height*boxes[i,0]) + yi
                 y_max = int(height*boxes[i,2]) + yi
+                xbase = int((self.sensor_width_pixels-self.image_width_pixels)/2)
+                ybase = int((self.sensor_height_pixels-self.image_height_pixels)/2)
                 objects.append(Detection(time, classes[i], x_min, x_max,
                                          y_min, y_max, scores[i], 
                                          width, height, image[y_min:y_max,
-                                                              x_min:x_max,:]))
+                                                              x_min:x_max,:],
+                                                              xbase, ybase))
         
 
         return objects
@@ -838,12 +849,12 @@ class Detection(BoundingBox):
     Output from object detector, measurement
     """
     def __init__(self, current_time, class_id, x_min, x_max, y_min, y_max, 
-                 confidence, image_width, image_height, patch):
+                 confidence, image_width, image_height, patch, xbase, ybase):
         """
         Initialization
         """
         super().__init__(x_min, x_max, y_min, y_max, image_width, image_height,
-             patch, confidence)
+             patch, confidence, xbase, ybase)
         # References
         self.pattern = None
         # Attributes
@@ -1010,14 +1021,14 @@ class Pattern(BoundingBox):
     """
     Persistent pattern in image
     """
-    def __init__(self, camera, detection):
+    def __init__(self, camera, detection, xbase, ybase):
         """
         Initialization based on Detection
         """
         super().__init__(detection.x_min, detection.x_max, detection.y_min,
                          detection.y_max, camera.sensor_width_pixels, 
                          camera.sensor_height_pixels, detection.patch,
-                         detection.confidence)
+                         detection.confidence, xbase, ybase)
         # References
         self.camera = camera
         self.detections = []
@@ -1096,7 +1107,9 @@ class Pattern(BoundingBox):
         self.vy_max = mu_ymax[1, 0]
         self.sigma_y_max = (np.eye(2)-k_y_max.dot(PATTERN_C)).dot(self.sigma_y_max)
         #
-        self.set_border_behaviour(self.camera.image_width_pixels, self.camera.image_height_pixels)
+        xbase = int((self.camera.sensor_width_pixels-self.camera.image_width_pixels)/2)
+        ybase = int((self.camera.sensor_height_pixels-self.camera.image_height_pixels)/2)
+        self.set_border_behaviour(self.camera.image_width_pixels, self.camera.image_height_pixels, xbase, ybase)
         self.matched = True
 
     def detection(self):
@@ -1145,8 +1158,12 @@ class Pattern(BoundingBox):
         self.vy_max = mu_ymax[1, 0]
         self.sigma_y_max = a.dot(self.sigma_y_max).dot(a.T) + PATTERN_R
         #
+        xbase = int((self.camera.sensor_width_pixels-self.camera.image_width_pixels)/2)
+        ybase = int((self.camera.sensor_height_pixels-self.camera.image_height_pixels)/2)
+
         self.set_border_behaviour(self.camera.image_width_pixels, 
-                                  self.camera.image_height_pixels)
+                                  self.camera.image_height_pixels,
+                                  xbase, ybase)
         self.matched = False
 
     def velocity(self):
@@ -1869,11 +1886,14 @@ class World:
         cost = np.zeros((n_left, n_right))
         for row in range(0, n_left):
             for col in range(0, n_right):
-                p = multivariate_normal.pdf(l_features[row]-r_features[col],
-                                            mean=STEREO_MATCH_MEAN, 
-                                            cov=STEREO_MATCH_COVARIANCE)
-                p = -np.log(p)
-                if np.isinf(p):
+                if (patterns_left[row].class_id == patterns_right[col].class_id):
+                    p = multivariate_normal.pdf(l_features[row]-r_features[col],
+                                                mean=STEREO_MATCH_MEAN, 
+                                                cov=STEREO_MATCH_COVARIANCE)
+                    p = -np.log(p)
+                    if np.isinf(p):
+                        p = 999.0
+                else:
                     p = 999.0
                 cost[row][col] = p
 
@@ -1950,23 +1970,23 @@ class World:
             for body in self.bodies:
                 body.add_trace(self.current_time)
 
-            if (self.current_time > self.last_forecast + FORECAST_INTERVAL):
-                for body in self.bodies:
-                    body.make_forecast(self.current_time)
-                    body.detect_collision()
-                    if body.collision_probability > COLLISION_MIN_LEVEL:
-                        if body.collision_probability > body.collision_probability_max:
-                            t_collision = int(10*(body.forecast.t_min_distance-self.current_time)/10)
-                            if t_collision > 0:
-                                text = CLASS_NAMES[body.class_id] + " may collide in "
-                                text += str(t_collision)
-                                text += " seconds with probability "
-                                text += str(int(1000*body.collision_probability)/10)
-                                text += " percent"
-                                self.add_event(Event(self, self.current_time, -1, id(body), text))
-                            body.collision_probability_max = body.collision_probability
+#            if (self.current_time > self.last_forecast + FORECAST_INTERVAL):
+            for body in self.bodies:
+                body.make_forecast(self.current_time)
+                body.detect_collision()
+                if body.collision_probability > COLLISION_MIN_LEVEL:
+                    if body.collision_probability > body.collision_probability_max:
+                        t_collision = int(10*(body.forecast.t_min_distance-self.current_time)/10)
+                        if t_collision > 0:
+                            text = CLASS_NAMES[body.class_id] + " may collide in "
+                            text += str(t_collision)
+                            text += " seconds with probability "
+                            text += str(int(1000*body.collision_probability)/10)
+                            text += " percent"
+                            self.add_event(Event(self, self.current_time, -1, id(body), text))
+                        body.collision_probability_max = body.collision_probability
                        
-                self.last_forecast = self.current_time
+            self.last_forecast = self.current_time
 
             # Check for new bodies
             self.check_patterns_for_bodies()
@@ -2000,7 +2020,7 @@ class World:
                 cv2.cvtColor(camera2.current_frame, cv2.COLOR_BGR2GRAY))
 #            minValue = disp.min()
 #            maxValue = disp.max()
-#            disp_rgb = np.uint8(255 * (disp - minValue) / (maxValue - minValue))
+#            disp = np.uint8(255 * (disp - minValue) / (maxValue - minValue))
 #            disp_rgb = cv2.applyColorMap(disp, cv2.COLORMAP_WINTER)
             
             # Draw patterns
@@ -2049,6 +2069,12 @@ class World:
                 cv2.line(map_frame, pt1, pt2, (200,200,200), 1)
             #Bodies
             for body in self.bodies:
+                # History
+                for trace in body.traces:
+                    xcc = xc + trace.x * pixels_meter
+                    ycc = yc + trace.z * pixels_meter
+                    cv2.circle(map_frame, (int(xcc), int(ycc)), 1, body.color, 1)
+                # Current
                 xcc = xc + body.x * pixels_meter
                 ycc = yc + body.z * pixels_meter
                 color = (0,255,0) # green
@@ -2061,6 +2087,30 @@ class World:
                 sy = int(sqrt(body.sigma[2,2]))
                 cv2.ellipse(map_frame, (int(xcc), int(ycc)), (sx, sy), 0.0, 0.0, 
                             360.0, color,1)
+                # Forecast
+#                xc = xc + body.x * pixels_meter
+#                yc = yc + body.z * pixels_meter
+                color = body.forecast_color
+#                radius_pixels = int(body.mean_radius() * pixels_meter)
+#                cv2.circle(self.frame, (int(xc), int(yc)), radius_pixels, color, 1)
+                if body.forecast is not None:
+                    for i in range(1, FORECAST_COUNT):
+                        x1 = int(xc + body.forecast.mu[0,i-1] * pixels_meter)
+                        y1 = int(yc + body.forecast.mu[2,i-1] * pixels_meter)
+                        x2 = int(xc + body.forecast.mu[0,i] * pixels_meter)
+                        y2 = int(yc + body.forecast.mu[2,i] * pixels_meter)
+                        cv2.line(map_frame, (x1,y1), (x2,y2), color, 1)
+#                    xc = self.width_pixels/2.0 + body.forecast.x_min_distance * pixels_meter
+#                    yc = self.height_pixels/2.0 + body.forecast.z_min_distance * pixels_meter
+#                    cv2.circle(self.frame, (int(xc), int(yc)), 3, color, 1)
+#                    if body.collision_probability > 0.0:
+#                        sx = int(sqrt(body.forecast.sigma_min_distance[0,0]))
+#                        sy = int(sqrt(body.forecast.sigma_min_distance[2,2]))
+#                        cv2.circle(self.frame, (int(xc), int(yc)), 3, color, 1)
+#                        cv2.ellipse(self.frame, (int(xc), int(yc)), (sx, sy), 0.0, 0.0, 
+#                                360.0, color,1)
+                
+                    
             self.frame[UI_Y0:UI_Y3, UI_X1:UI_X2, :] = map_frame
             """
             Map (from side)
@@ -2160,7 +2210,7 @@ def run_application():
     # Load KITTI data
     basedir = 'D:\Thesis\Kitti\Raw'
     date = '2011_09_28'
-    drive = '0171'
+    drive = '0043'
     dataset = pykitti.raw(basedir, date, drive, imformat='cv2')
 
     world = World()
