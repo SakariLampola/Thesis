@@ -21,7 +21,7 @@ import sys
 import tensorflow as tf
 sys.path.append("..")
 from object_detection.utils import ops as utils_ops
-import matplotlib as plt
+import matplotlib as mpl
 
 # Hyperparameters--------------------------------------------------------------
 BODY_ALFA = 100000.0 # Body initial location error variance
@@ -78,7 +78,10 @@ STEREO_MAX_DISTANCE = 20.0 # Max distance to stereo vision to be accurate
 STEREO_MIN_LOG_PROBABILITY = 100 # Mimimun negative log probability for matching
 # Other constants--------------------------------------------------------------
 CLASS_NAMES = ["Background", "Car", "Person"]
-MAP_EXTENT = 41.0
+KITTI_ROT = np.array([[1,0,0,0],
+                      [0,-1,0,0],
+                      [0,0,-1,0],
+                      [0,0,0,1]]) # From Kitti cam2 to ShadowWorld coordinates
 SENSOR_WIDTH = 1392
 SENSOR_HEIGHT = 512
 UI_VIDEO_SCALE = 0.8
@@ -342,7 +345,7 @@ class BoundingBox:
         self.y = (y_min + y_max) / 2
         self.width = x_max - x_min
         self.height = y_max - y_min
-        patch_hsv = plt.colors.rgb_to_hsv(patch)
+        patch_hsv = mpl.colors.rgb_to_hsv(patch)
         histo, bins = np.histogram(patch_hsv[:,:,0], 3)
         histo = histo / sum(histo)
         self.hue0 = histo[0]
@@ -636,27 +639,27 @@ class Camera:
                           (int(pattern.x_max), int(pattern.y_max)), 
                           pattern.bounding_box_color, line)
             x_center, y_center = pattern.center_point()
-            cv2.circle(frame_out, (int(x_center), int(y_center)),
-                       int(pattern.radius()), (255, 255, 255), line)
-            label = "{0:s}: {1:.2f}".format(CLASS_NAMES[pattern.class_id],
-                     pattern.confidence)
-            ytext = int(pattern.y_min) - 15 if int(pattern.y_min) - 15 > 15 \
-                else int(pattern.y_min) + 15
-            cv2.putText(frame_out, label, (int(pattern.x_min), ytext), \
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.45, (255, 255, 255), 2)
+#            cv2.circle(frame_out, (int(x_center), int(y_center)),
+#                       int(pattern.radius()), (255, 255, 255), line)
+#            label = "{0:s}: {1:.2f}".format(CLASS_NAMES[pattern.class_id],
+#                     pattern.confidence)
+#            ytext = int(pattern.y_min) - 15 if int(pattern.y_min) - 15 > 15 \
+#                else int(pattern.y_min) + 15
+#            cv2.putText(frame_out, label, (int(pattern.x_min), ytext), \
+#                        cv2.FONT_HERSHEY_SIMPLEX, 0.45, (255, 255, 255), 2)
             
-            if (pattern.is_reliable()):
-                x_variance, y_variance = pattern.location_variance()
-                x_std2 = 2.0 * sqrt(x_variance)
-                y_std2 = 2.0 * sqrt(y_variance)
-                cv2.ellipse(frame_out, (int(x_center), int(y_center)), 
-                            (int(x_std2),int(y_std2)), 0.0, 0, 360, 
-                            pattern.bounding_box_color, line)
-                x_center_velocity, y_center_velocity = pattern.velocity()
-                cv2.arrowedLine(frame_out, (int(x_center), int(y_center)), 
-                                (int(x_center+x_center_velocity), 
-                                 int(y_center+y_center_velocity)), 
-                                 pattern.bounding_box_color, line)
+#            if (pattern.is_reliable()):
+#                x_variance, y_variance = pattern.location_variance()
+#                x_std2 = 2.0 * sqrt(x_variance)
+#                y_std2 = 2.0 * sqrt(y_variance)
+#                cv2.ellipse(frame_out, (int(x_center), int(y_center)), 
+#                            (int(x_std2),int(y_std2)), 0.0, 0, 360, 
+#                            pattern.bounding_box_color, line)
+#                x_center_velocity, y_center_velocity = pattern.velocity()
+#                cv2.arrowedLine(frame_out, (int(x_center), int(y_center)), 
+#                                (int(x_center+x_center_velocity), 
+#                                 int(y_center+y_center_velocity)), 
+#                                 pattern.bounding_box_color, line)
 
 
         return frame_out
@@ -1748,7 +1751,7 @@ class World:
     """
     3 dimensional model of the physical world
     """
-    def __init__(self):
+    def __init__(self, size, t_cam_from_velo, laserscans):
         """
         Initialization
         """
@@ -1766,6 +1769,10 @@ class World:
         self.delta_time = 1.0/10.0
         self.last_forecast = -10.0
         self.mode = "step"
+        self.t_cam_from_velo = t_cam_from_velo
+        self.laserscans = laserscans
+        self.laserscan_factory = iter(self.laserscans)
+        self.size = size
 
         self.frame = np.zeros((UI_Y4+1, UI_X3+1, 3), np.uint8)
         label = "Commands:"
@@ -1890,10 +1897,15 @@ class World:
                     p = multivariate_normal.pdf(l_features[row]-r_features[col],
                                                 mean=STEREO_MATCH_MEAN, 
                                                 cov=STEREO_MATCH_COVARIANCE)
-                    p = -np.log(p)
-                    if np.isinf(p):
+                    if p == 0.0:
                         p = 999.0
+                    else:
+                        p = -np.log(p)
+                        if np.isinf(p):
+                            p = 999.0
                 else:
+                    p = 999.0
+                if np.isnan(p):
                     p = 999.0
                 cost[row][col] = p
 
@@ -1934,6 +1946,15 @@ class World:
                 more_camera = camera.update(self.current_time, self.delta_time)
                 if not more_camera:
                     return
+            # Fetch laser scans
+            try:
+                laser_scans = next(self.laserscan_factory)
+            except StopIteration:
+                return
+            # Convert laser scans to our coordinates
+            laser_scans = self.t_cam_from_velo.dot(laser_scans.T)
+            laser_scans = KITTI_ROT.dot(laser_scans)
+            
             # Update existing bodies
             for body in self.bodies:
                 body.predict(self.delta_time)
@@ -2018,16 +2039,16 @@ class World:
             disp = stereo.compute(
                 cv2.cvtColor(camera1.current_frame, cv2.COLOR_BGR2GRAY),
                 cv2.cvtColor(camera2.current_frame, cv2.COLOR_BGR2GRAY))
-#            minValue = disp.min()
-#            maxValue = disp.max()
-#            disp = np.uint8(255 * (disp - minValue) / (maxValue - minValue))
-#            disp_rgb = cv2.applyColorMap(disp, cv2.COLORMAP_WINTER)
+            minValue = disp.min()
+            maxValue = disp.max()
+            disp = np.uint8(255.0 * (disp - minValue) / (maxValue - minValue))
+            disp_rgb = cv2.applyColorMap(disp, cv2.COLORMAP_JET)
             
             # Draw patterns
-            disp_rgb = np.zeros((disp.shape[0], disp.shape[1], 3), dtype = np.uint8)
-            disp_rgb[:,:,0] = disp
-            disp_rgb[:,:,1] = disp
-            disp_rgb[:,:,2] = disp
+#            disp_rgb = np.zeros((disp.shape[0], disp.shape[1], 3), dtype = np.uint8)
+#            disp_rgb[:,:,0] = disp
+#            disp_rgb[:,:,1] = disp
+#            disp_rgb[:,:,2] = disp
             xi = int((camera1.sensor_width_pixels - camera1.image_width_pixels)/2)
             yi = int((camera1.sensor_height_pixels - camera1.image_height_pixels)/2)
             for camera in [self.camera_left, self.camera_right]:
@@ -2051,10 +2072,16 @@ class World:
             map_frame = np.zeros((UI_Y3-UI_Y0, UI_X2-UI_X1, 3), np.uint8)
             xc = int((UI_X2-UI_X1)/2)
             yc = int((UI_Y3-UI_Y0)/2)
-            pixels_meter = xc / MAP_EXTENT
+            pixels_meter = xc / self.size
+            # Laser scans
+            for i in range(0, laser_scans.shape[1]):
+                x = int(xc + laser_scans[0,i] * pixels_meter)
+                y = int(yc + laser_scans[2,i] * pixels_meter)
+                if laser_scans[1,i] < 1.0 and  laser_scans[1,i] > -1.0:
+                    cv2.circle(map_frame, (x, y), 1, (256,0,0),1)
             # Radar circles
             radius = 10.0
-            while radius < MAP_EXTENT:
+            while radius < self.size:
                 radius_pixels = int(radius * pixels_meter)
                 cv2.circle(map_frame, (xc, yc), radius_pixels, (200,200,200), 1)
                 radius += 10.0
@@ -2064,10 +2091,10 @@ class World:
                 x = xc * tan(camera.field_of_view/2.0)
                 pt1 = (int(xc+x_offset), int(yc))
                 pt2 = (int(xc-x+x_offset),0)
-                cv2.line(map_frame, pt1, pt2, (200,200,200), 1)
+                cv2.line(map_frame, pt1, pt2, (0,0,255), 1)
                 pt2 = (int(xc+x+x_offset),0)
-                cv2.line(map_frame, pt1, pt2, (200,200,200), 1)
-            #Bodies
+                cv2.line(map_frame, pt1, pt2, (0,0,255), 1)
+            # Bodies
             for body in self.bodies:
                 # History
                 for trace in body.traces:
@@ -2077,11 +2104,11 @@ class World:
                 # Current
                 xcc = xc + body.x * pixels_meter
                 ycc = yc + body.z * pixels_meter
-                color = (0,255,0) # green
-                if body.status == "predicted":
-                    color = (0,0,255) # red
+#                color = (0,255,0) # green
+#                if body.status == "predicted":
+#                    color = (0,0,255) # red
                 radius_pixels = int(body.mean_radius() * pixels_meter)
-                cv2.circle(map_frame, (int(xcc), int(ycc)), radius_pixels, color, 1)
+                cv2.circle(map_frame, (int(xcc), int(ycc)), radius_pixels, body.color, 1)
                 color = (100,100,100)
                 sx = int(sqrt(body.sigma[0,0]))
                 sy = int(sqrt(body.sigma[2,2]))
@@ -2090,7 +2117,7 @@ class World:
                 # Forecast
 #                xc = xc + body.x * pixels_meter
 #                yc = yc + body.z * pixels_meter
-                color = body.forecast_color
+#                color = body.forecast_color
 #                radius_pixels = int(body.mean_radius() * pixels_meter)
 #                cv2.circle(self.frame, (int(xc), int(yc)), radius_pixels, color, 1)
                 if body.forecast is not None:
@@ -2099,7 +2126,7 @@ class World:
                         y1 = int(yc + body.forecast.mu[2,i-1] * pixels_meter)
                         x2 = int(xc + body.forecast.mu[0,i] * pixels_meter)
                         y2 = int(yc + body.forecast.mu[2,i] * pixels_meter)
-                        cv2.line(map_frame, (x1,y1), (x2,y2), color, 1)
+                        cv2.line(map_frame, (x1,y1), (x2,y2), body.color, 1)
 #                    xc = self.width_pixels/2.0 + body.forecast.x_min_distance * pixels_meter
 #                    yc = self.height_pixels/2.0 + body.forecast.z_min_distance * pixels_meter
 #                    cv2.circle(self.frame, (int(xc), int(yc)), 3, color, 1)
@@ -2109,7 +2136,7 @@ class World:
 #                        cv2.circle(self.frame, (int(xc), int(yc)), 3, color, 1)
 #                        cv2.ellipse(self.frame, (int(xc), int(yc)), (sx, sy), 0.0, 0.0, 
 #                                360.0, color,1)
-                
+               
                     
             self.frame[UI_Y0:UI_Y3, UI_X1:UI_X2, :] = map_frame
             """
@@ -2119,10 +2146,10 @@ class World:
             map_frame = np.zeros((UI_Y4-UI_Y3, UI_X2-UI_X1, 3), np.uint8)
             xc = int((UI_X2-UI_X1)/2)
             yc = int((UI_Y4-UI_Y3)/2)
-            pixels_meter = xc / MAP_EXTENT
+            pixels_meter = xc / self.size
             # Radar circles
             radius = 10.0
-            while radius < MAP_EXTENT:
+            while radius < self.size:
                 radius_pixels = int(radius * pixels_meter)
                 cv2.circle(map_frame, (xc, yc), radius_pixels, (200,200,200), 1)
                 radius += 10.0
@@ -2132,16 +2159,16 @@ class World:
             for body in self.bodies:
                 xcc = xc + body.x * pixels_meter
                 ycc = yc - body.y * pixels_meter
-                color = (0,255,0) # green
-                if body.status == "predicted":
-                    color = (0,0,255) # red
+#                color = (0,255,0) # green
+#                if body.status == "predicted":
+#                    color = (0,0,255) # red
                 radius_pixels = int(body.mean_radius() * pixels_meter)
-                cv2.circle(map_frame, (int(xcc), int(ycc)), radius_pixels, color, 1)
+                cv2.circle(map_frame, (int(xcc), int(ycc)), radius_pixels, body.color, 1)
                 color = (100,100,100)
                 sx = int(sqrt(body.sigma[0,0]))
                 sy = int(sqrt(body.sigma[2,2]))
                 cv2.ellipse(map_frame, (int(xcc), int(ycc)), (sx, sy), 0.0, 0.0, 
-                            360.0, color,1)
+                            360.0, body.color,1)
             self.frame[UI_Y3:UI_Y4, UI_X1:UI_X2, :] = map_frame
             """
             Report panel
@@ -2160,8 +2187,18 @@ class World:
             irow += offset
             for body in self.bodies:
                 col = body.color
-                label = "{0:6s} {1:5.1f} {2:5.1f} {3:5.1f} {4:5.1f} {5:5.1f} {6:5.1f}".format(
+                conf1 = 0.0
+                if body.pattern_left is not None:
+                    conf1 = body.pattern_left.confidence
+                conf2 = 0.0
+                if body.pattern_right is not None:
+                    conf2 = body.pattern_right.confidence
+                label = "{0:6s} {1:10s} Confidence {2:5.2f}/{3:5.2f}".format(
                         CLASS_NAMES[body.class_id], 
+                        body.status, conf1, conf2)
+                cv2.putText(rep_frame, label, (10,irow), cv2.FONT_HERSHEY_SIMPLEX, 0.4, col, 1)
+                irow += offset
+                label = "   {0:5.1f} {1:5.1f} {2:5.1f} {3:5.1f} {4:5.1f} {5:5.1f}".format(
                         body.x, body.y, body.z,
                         body.vx, body.vy, body.vz)
                 cv2.putText(rep_frame, label, (10,irow), cv2.FONT_HERSHEY_SIMPLEX, 0.4, col, 1)
@@ -2209,11 +2246,17 @@ def run_application():
 
     # Load KITTI data
     basedir = 'D:\Thesis\Kitti\Raw'
-    date = '2011_09_28'
-    drive = '0043'
+    date = '2011_09_28' # Simple 1 person
+    drive = '0119'
+#    date = '2011_09_28' # Several persons
+#    drive = '0016'
+#    date = '2011_09_26' # Car 
+#    drive = '0009'
+
     dataset = pykitti.raw(basedir, date, drive, imformat='cv2')
 
-    world = World()
+    world = World(size=31, t_cam_from_velo=dataset.calib.T_cam0_velo,
+                  laserscans=dataset.velo)
     
     sensor_width = SENSOR_WIDTH * 4.65 / 1000000 # ICX267
     sensor_height = SENSOR_HEIGHT * 4.65 / 1000000 # ICX267
