@@ -24,22 +24,22 @@ from object_detection.utils import ops as utils_ops
 import matplotlib as mpl
 
 # Hyperparameters--------------------------------------------------------------
-BODY_ALFA = 100000.0 # Body initial location error variance
-BODY_BETA = 100000.0 # Body initial velocity error variance
+BODY_ALFA = 10.0 # Body initial location error variance
+BODY_BETA = 100.0 # Body initial velocity error variance
 BODY_C = np.array([[1.0, 0.0, 0.0, 0.0, 0.0, 0.0],
                    [0.0, 1.0, 0.0, 0.0, 0.0, 0.0],
                    [0.0, 0.0, 1.0, 0.0, 0.0, 0.0]
                   ]) # Body measurement matrix
 BODY_DATA_COLLECTION_COUNT = 30 # How many frames until notification
-BODY_Q = np.array([[200.0, 0.0,   0.0],
-                   [0.0, 200.0,   0.0],
-                   [0.0,   0.0, 200.0]]) # Body measurement variance 200
+BODY_Q = np.array([[25.0, 0.0,  0.0],
+                   [0.0, 25.0,  0.0],
+                   [0.0,  0.0, 25.0]]) # Body measurement variance 200
 BODY_R = np.array([[0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                   [0.0, 1.0, 0.0, 0.0, 0.0, 0.0],
                    [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                   [0.0, 0.0, 0.0, 0.1, 0.0, 0.0],
                    [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-                   [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-                   [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-                   [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+                   [0.0, 0.0, 0.0, 0.0, 0.0, 1.0]
                   ]) # Body state equation covariance
 #
 BORDER_WIDTH = 30 # Part of video window for special pattern behaviour
@@ -62,12 +62,12 @@ FORECAST_COUNT = 500 # How many time steps ahead a body forecast is made
 # Path to frozen detection graph. This is the actual model that is used for the object detection.
 PATH_TO_CKPT = r'D:\Thesis\Models\faster_rcnn_resnet101_kitti_2018_01_28' + '/frozen_inference_graph.pb'
 #
-PATTERN_ALFA = 200.0 # Pattern initial location error variance
+PATTERN_ALFA = 100.0 # Pattern initial location error variance
 PATTERN_BETA = 10000.0 # Pattern initial velocity error variance
 PATTERN_C = np.array([[1.0, 0.0]]) # Pattern measurement matrix
-PATTERN_Q = np.array([200.0]) # Pattern measurement variance
-PATTERN_R = np.array([[0.1, 0.0],
-                      [0.0, 1.0]]) # Pattern state equation covariance
+PATTERN_Q = np.array([100.0]) # Pattern measurement variance
+PATTERN_R = np.array([[0.0, 0.0],
+                      [0.0, 100.0]]) # Pattern state equation covariance
 #
 RETENTION_COUNT_MAX = 30 # How many frames pattern is kept untedected
 #
@@ -144,15 +144,29 @@ class Body:
         """
         if (self.pattern_left is None) or (self.pattern_left is None):
             return 0.0, 0.0, 0.0
+
+        x_min_left, x_max_left, y_min_left, y_max_left = self.pattern_left.estimated_location()
+        x_min_right, x_max_right, y_min_right, y_max_right = self.pattern_right.estimated_location()
         
         sw = self.pattern_left.camera.sensor_width
         sh = self.pattern_left.camera.sensor_height
         pw = self.pattern_left.camera.sensor_width_pixels
         ph = self.pattern_left.camera.sensor_height_pixels
-        ri = self.pattern_left.radius()
+        # Left pattern radius
+        h = (y_max_left - y_min_left)/2.0
+        w = (x_max_left - x_min_left)/2.0
+        ri = sqrt(h*h+w*w)
+        if h<=0:
+            ri = w
+        if w<=0:
+            ri =  h
+#        ri = self.pattern_left.radius()
         r = self.mean_radius()
         f = self.pattern_left.camera.focal_length
-        xp, yp = self.pattern_left.center_point()
+        # Center point
+        xp = (x_min_left + x_max_left) / 2.0
+        yp = (y_min_left + y_max_left) / 2.0
+#        xp, yp = self.pattern_left.center_point()
 
         xc = -sw/2.0 + xp*sw/pw
         yc = sh/2.0 - yp*sh/ph
@@ -163,8 +177,8 @@ class Body:
 
         d_size = f*r/(cos(alfa)*cos(beta)*ri*sh/ph)
         
-        disparity = (self.pattern_left.x_min+self.pattern_left.x_max)*0.5       
-        disparity -= (self.pattern_right.x_min+self.pattern_right.x_max)*0.5       
+        disparity = (x_min_left+x_max_left)*0.5       
+        disparity -= (x_min_right+x_max_right)*0.5       
         base = self.pattern_right.camera.x - self.pattern_left.camera.x
 
         if disparity > 0:
@@ -186,15 +200,22 @@ class Body:
             k_size = l1/l2
             k_stereo = 1 - k_size
 
-        self.distance_stereo = d_stereo
-        self.distance_size = d_size
         
         d = k_size* d_size + k_stereo * d_stereo
+        
+        self.distance_stereo = d_stereo
+        self.distance_size = d_size
+        self.distance = d
+
         t = d / sqrt(xc**2.0 + yc**2.0 + zc**2.0)
 
         xo = t*xc
         yo = t*yc
         zo = t*zc
+
+        self.x_projected = xo
+        self.y_projected = yo
+        self.z_projected = zo
 
         return xo, yo, zo
 
@@ -1124,6 +1145,15 @@ class Pattern(BoundingBox):
 
         detection = self.detections[-1]
         return detection.x_min, detection.x_max, detection.y_min, detection.y_max
+
+    def estimated_location(self):
+        """
+        Get the location estimate for distance estimation and 3D projection
+        """
+        if self.matched:
+            return self.detection()
+        else:
+            return self.x_min, self.x_max, self.y_min, self.y_max
     
     def location_variance(self):
         """
@@ -1364,8 +1394,9 @@ class PresentationLog(Presentation):
             self.file.write("sigma_43,sigma_44,sigma_45,")
             self.file.write("sigma_50,sigma_51,sigma_52,")
             self.file.write("sigma_53,sigma_54,sigma_55,")
-            self.file.write("x_pattern,y_pattern,z_pattern,")
-            self.file.write("pattern,status,collision_p,")
+            self.file.write("x_pattern_left,y_pattern_left,z_pattern_left,")
+            self.file.write("x_pattern_right,y_pattern_right,z_pattern_right,")
+            self.file.write("pattern_left, pattern_right,status,collision_p,")
             self.file.write("c_time,c_x,c_y,c_z,")
             self.file.write("c_sigma_00,c_sigma_01,c_sigma_02,")
             self.file.write("c_sigma_03,c_sigma_04,c_sigma_05,")
@@ -1378,7 +1409,9 @@ class PresentationLog(Presentation):
             self.file.write("c_sigma_40,c_sigma_41,c_sigma_42,")
             self.file.write("c_sigma_43,c_sigma_44,c_sigma_45,")
             self.file.write("c_sigma_50,c_sigma_51,c_sigma_52,")
-            self.file.write("c_sigma_53,c_sigma_54,c_sigma_55")
+            self.file.write("c_sigma_53,c_sigma_54,c_sigma_55,")
+            self.file.write("distance_stereo,distance_size,distance,")
+            self.file.write("x_projected,y_projected,z_projected")
             self.file.write("\n")
             f = "{0:.3f},{1:d},{2:d}," # time,id,class_id
             f += "{3:.3f},{4:.3f},{5:.3f}," # x,y,z
@@ -1395,21 +1428,24 @@ class PresentationLog(Presentation):
             f += "{36:.3f},{37:.3f},{38:.3f}," # sigma_43,sigma_44,sigma_45
             f += "{39:.3f},{40:.3f},{41:.3f}," # sigma_50,sigma_51,sigma_52
             f += "{42:.3f},{43:.3f},{44:.3f}," # sigma_53,sigma_54,sigma_55
-            f += "{45:.3f},{46:.3f},{47:.3f}," # x_pattern,y_pattern,z_pattern
-            f += "{48:d},{49:d},{50:.3f}," # pattern, status, collision_p
-            f += "{51:.3f},{52:.3f},{53:.3f},{54:.3f}," # collision time,x,y,z
-            f += "{55:.3f},{56:.3f},{57:.3f}," # collision sigma_00,sigma_01,sigma_02
-            f += "{58:.3f},{59:.3f},{60:.3f}," # collision sigma_03,sigma_04,sigma_05
-            f += "{61:.3f},{62:.3f},{63:.3f}," # collision sigma_10,sigma_11,sigma_12
-            f += "{64:.3f},{65:.3f},{66:.3f}," # collision sigma_13,sigma_14,sigma_15
-            f += "{67:.3f},{68:.3f},{69:.3f}," # collision sigma_20,sigma_21,sigma_22
-            f += "{70:.3f},{71:.3f},{72:.3f}," # collision sigma_23,sigma_24,sigma_25
-            f += "{73:.3f},{74:.3f},{75:.3f}," # collision sigma_30,sigma_31,sigma_42
-            f += "{76:.3f},{77:.3f},{78:.3f}," # collision sigma_33,sigma_34,sigma_45
-            f += "{79:.3f},{80:.3f},{81:.3f}," # collision sigma_40,sigma_41,sigma_42
-            f += "{82:.3f},{83:.3f},{84:.3f}," # collision sigma_43,sigma_44,sigma_45
-            f += "{85:.3f},{86:.3f},{87:.3f}," # collision sigma_50,sigma_51,sigma_52
-            f += "{88:.3f},{89:.3f},{90:.3f}" # collision sigma_53,sigma_54,sigma_55
+            f += "{45:.3f},{46:.3f},{47:.3f}," # x_pattern_left,y_pattern_left,z_pattern_left
+            f += "{48:.3f},{49:.3f},{50:.3f}," # x_pattern_left,y_pattern_left,z_pattern_left
+            f += "{51:d},{52:d},{53:d},{54:.3f}," # pattern_left, pattern_right, status, collision_p
+            f += "{55:.3f},{56:.3f},{57:.3f},{58:.3f}," # collision time,x,y,z
+            f += "{59:.3f},{60:.3f},{61:.3f}," # collision sigma_00,sigma_01,sigma_02
+            f += "{62:.3f},{63:.3f},{64:.3f}," # collision sigma_03,sigma_04,sigma_05
+            f += "{65:.3f},{65:.3f},{67:.3f}," # collision sigma_10,sigma_11,sigma_12
+            f += "{68:.3f},{69:.3f},{70:.3f}," # collision sigma_13,sigma_14,sigma_15
+            f += "{71:.3f},{72:.3f},{73:.3f}," # collision sigma_20,sigma_21,sigma_22
+            f += "{74:.3f},{75:.3f},{76:.3f}," # collision sigma_23,sigma_24,sigma_25
+            f += "{77:.3f},{78:.3f},{79:.3f}," # collision sigma_30,sigma_31,sigma_42
+            f += "{80:.3f},{81:.3f},{82:.3f}," # collision sigma_33,sigma_34,sigma_45
+            f += "{83:.3f},{84:.3f},{85:.3f}," # collision sigma_40,sigma_41,sigma_42
+            f += "{86:.3f},{87:.3f},{88:.3f}," # collision sigma_43,sigma_44,sigma_45
+            f += "{89:.3f},{90:.3f},{91:.3f}," # collision sigma_50,sigma_51,sigma_52
+            f += "{92:.3f},{93:.3f},{94:.3f}," # collision sigma_53,sigma_54,sigma_55
+            f += "{95:.3f},{96:.3f},{97:.3f}," # distance_stereo,distance_size,distance
+            f += "{98:.3f},{99:.3f},{100:.3f}" # x_projected,y_projected,z_projected
             f += "\n"
             self.fmt = f
         elif self.category == "Event":
@@ -1438,7 +1474,7 @@ class PresentationLog(Presentation):
         Update presentation at time t
         """
         if self.category == "Detection":
-            for camera in self.world.cameras:
+            for camera in [self.world.camera_left, self.world.camera_right]:
                 for detection in camera.detections:
                     pattern_id = 0
                     if detection.pattern is not None:
@@ -1458,7 +1494,7 @@ class PresentationLog(Presentation):
                                                     pattern_id,
                                                     str(detection.matched)))
         elif self.category == "Pattern":
-            for camera in self.world.cameras:
+            for camera in [self.world.camera_left, self.world.camera_right]:
                 for pattern in camera.patterns:                    
                     body_id = 0
                     if pattern.body is not None:
@@ -1514,11 +1550,16 @@ class PresentationLog(Presentation):
                                                     y_max_d))
         elif self.category == "Body":
             for body in self.world.bodies:
-                pattern_id = 0
-                x_pattern,y_pattern,z_pattern = 0.0, 0.0, 0.0
-                if body.pattern is not None:
-                    pattern_id = id(body.pattern)
-                    x_pattern,y_pattern,z_pattern = body.coordinates_from_pattern()
+                pattern_id_left = 0
+                x_pattern_left,y_pattern_left,z_pattern_left = 0.0, 0.0, 0.0
+                if body.pattern_left is not None:
+                    pattern_id_left = id(body.pattern_left)
+                    x_pattern_left,y_pattern_left,z_pattern_left = body.coordinates_from_patterns()
+                pattern_id_right = 0
+                x_pattern_right,y_pattern_right,z_pattern_right = 0.0, 0.0, 0.0
+                if body.pattern_right is not None:
+                    pattern_id_right = id(body.pattern_right)
+                    x_pattern_right,y_pattern_right,z_pattern_right = body.coordinates_from_patterns()
                 status = 0
                 if body.status == 'measured':
                     status = 1
@@ -1649,10 +1690,14 @@ class PresentationLog(Presentation):
                                                 body.sigma[5,3],
                                                 body.sigma[5,4],
                                                 body.sigma[5,5],
-                                                x_pattern,
-                                                y_pattern,
-                                                z_pattern,
-                                                pattern_id,
+                                                x_pattern_left,
+                                                y_pattern_left,
+                                                z_pattern_left,
+                                                x_pattern_right,
+                                                y_pattern_right,
+                                                z_pattern_right,
+                                                pattern_id_left,
+                                                pattern_id_right,
                                                 status,
                                                 body.collision_probability,
                                                 c_time,
@@ -1694,7 +1739,13 @@ class PresentationLog(Presentation):
                                                 s_s_52,
                                                 s_s_53,
                                                 s_s_54,
-                                                s_s_55))
+                                                s_s_55,
+                                                body.distance_stereo,
+                                                body.distance_size,
+                                                body.distance,
+                                                body.x_projected,
+                                                body.y_projected,
+                                                body.z_projected))
         else:
             pass
                 
@@ -2013,6 +2064,12 @@ class World:
             self.check_patterns_for_bodies()
 
             """
+            Update presentations
+            """
+            for presentation in self.presentations:
+                presentation.update(self.current_time)
+
+            """
             Create UI, first camera views
             """
             # Create UI
@@ -2282,16 +2339,11 @@ def run_application():
 #                     x_loc=20, y_loc=20, width_pixels=900, 
 #                     height_pixels=int(900*720/1280))
     world.add_camera_right(camera2)
-#
-#    world.add_presentation(PresentationForecast(world, map_id=2, x_loc=940, 
-#                                                y_loc=620, height_pixels=500, 
-#                                                width_pixels=500, 
-#                                                extent=TEST_EXTENTS[test_video]))
 
-    world.add_presentation(PresentationLog(world, "Detection", "logs/DetectionStereo.txt"))
-    world.add_presentation(PresentationLog(world, "Pattern", "logs/PatternStereo.txt"))
-    world.add_presentation(PresentationLog(world, "Body", "logs/BodyStereo.txt"))
-    world.add_presentation(PresentationLog(world, "Event", "logs/EventStereo.txt"))
+    world.add_presentation(PresentationLog(world, "Detection", "logs/Detection.txt"))
+    world.add_presentation(PresentationLog(world, "Pattern", "logs/Pattern.txt"))
+    world.add_presentation(PresentationLog(world, "Body", "logs/Body.txt"))
+    world.add_presentation(PresentationLog(world, "Event", "logs/Event.txt"))
 
     world.run()
     
