@@ -99,24 +99,28 @@ class Body:
     """
     A physical entity in the world
     """
-    def __init__(self, world, pattern_left, pattern_right):
+    def __init__(self, world, pattern):
         """
         Initialization
         """
         # References
         self.world = world
-        self.pattern_left = pattern_left
-        self.pattern_right = pattern_right
+        self.pattern = pattern
+        self.detection_right = None
         self.events = []
         self.traces = []
         self.forecast = None
         # Attributes
-        self.set_class_attributes(pattern_left.class_id)
+        self.set_class_attributes(pattern.class_id)
         self.frame_age = 0
         self.distance_stereo = 0.0
         self.distance_size = 0.0
-        self.x, self.y, self.z = self.coordinates_from_patterns()
-        self.status = "measured"
+        self.distance = 0.0
+        self.x, self.y, self.z = self.coordinates_from_pattern()
+        self.x_projected = self.x
+        self.y_projected = self.y
+        self.z_projected = self.z
+        self.status = "new"
         self.vx = 0.0
         self.vy = 0.0
         self.vz = 0.0
@@ -126,10 +130,9 @@ class Body:
                                [0.0,       0.0,       0.0, BODY_BETA,       0.0,       0.0],
                                [0.0,       0.0,       0.0,       0.0, BODY_BETA,       0.0],
                                [0.0,       0.0,       0.0,       0.0,       0.0, BODY_BETA]])
-        self.forecast_color = pattern_left.bounding_box_color
         self.collision_probability = 0.0
         self.collision_probability_max = 0.0
-        self.color = (255,255,255)
+        self.color = pattern.bounding_box_color
 
     def add_trace(self, time):
         """
@@ -137,71 +140,60 @@ class Body:
         """
         self.traces.append(Trace(time, self))
     
-    def coordinates_from_patterns(self):
+    def coordinates_from_pattern(self):
         """
         Calculates world coordinates from pattern center point, pattern height,
         camera parameters and default body height
         """
-        if (self.pattern_left is None) or (self.pattern_left is None):
+        if self.pattern is None:
             return 0.0, 0.0, 0.0
 
-        x_min_left, x_max_left, y_min_left, y_max_left = self.pattern_left.estimated_location()
-        x_min_right, x_max_right, y_min_right, y_max_right = self.pattern_right.estimated_location()
-        
-        sw = self.pattern_left.camera.sensor_width
-        sh = self.pattern_left.camera.sensor_height
-        pw = self.pattern_left.camera.sensor_width_pixels
-        ph = self.pattern_left.camera.sensor_height_pixels
-        # Left pattern radius
-        h = (y_max_left - y_min_left)/2.0
-        w = (x_max_left - x_min_left)/2.0
-        ri = sqrt(h*h+w*w)
-        if h<=0:
-            ri = w
-        if w<=0:
-            ri =  h
-#        ri = self.pattern_left.radius()
-        r = self.mean_radius()
-        f = self.pattern_left.camera.focal_length
-        # Center point
-        xp = (x_min_left + x_max_left) / 2.0
-        yp = (y_min_left + y_max_left) / 2.0
-#        xp, yp = self.pattern_left.center_point()
+        sw = self.pattern.camera.sensor_width
+        sh = self.pattern.camera.sensor_height
+        pw = self.pattern.camera.sensor_width_pixels
+        ph = self.pattern.camera.sensor_height_pixels
 
+        # Size based distance
+        ri = self.pattern.radius()
+        r = self.mean_radius()
+        f = self.pattern.camera.focal_length
+        xp, yp = self.pattern.center_point()
         xc = -sw/2.0 + xp*sw/pw
         yc = sh/2.0 - yp*sh/ph
         zc = -f
-
         alfa = atan(yc/f)
         beta = atan(xc/f)
-
         d_size = f*r/(cos(alfa)*cos(beta)*ri*sh/ph)
-        
-        disparity = (x_min_left+x_max_left)*0.5       
-        disparity -= (x_min_right+x_max_right)*0.5       
-        base = self.pattern_right.camera.x - self.pattern_left.camera.x
 
-        if disparity > 0:
-            d_stereo = f*base/(cos(alfa)*cos(beta)*disparity*sw/pw)
-        else:
-            d_stereo = d_size
+        # Stereo based distance
+        d_stereo = np.nan
+        if (self.detection_right is not None):
+            x_min_left, x_max_left, y_min_left, y_max_left = self.pattern.estimated_location()
+            x_min_right = self.detection_right.x_min
+            x_max_right = self.detection_right.x_max
+            disparity = (x_min_left+x_max_left)*0.5       
+            disparity -= (x_min_right+x_max_right)*0.5       
+            base = self.world.camera_right.x - self.world.camera_left.x
+            if disparity > 0:
+                d_stereo = f*base/(cos(alfa)*cos(beta)*disparity*sw/pw)
         
-        estimated_distance = (d_stereo + d_size)*0.5
-        fraction = 0.25
-        if estimated_distance < (1-fraction) * STEREO_MAX_DISTANCE:
-            k_size = 0.0
-            k_stereo = 1.0
-        elif estimated_distance > (1+fraction) * STEREO_MAX_DISTANCE:
-            k_size = 1.0
-            k_stereo = 0.0
+        if np.isnan(d_stereo):
+            d = d_size            
         else:
-            l1 = estimated_distance - (1-fraction) * STEREO_MAX_DISTANCE
-            l2 = (1+fraction)*STEREO_MAX_DISTANCE - (1-fraction)*STEREO_MAX_DISTANCE
-            k_size = l1/l2
-            k_stereo = 1 - k_size
-
-        
-        d = k_size* d_size + k_stereo * d_stereo
+            estimated_distance = (d_stereo + d_size)*0.5
+            fraction = 0.25
+            if estimated_distance < (1-fraction) * STEREO_MAX_DISTANCE:
+                k_size = 0.0
+                k_stereo = 1.0
+            elif estimated_distance > (1+fraction) * STEREO_MAX_DISTANCE:
+                k_size = 1.0
+                k_stereo = 0.0
+            else:
+                l1 = estimated_distance - (1-fraction) * STEREO_MAX_DISTANCE
+                l2 = (1+fraction)*STEREO_MAX_DISTANCE - (1-fraction)*STEREO_MAX_DISTANCE
+                k_size = l1/l2
+                k_stereo = 1 - k_size
+            d = k_size* d_size + k_stereo * d_stereo
         
         self.distance_stereo = d_stereo
         self.distance_size = d_size
@@ -533,7 +525,8 @@ class Camera:
     """
     Camera observing surrounding, located and oriented in world
     """
-    def __init__(self, world, name, focal_length, sensor_width, sensor_height,
+    def __init__(self, world, name, focal_length, is_primary,
+                 sensor_width, sensor_height,
                  sensor_width_pixels, sensor_height_pixels, 
                  x, y, z, yaw, pitch, roll, frames):
         """
@@ -545,6 +538,7 @@ class Camera:
         self.detections = []
         # Attributes
         self.name = name
+        self.is_primary = is_primary
         self.focal_length = focal_length
         self.sensor_width = sensor_width
         self.sensor_height = sensor_height
@@ -591,7 +585,7 @@ class Camera:
 
         xbase = int((self.sensor_width_pixels-self.image_width_pixels)/2)
         ybase = int((self.sensor_height_pixels-self.image_height_pixels)/2)
-        new_pattern = Pattern(self, detection, xbase, ybase)
+        new_pattern = Pattern(self, detection, xbase, ybase, self.is_primary)
 
         self.patterns.append(new_pattern)
         self.world.add_event(Event(self.world, self.world.current_time, 2,
@@ -648,18 +642,22 @@ class Camera:
         ih = self.image_height_pixels
         frame_out[yi:yi+ih, xi:xi+iw, :] = self.current_frame
 
-        line = 2
-        # Draw detections
-        for detection in self.detections:
-            cv2.rectangle(frame_out, (detection.x_min, detection.y_min), \
-                          (detection.x_max, detection.y_max), (255,255,255), line)
-
+        line = 3
         # Draw patterns
         for pattern in self.patterns:
             cv2.rectangle(frame_out, (int(pattern.x_min), int(pattern.y_min)), 
                           (int(pattern.x_max), int(pattern.y_max)), 
                           pattern.bounding_box_color, line)
             x_center, y_center = pattern.center_point()
+
+        line = 1
+        # Draw detections
+        for detection in self.detections:
+            cv2.rectangle(frame_out, (detection.x_min, detection.y_min), \
+                          (detection.x_max, detection.y_max), (255,255,255), line)
+
+
+
 #            cv2.circle(frame_out, (int(x_center), int(y_center)),
 #                       int(pattern.radius()), (255, 255, 255), line)
 #            label = "{0:s}: {1:.2f}".format(CLASS_NAMES[pattern.class_id],
@@ -717,6 +715,10 @@ class Camera:
         for detection in self.detections:
             self.world.add_event(Event(self.world, current_time, 3,
                                        id(detection), "Detection created"))
+
+        # If not primary camera, stop
+        if not self.is_primary:
+            return True
 
         # Process previous patterns
         if len(self.patterns) > 0:
@@ -1045,7 +1047,7 @@ class Pattern(BoundingBox):
     """
     Persistent pattern in image
     """
-    def __init__(self, camera, detection, xbase, ybase):
+    def __init__(self, camera, detection, xbase, ybase, is_primary):
         """
         Initialization based on Detection
         """
@@ -1073,8 +1075,11 @@ class Pattern(BoundingBox):
         self.sigma_y_max = np.array([[PATTERN_ALFA, 0],
                                      [0.0, PATTERN_BETA]])
         self.confidence = detection.confidence
-        self.bounding_box_color = (rnd.randint(120,240), rnd.randint(80,200), 
-                                   rnd.randint(100,220))
+        if is_primary:
+            self.bounding_box_color = (rnd.randint(120,240), rnd.randint(80,200), 
+                                       rnd.randint(100,220))
+        else:
+            self.bounding_box_color = (127,127,127)
 
         self.x = detection.x
         self.y = detection.y
@@ -1394,9 +1399,8 @@ class PresentationLog(Presentation):
             self.file.write("sigma_43,sigma_44,sigma_45,")
             self.file.write("sigma_50,sigma_51,sigma_52,")
             self.file.write("sigma_53,sigma_54,sigma_55,")
-            self.file.write("x_pattern_left,y_pattern_left,z_pattern_left,")
-            self.file.write("x_pattern_right,y_pattern_right,z_pattern_right,")
-            self.file.write("pattern_left, pattern_right,status,collision_p,")
+            self.file.write("x_pattern,y_pattern,z_pattern,")
+            self.file.write("pattern_left,status,collision_p,")
             self.file.write("c_time,c_x,c_y,c_z,")
             self.file.write("c_sigma_00,c_sigma_01,c_sigma_02,")
             self.file.write("c_sigma_03,c_sigma_04,c_sigma_05,")
@@ -1428,24 +1432,23 @@ class PresentationLog(Presentation):
             f += "{36:.3f},{37:.3f},{38:.3f}," # sigma_43,sigma_44,sigma_45
             f += "{39:.3f},{40:.3f},{41:.3f}," # sigma_50,sigma_51,sigma_52
             f += "{42:.3f},{43:.3f},{44:.3f}," # sigma_53,sigma_54,sigma_55
-            f += "{45:.3f},{46:.3f},{47:.3f}," # x_pattern_left,y_pattern_left,z_pattern_left
-            f += "{48:.3f},{49:.3f},{50:.3f}," # x_pattern_left,y_pattern_left,z_pattern_left
-            f += "{51:d},{52:d},{53:d},{54:.3f}," # pattern_left, pattern_right, status, collision_p
-            f += "{55:.3f},{56:.3f},{57:.3f},{58:.3f}," # collision time,x,y,z
-            f += "{59:.3f},{60:.3f},{61:.3f}," # collision sigma_00,sigma_01,sigma_02
-            f += "{62:.3f},{63:.3f},{64:.3f}," # collision sigma_03,sigma_04,sigma_05
-            f += "{65:.3f},{65:.3f},{67:.3f}," # collision sigma_10,sigma_11,sigma_12
-            f += "{68:.3f},{69:.3f},{70:.3f}," # collision sigma_13,sigma_14,sigma_15
-            f += "{71:.3f},{72:.3f},{73:.3f}," # collision sigma_20,sigma_21,sigma_22
-            f += "{74:.3f},{75:.3f},{76:.3f}," # collision sigma_23,sigma_24,sigma_25
-            f += "{77:.3f},{78:.3f},{79:.3f}," # collision sigma_30,sigma_31,sigma_42
-            f += "{80:.3f},{81:.3f},{82:.3f}," # collision sigma_33,sigma_34,sigma_45
-            f += "{83:.3f},{84:.3f},{85:.3f}," # collision sigma_40,sigma_41,sigma_42
-            f += "{86:.3f},{87:.3f},{88:.3f}," # collision sigma_43,sigma_44,sigma_45
-            f += "{89:.3f},{90:.3f},{91:.3f}," # collision sigma_50,sigma_51,sigma_52
-            f += "{92:.3f},{93:.3f},{94:.3f}," # collision sigma_53,sigma_54,sigma_55
-            f += "{95:.3f},{96:.3f},{97:.3f}," # distance_stereo,distance_size,distance
-            f += "{98:.3f},{99:.3f},{100:.3f}" # x_projected,y_projected,z_projected
+            f += "{45:.3f},{46:.3f},{47:.3f}," # x_pattern,y_pattern,z_pattern
+            f += "{48:d},{49:d},{50:.3f}," # pattern_left, status, collision_p
+            f += "{51:.3f},{52:.3f},{53:.3f},{54:.3f}," # collision time,x,y,z
+            f += "{55:.3f},{56:.3f},{57:.3f}," # collision sigma_00,sigma_01,sigma_02
+            f += "{58:.3f},{59:.3f},{60:.3f}," # collision sigma_03,sigma_04,sigma_05
+            f += "{61:.3f},{62:.3f},{63:.3f}," # collision sigma_10,sigma_11,sigma_12
+            f += "{64:.3f},{65:.3f},{66:.3f}," # collision sigma_13,sigma_14,sigma_15
+            f += "{67:.3f},{68:.3f},{69:.3f}," # collision sigma_20,sigma_21,sigma_22
+            f += "{70:.3f},{71:.3f},{72:.3f}," # collision sigma_23,sigma_24,sigma_25
+            f += "{73:.3f},{74:.3f},{75:.3f}," # collision sigma_30,sigma_31,sigma_42
+            f += "{76:.3f},{77:.3f},{78:.3f}," # collision sigma_33,sigma_34,sigma_45
+            f += "{79:.3f},{80:.3f},{81:.3f}," # collision sigma_40,sigma_41,sigma_42
+            f += "{82:.3f},{83:.3f},{84:.3f}," # collision sigma_43,sigma_44,sigma_45
+            f += "{85:.3f},{86:.3f},{87:.3f}," # collision sigma_50,sigma_51,sigma_52
+            f += "{88:.3f},{89:.3f},{90:.3f}," # collision sigma_53,sigma_54,sigma_55
+            f += "{91:.3f},{92:.3f},{93:.3f}," # distance_stereo,distance_size,distance
+            f += "{94:.3f},{95:.3f},{96:.3f}" # x_projected,y_projected,z_projected
             f += "\n"
             self.fmt = f
         elif self.category == "Event":
@@ -1550,16 +1553,13 @@ class PresentationLog(Presentation):
                                                     y_max_d))
         elif self.category == "Body":
             for body in self.world.bodies:
-                pattern_id_left = 0
-                x_pattern_left,y_pattern_left,z_pattern_left = 0.0, 0.0, 0.0
-                if body.pattern_left is not None:
-                    pattern_id_left = id(body.pattern_left)
-                    x_pattern_left,y_pattern_left,z_pattern_left = body.coordinates_from_patterns()
-                pattern_id_right = 0
-                x_pattern_right,y_pattern_right,z_pattern_right = 0.0, 0.0, 0.0
-                if body.pattern_right is not None:
-                    pattern_id_right = id(body.pattern_right)
-                    x_pattern_right,y_pattern_right,z_pattern_right = body.coordinates_from_patterns()
+                pattern_id = 0
+                x_pattern,y_pattern,z_pattern = 0.0, 0.0, 0.0
+                if body.pattern is not None:
+                    pattern_id = id(body.pattern)
+                    x_pattern = body.x_projected
+                    y_pattern = body.y_projected
+                    z_pattern = body.z_projected
                 status = 0
                 if body.status == 'measured':
                     status = 1
@@ -1690,14 +1690,10 @@ class PresentationLog(Presentation):
                                                 body.sigma[5,3],
                                                 body.sigma[5,4],
                                                 body.sigma[5,5],
-                                                x_pattern_left,
-                                                y_pattern_left,
-                                                z_pattern_left,
-                                                x_pattern_right,
-                                                y_pattern_right,
-                                                z_pattern_right,
-                                                pattern_id_left,
-                                                pattern_id_right,
+                                                x_pattern,
+                                                y_pattern,
+                                                z_pattern,
+                                                pattern_id,
                                                 status,
                                                 body.collision_probability,
                                                 c_time,
@@ -1910,6 +1906,12 @@ class World:
         Match camera patterns and create bodies for (new) matches
         """
         patterns_left = self.camera_left.patterns
+        for pattern in patterns_left:
+            if pattern.body is None:
+                new_body = Body(self, pattern)
+                pattern.body = new_body
+                self.add_body(new_body)
+        
         n_left = len(patterns_left)
         l_features = np.zeros((n_left, 10))
         for i in range(0, n_left):
@@ -1925,11 +1927,11 @@ class World:
             l_features[i, 8] = pat.saturation
             l_features[i, 9] = pat.value
             
-        patterns_right = self.camera_right.patterns
-        n_right = len(patterns_right)
+        detections_right = self.camera_right.detections
+        n_right = len(detections_right)
         r_features = np.zeros((n_right, 10))
         for i in range(0, n_right):
-            pat = patterns_right[i]
+            pat = detections_right[i]
             r_features[i, 0] = pat.confidence
             r_features[i, 1] = pat.x
             r_features[i, 2] = pat.y
@@ -1941,10 +1943,13 @@ class World:
             r_features[i, 8] = pat.saturation
             r_features[i, 9] = pat.value
         
+        for body in self.bodies:
+            body.detection_right = None
+
         cost = np.zeros((n_left, n_right))
         for row in range(0, n_left):
             for col in range(0, n_right):
-                if (patterns_left[row].class_id == patterns_right[col].class_id):
+                if (patterns_left[row].class_id == detections_right[col].class_id):
                     p = multivariate_normal.pdf(l_features[row]-r_features[col],
                                                 mean=STEREO_MATCH_MEAN, 
                                                 cov=STEREO_MATCH_COVARIANCE)
@@ -1952,26 +1957,18 @@ class World:
                         p = 999.0
                     else:
                         p = -np.log(p)
-                        if np.isinf(p):
+                        if np.isinf(p) or np.isnan(p):
                             p = 999.0
                 else:
-                    p = 999.0
-                if np.isnan(p):
                     p = 999.0
                 cost[row][col] = p
 
         row_ind, col_ind = linear_sum_assignment(cost)
         for i in range(len(row_ind)):
-            lpat = patterns_left[row_ind[i]]
-            rpat = patterns_right[col_ind[i]]
-            if lpat.body is None and rpat.body is None:
-                if cost[row_ind[i]][col_ind[i]]<STEREO_MIN_LOG_PROBABILITY:
-                    new_body = Body(self, lpat, rpat)
-                    lpat.body = new_body
-                    rpat.body = new_body
-                    rpat.bounding_box_color = lpat.bounding_box_color
-                    new_body.color = lpat.bounding_box_color
-                    self.add_body(new_body)
+            rdet = detections_right[col_ind[i]]
+            if cost[row_ind[i]][col_ind[i]]<STEREO_MIN_LOG_PROBABILITY:
+                body.detection_right = rdet
+#                body.x, body.y, body.z = body.coordinates_from_pattern()
 
     def close(self):
         """
@@ -2034,14 +2031,18 @@ class World:
 
                     self.add_event(Event(self, self.current_time, 0, id(body),
                                          text))
-                if body.pattern_left is not None:
-                    if body.pattern_left.is_reliable() and body.pattern_right.is_reliable():
-                        xo, yo, zo = body.coordinates_from_patterns()
-                        body.correct(xo, yo, zo, self.delta_time)
 
+
+            # Check for new bodies
+            self.check_patterns_for_bodies()
+
+            # Apply measurements
             for body in self.bodies:
-                body.add_trace(self.current_time)
-
+                if body.pattern is not None:
+                    if body.pattern.is_reliable() and body.status is "predicted":
+                        xo, yo, zo = body.coordinates_from_pattern()
+                        body.correct(xo, yo, zo, self.delta_time)
+            
 #            if (self.current_time > self.last_forecast + FORECAST_INTERVAL):
             for body in self.bodies:
                 body.make_forecast(self.current_time)
@@ -2060,8 +2061,8 @@ class World:
                        
             self.last_forecast = self.current_time
 
-            # Check for new bodies
-            self.check_patterns_for_bodies()
+            for body in self.bodies:
+                body.add_trace(self.current_time)
 
             """
             Update presentations
@@ -2086,6 +2087,24 @@ class World:
                 cymax = frame_offset + (UI_Y1-UI_Y0)
                 self.frame[cymin:cymax, cxmin:cxmax, :] = camera_frame
                 frame_offset += (UI_Y1-UI_Y0)
+
+            """
+            Draw lines for stereo matched patterns
+            """
+            for body in self.bodies:
+                l_pattern = body.pattern
+                r_detection = body.detection_right
+                if l_pattern is not None and r_detection is not None:
+                    x1,y1 = l_pattern.center_point()
+                    x1 *= UI_VIDEO_SCALE
+                    y1 *= UI_VIDEO_SCALE
+                    x2,y2 = r_detection.center_point()
+                    x2 *= UI_VIDEO_SCALE
+                    y2 *= UI_VIDEO_SCALE
+                    y2 += + UI_Y1
+                    cv2.line(self.frame, (int(x1),int(y1)), (int(x2),int(y2)), 
+                             l_pattern.bounding_box_color,1)
+                    
 
             """
             Stereo view
@@ -2115,7 +2134,7 @@ class World:
                     y_min = int(pattern.y_min-yi)
                     y_max = int(pattern.y_max-yi)
                     cv2.rectangle(disp_rgb, (x_min, y_min), (x_max, y_max), 
-                                  pattern.bounding_box_color, 1)
+                                  pattern.bounding_box_color, 2)
             cxmin = int(UI_VIDEO_SCALE*(camera1.sensor_width_pixels-camera1.image_width_pixels)/2)
             cxmax = UI_X1 -cxmin
             cymin = UI_Y2+int(UI_VIDEO_SCALE*(camera1.sensor_height_pixels-camera1.image_height_pixels)/2)
@@ -2245,19 +2264,24 @@ class World:
             for body in self.bodies:
                 col = body.color
                 conf1 = 0.0
-                if body.pattern_left is not None:
-                    conf1 = body.pattern_left.confidence
+                if body.pattern is not None:
+                    conf1 = body.pattern.confidence
                 conf2 = 0.0
-                if body.pattern_right is not None:
-                    conf2 = body.pattern_right.confidence
-                label = "{0:6s} {1:10s} Confidence {2:5.2f}/{3:5.2f}".format(
+                if body.detection_right is not None:
+                    conf2 = body.detection_right.confidence
+                label = "{0:6s} {1:10s} Confidence: {2:5.2f} {3:5.2f}".format(
                         CLASS_NAMES[body.class_id], 
                         body.status, conf1, conf2)
                 cv2.putText(rep_frame, label, (10,irow), cv2.FONT_HERSHEY_SIMPLEX, 0.4, col, 1)
                 irow += offset
-                label = "   {0:5.1f} {1:5.1f} {2:5.1f} {3:5.1f} {4:5.1f} {5:5.1f}".format(
+                label = "   Loc: {0:5.1f} {1:5.1f} {2:5.1f} {3:5.1f} {4:5.1f} {5:5.1f}".format(
                         body.x, body.y, body.z,
-                        body.vx, body.vy, body.vz)
+                        body.sigma[0][0], body.sigma[1][1], body.sigma[2][2])
+                cv2.putText(rep_frame, label, (10,irow), cv2.FONT_HERSHEY_SIMPLEX, 0.4, col, 1)
+                irow += offset
+                label = "   Vel: {0:5.1f} {1:5.1f} {2:5.1f} {3:5.1f} {4:5.1f} {5:5.1f}".format(
+                        body.vx, body.vy, body.vz,
+                        body.sigma[3][3], body.sigma[4][4], body.sigma[5][5])
                 cv2.putText(rep_frame, label, (10,irow), cv2.FONT_HERSHEY_SIMPLEX, 0.4, col, 1)
                 irow += offset
                 label = "   Distance/stereo: {0:5.1f} Distance/size:{1:5.1f}".format(body.distance_stereo, body.distance_size)
@@ -2300,25 +2324,30 @@ def run_application():
     """
     Example application
     """
-
+    examples = [['2011_09_28','0119', 31], # 0 = simple one person
+                ['2011_09_28','0016', 71], # 1 = several persons
+                ['2011_09_26','0009',101]  # 2 = car
+                ] 
     # Load KITTI data
     basedir = 'D:\Thesis\Kitti\Raw'
-    date = '2011_09_28' # Simple 1 person
-    drive = '0119'
+#    date = '2011_09_28' # Simple 1 person
+#    drive = '0119'
 #    date = '2011_09_28' # Several persons
 #    drive = '0016'
 #    date = '2011_09_26' # Car 
 #    drive = '0009'
 
-    dataset = pykitti.raw(basedir, date, drive, imformat='cv2')
+    example = 0
+    dataset = pykitti.raw(basedir, examples[example][0], examples[example][1],
+                          imformat='cv2')
 
-    world = World(size=31, t_cam_from_velo=dataset.calib.T_cam0_velo,
+    world = World(size=examples[example][2], t_cam_from_velo=dataset.calib.T_cam0_velo,
                   laserscans=dataset.velo)
     
     sensor_width = SENSOR_WIDTH * 4.65 / 1000000 # ICX267
     sensor_height = SENSOR_HEIGHT * 4.65 / 1000000 # ICX267
 
-    camera1 = Camera(world, name="Left", focal_length=0.003,
+    camera1 = Camera(world, name="Left", focal_length=0.003, is_primary=True,
                      sensor_width=sensor_width, sensor_height=sensor_height, 
                      sensor_width_pixels=SENSOR_WIDTH, 
                      sensor_height_pixels=SENSOR_HEIGHT,
@@ -2329,7 +2358,7 @@ def run_application():
 #                     height_pixels=int(900*720/1280))
     world.add_camera_left(camera1)
 
-    camera2 = Camera(world, name="Right", focal_length=0.003,
+    camera2 = Camera(world, name="Right", focal_length=0.003, is_primary=False,
                      sensor_width=sensor_width, sensor_height=sensor_height, 
                      sensor_width_pixels=SENSOR_WIDTH, 
                      sensor_height_pixels=SENSOR_HEIGHT,
