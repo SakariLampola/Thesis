@@ -9,13 +9,13 @@ Created on Mon Jan 29 08:30:49 2018
 import numpy as np
 import cv2
 import time
-import pandas as pd
+#import pandas as pd
 import random as rnd
 import pyttsx3
 import winsound
 from math import atan, cos, sqrt, tan, exp, log
 from scipy.optimize import linear_sum_assignment
-from scipy.stats import multivariate_normal
+#from scipy.stats import multivariate_normal
 import pykitti
 import sys
 import tensorflow as tf
@@ -58,6 +58,8 @@ FORECAST_A = np.array([[1.0, 0.0, 0.0, FORECAST_DELTA,            0.0,          
                        [0.0, 0.0, 0.0,            0.0,            1.0,            0.0],
                        [0.0, 0.0, 0.0,            0.0,            0.0,           1.0]])
 FORECAST_COUNT = 500 # How many time steps ahead a body forecast is made
+DISTANCE_SIZE_FACTOR = 1.1*1.32 # How much distance based distance estimation must be adjusted
+DISTANCE_STEREO_FACTOR = 1.1 # How much distance based distance estimation must be adjusted
 #FORECAST_INTERVAL = 1.0 # How often forecast is made
 # Path to frozen detection graph. This is the actual model that is used for the object detection.
 PATH_TO_CKPT = r'D:\Thesis\Models\faster_rcnn_resnet101_kitti_2018_01_28' + '/frozen_inference_graph.pb'
@@ -69,13 +71,14 @@ PATTERN_Q = np.array([100.0]) # Pattern measurement variance
 PATTERN_R = np.array([[0.0, 0.0],
                       [0.0, 100.0]]) # Pattern state equation covariance
 #
-RETENTION_COUNT_MAX = 30 # How many frames pattern is kept untedected
+RETENTION_COUNT_MAX = 3 # How many frames pattern is kept untedected
 #
 SIMILARITY_DISTANCE = 0.4 # Max distance for detection-pattern similarity
-STEREO_MATCH_MEAN = pd.read_pickle("stereo/stereomatch_mean.pkl").as_matrix()
-STEREO_MATCH_COVARIANCE = pd.read_pickle("stereo/stereomatch_covariance.pkl").as_matrix()
+#STEREO_MATCH_MEAN = pd.read_pickle("stereo/stereomatch_mean.pkl").as_matrix()
+#STEREO_MATCH_COVARIANCE = pd.read_pickle("stereo/stereomatch_covariance.pkl").as_matrix()
+STEREO_MATCHING_HORIZONTAL = 0.2 # How much horizontal difference is attuanated
+STEREO_MATCHING_MAX_DISTANCE = 30 # Maximum allowed distance for stereo matching
 STEREO_MAX_DISTANCE = 20.0 # Max distance to stereo vision to be accurate
-STEREO_MIN_LOG_PROBABILITY = 100 # Mimimun negative log probability for matching
 # Other constants--------------------------------------------------------------
 CLASS_NAMES = ["Background", "Car", "Person"]
 KITTI_ROT = np.array([[1,0,0,0],
@@ -106,7 +109,6 @@ class Body:
         # References
         self.world = world
         self.pattern = pattern
-        self.detection_right = None
         self.events = []
         self.traces = []
         self.forecast = None
@@ -117,9 +119,6 @@ class Body:
         self.distance_size = 0.0
         self.distance = 0.0
         self.x, self.y, self.z = self.coordinates_from_pattern()
-        self.x_projected = self.x
-        self.y_projected = self.y
-        self.z_projected = self.z
         self.status = "new"
         self.vx = 0.0
         self.vy = 0.0
@@ -163,19 +162,19 @@ class Body:
         zc = -f
         alfa = atan(yc/f)
         beta = atan(xc/f)
-        d_size = f*r/(cos(alfa)*cos(beta)*ri*sh/ph)
+        d_size = DISTANCE_SIZE_FACTOR*f*r/(cos(alfa)*cos(beta)*ri*sh/ph)
 
         # Stereo based distance
         d_stereo = np.nan
-        if (self.detection_right is not None):
+        if (self.pattern.detection_right is not None):
             x_min_left, x_max_left, y_min_left, y_max_left = self.pattern.estimated_location()
-            x_min_right = self.detection_right.x_min
-            x_max_right = self.detection_right.x_max
+            x_min_right = self.pattern.detection_right.x_min
+            x_max_right = self.pattern.detection_right.x_max
             disparity = (x_min_left+x_max_left)*0.5       
             disparity -= (x_min_right+x_max_right)*0.5       
             base = self.world.camera_right.x - self.world.camera_left.x
             if disparity > 0:
-                d_stereo = f*base/(cos(alfa)*cos(beta)*disparity*sw/pw)
+                d_stereo = DISTANCE_STEREO_FACTOR*f*base/(cos(alfa)*cos(beta)*disparity*sw/pw)
         
         if np.isnan(d_stereo):
             d = d_size            
@@ -555,7 +554,6 @@ class Camera:
         self.roll = roll
         self.frames = frames
         self.frame_factory = iter(self.frames)
-        self.current_frame_count = 0
         self.current_frame = None
 
     def add_pattern(self, detection):
@@ -590,6 +588,10 @@ class Camera:
         self.patterns.append(new_pattern)
         self.world.add_event(Event(self.world, self.world.current_time, 2,
                                    id(new_pattern), "Pattern created"))
+
+        new_body = Body(self.world, new_pattern)
+        new_pattern.body = new_body
+        self.world.add_body(new_body)
 
         return True
     
@@ -708,8 +710,6 @@ class Camera:
 
         self.current_frame = frame_video_in.copy()
         self.image_height_pixels, self.image_width_pixels  = self.current_frame.shape[:2]
-
-        self.current_frame_count += 1
 
         self.detections = self.detect(self.current_frame, current_time)
         for detection in self.detections:
@@ -860,12 +860,13 @@ class Camera:
         # If no match for a detection, create a new pattern
         for detection in self.detections:
             if not detection.matched:
-                found = False
-                for pattern in self.patterns:
-                    if detection.pattern_distance(pattern) < SIMILARITY_DISTANCE:
-                        found = True
-                if not found: # Only if there is no other pattern near
-                    self.add_pattern(detection)
+                self.add_pattern(detection)
+#                found = False
+#                for pattern in self.patterns:
+#                    if detection.pattern_distance(pattern) < SIMILARITY_DISTANCE:
+#                        found = True
+#                if not found: # Only if there is no other pattern near
+#                    self.add_pattern(detection)
 
         return True
 
@@ -1091,6 +1092,8 @@ class Pattern(BoundingBox):
         self.saturation = detection.saturation
         self.value = detection.value
         self.patch = detection.patch
+
+        self.detection_right = None
 
         self.retention_count = 0
         self.matched = False
@@ -1901,73 +1904,99 @@ class World:
             if key_pushed == ord('s'):
                 self.mode = "step"
 
-    def check_patterns_for_bodies(self):
+    def match_right_detections_to_left_patterns(self):
         """
-        Match camera patterns and create bodies for (new) matches
+        Match left camera patterns to right camera detections
         """
         patterns_left = self.camera_left.patterns
-        for pattern in patterns_left:
-            if pattern.body is None:
-                new_body = Body(self, pattern)
-                pattern.body = new_body
-                self.add_body(new_body)
-        
         n_left = len(patterns_left)
-        l_features = np.zeros((n_left, 10))
-        for i in range(0, n_left):
-            pat = patterns_left[i]
-            l_features[i, 0] = pat.confidence
-            l_features[i, 1] = pat.x
-            l_features[i, 2] = pat.y
-            l_features[i, 3] = pat.width
-            l_features[i, 4] = pat.height
-            l_features[i, 5] = pat.hue0
-            l_features[i, 6] = pat.hue1
-            l_features[i, 7] = pat.hue2
-            l_features[i, 8] = pat.saturation
-            l_features[i, 9] = pat.value
             
         detections_right = self.camera_right.detections
         n_right = len(detections_right)
-        r_features = np.zeros((n_right, 10))
-        for i in range(0, n_right):
-            pat = detections_right[i]
-            r_features[i, 0] = pat.confidence
-            r_features[i, 1] = pat.x
-            r_features[i, 2] = pat.y
-            r_features[i, 3] = pat.width
-            r_features[i, 4] = pat.height
-            r_features[i, 5] = pat.hue0
-            r_features[i, 6] = pat.hue1
-            r_features[i, 7] = pat.hue2
-            r_features[i, 8] = pat.saturation
-            r_features[i, 9] = pat.value
         
-        for body in self.bodies:
-            body.detection_right = None
+        for pattern in patterns_left:
+            pattern.detection_right = None
 
         cost = np.zeros((n_left, n_right))
         for row in range(0, n_left):
+            pat = patterns_left[row]
+            wl = pat.x_max - pat.x_min
+            hl = pat.y_max - pat.y_min
+            xl = 0.5*(pat.x_min + pat.x_max)
+            yl = 0.5*(pat.y_min + pat.y_max)
             for col in range(0, n_right):
+                det = detections_right[col]
+                wr = det.x_max - det.x_min
+                hr = det.y_max - det.y_min
+                xr = 0.5*(det.x_min + det.x_max)
+                yr = 0.5*(det.y_min + det.y_max)
                 if (patterns_left[row].class_id == detections_right[col].class_id):
-                    p = multivariate_normal.pdf(l_features[row]-r_features[col],
-                                                mean=STEREO_MATCH_MEAN, 
-                                                cov=STEREO_MATCH_COVARIANCE)
-                    if p == 0.0:
-                        p = 999.0
-                    else:
-                        p = -np.log(p)
-                        if np.isinf(p) or np.isnan(p):
-                            p = 999.0
+                    c = abs(wl-wr)+abs(hl-hr)+abs(yl-yr)+STEREO_MATCHING_HORIZONTAL*abs(xl-xr)
                 else:
-                    p = 999.0
-                cost[row][col] = p
+                    c = 999999.0
+                cost[row][col] = c
 
         row_ind, col_ind = linear_sum_assignment(cost)
         for i in range(len(row_ind)):
-            rdet = detections_right[col_ind[i]]
-            if cost[row_ind[i]][col_ind[i]]<STEREO_MIN_LOG_PROBABILITY:
-                body.detection_right = rdet
+            if cost[row_ind[i]][col_ind[i]] < STEREO_MATCHING_MAX_DISTANCE:
+                patterns_left[row_ind[i]].detection_right = detections_right[col_ind[i]]
+#
+#        patterns_left = self.camera_left.patterns
+#        n_left = len(patterns_left)
+#        l_features = np.zeros((n_left, 10))
+#        for i in range(0, n_left):
+#            pat = patterns_left[i]
+#            l_features[i, 0] = pat.confidence
+#            l_features[i, 1] = pat.x
+#            l_features[i, 2] = pat.y
+#            l_features[i, 3] = pat.width
+#            l_features[i, 4] = pat.height
+#            l_features[i, 5] = pat.hue0
+#            l_features[i, 6] = pat.hue1
+#            l_features[i, 7] = pat.hue2
+#            l_features[i, 8] = pat.saturation
+#            l_features[i, 9] = pat.value
+#            
+#        detections_right = self.camera_right.detections
+#        n_right = len(detections_right)
+#        r_features = np.zeros((n_right, 10))
+#        for i in range(0, n_right):
+#            pat = detections_right[i]
+#            r_features[i, 0] = pat.confidence
+#            r_features[i, 1] = pat.x
+#            r_features[i, 2] = pat.y
+#            r_features[i, 3] = pat.width
+#            r_features[i, 4] = pat.height
+#            r_features[i, 5] = pat.hue0
+#            r_features[i, 6] = pat.hue1
+#            r_features[i, 7] = pat.hue2
+#            r_features[i, 8] = pat.saturation
+#            r_features[i, 9] = pat.value
+#        
+#        for pattern in patterns_left:
+#            pattern.detection_right = None
+#
+#        cost = np.zeros((n_left, n_right))
+#        for row in range(0, n_left):
+#            for col in range(0, n_right):
+#                if (patterns_left[row].class_id == detections_right[col].class_id):
+#                    p = multivariate_normal.pdf(l_features[row]-r_features[col],
+#                                                mean=STEREO_MATCH_MEAN, 
+#                                                cov=STEREO_MATCH_COVARIANCE)
+#                    if p == 0.0:
+#                        p = 999.0
+#                    else:
+#                        p = -np.log(p)
+#                        if np.isinf(p) or np.isnan(p):
+#                            p = 999.0
+#                else:
+#                    p = 999.0
+#                cost[row][col] = p
+#
+#        row_ind, col_ind = linear_sum_assignment(cost)
+#        for i in range(len(row_ind)):
+#            if cost[row_ind[i]][col_ind[i]]<STEREO_MIN_LOG_PROBABILITY:
+#                patterns_left[row_ind[i]].detection_right = detections_right[col_ind[i]]
 #                body.x, body.y, body.z = body.coordinates_from_pattern()
 
     def close(self):
@@ -1988,54 +2017,30 @@ class World:
         self.frame = np.zeros((UI_Y4+1, UI_X3+1, 3), np.uint8)
         more = True
         while more:
-            # Update cameras, bodies
-            more = True
-            for camera in [self.camera_left, self.camera_right]:
-                more_camera = camera.update(self.current_time, self.delta_time)
-                if not more_camera:
-                    return
-            # Fetch laser scans
-            try:
-                laser_scans = next(self.laserscan_factory)
-            except StopIteration:
+            # Left camera
+            more_camera = self.camera_left.update(self.current_time, self.delta_time)
+            if not more_camera:
                 return
-            # Convert laser scans to our coordinates
-            laser_scans = self.t_cam_from_velo.dot(laser_scans.T)
-            laser_scans = KITTI_ROT.dot(laser_scans)
-            
-            # Update existing bodies
+            # Right camera
+            more_camera = self.camera_right.update(self.current_time, self.delta_time)
+            if not more_camera:
+                return
+            # Match right camera detections to left camera patterns
+            self.match_right_detections_to_left_patterns()
+
+            # Apply measurements for newly created bodies
+            for body in self.bodies:
+                if body.pattern is not None:
+                    if body.pattern.is_reliable() and body.status is "new":
+                        xo, yo, zo = body.coordinates_from_pattern()
+                        body.x = xo
+                        body.y = yo
+                        body.z = zo
+
+            # Predict body locations
             for body in self.bodies:
                 body.predict(self.delta_time)
-                    
-                if body.frame_age == BODY_DATA_COLLECTION_COUNT:
-                    text = CLASS_NAMES[body.class_id]+" observed "
-                    speed = int(3.6*body.speed())
-                    distance = int(abs(body.z))
-                    text += "distance " + str(distance) + " meters "
-                    if (speed < 4):
-                        text += "hanging around "
-                    else:
-                        if body.z <= 0 and body.vz >= 0:
-                            text += "moving towards us "
-                        elif body.z <= 0 and body.vz < 0:
-                            text += "moving away from us "
-                        if body.z > 0 and body.vz >= 0:
-                            text += "moving away from us "
-                        elif body.z > 0 and body.vz < 0:
-                            text += "moving towards us "
-                        if body.vx <= 0:
-                            text += "from right to left "
-                        else:
-                            text += "from left to right "
-                        text += "speed " + str(speed) + " kilometers per hour "
-
-                    self.add_event(Event(self, self.current_time, 0, id(body),
-                                         text))
-
-
-            # Check for new bodies
-            self.check_patterns_for_bodies()
-
+            
             # Apply measurements
             for body in self.bodies:
                 if body.pattern is not None:
@@ -2063,6 +2068,15 @@ class World:
 
             for body in self.bodies:
                 body.add_trace(self.current_time)
+
+            # Fetch laser scans
+            try:
+                laser_scans = next(self.laserscan_factory)
+            except StopIteration:
+                return
+            # Convert laser scans to our coordinates
+            laser_scans = self.t_cam_from_velo.dot(laser_scans.T)
+            laser_scans = KITTI_ROT.dot(laser_scans)
 
             """
             Update presentations
@@ -2093,7 +2107,7 @@ class World:
             """
             for body in self.bodies:
                 l_pattern = body.pattern
-                r_detection = body.detection_right
+                r_detection = l_pattern.detection_right
                 if l_pattern is not None and r_detection is not None:
                     x1,y1 = l_pattern.center_point()
                     x1 *= UI_VIDEO_SCALE
@@ -2267,8 +2281,8 @@ class World:
                 if body.pattern is not None:
                     conf1 = body.pattern.confidence
                 conf2 = 0.0
-                if body.detection_right is not None:
-                    conf2 = body.detection_right.confidence
+                if body.pattern.detection_right is not None:
+                    conf2 = body.pattern.detection_right.confidence
                 label = "{0:6s} {1:10s} Confidence: {2:5.2f} {3:5.2f}".format(
                         CLASS_NAMES[body.class_id], 
                         body.status, conf1, conf2)
@@ -2337,7 +2351,7 @@ def run_application():
 #    date = '2011_09_26' # Car 
 #    drive = '0009'
 
-    example = 0
+    example = 2
     dataset = pykitti.raw(basedir, examples[example][0], examples[example][1],
                           imformat='cv2')
 
