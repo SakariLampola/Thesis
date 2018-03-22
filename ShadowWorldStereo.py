@@ -13,7 +13,7 @@ import time
 import random as rnd
 import pyttsx3
 import winsound
-from math import atan, cos, sqrt, tan, exp, log
+from math import atan, cos, sqrt, tan, exp, log, atan2, sin, pi
 from scipy.optimize import linear_sum_assignment
 #from scipy.stats import multivariate_normal
 import pykitti
@@ -77,7 +77,7 @@ SIMILARITY_DISTANCE = 0.4 # Max distance for detection-pattern similarity
 #STEREO_MATCH_MEAN = pd.read_pickle("stereo/stereomatch_mean.pkl").as_matrix()
 #STEREO_MATCH_COVARIANCE = pd.read_pickle("stereo/stereomatch_covariance.pkl").as_matrix()
 STEREO_MATCHING_HORIZONTAL = 0.2 # How much horizontal difference is attuanated
-STEREO_MATCHING_MAX_DISTANCE = 30 # Maximum allowed distance for stereo matching
+STEREO_MATCHING_MAX_DISTANCE = 90 # Maximum allowed distance for stereo matching
 STEREO_MAX_DISTANCE = 20.0 # Max distance to stereo vision to be accurate
 # Other constants--------------------------------------------------------------
 CLASS_NAMES = ["Background", "Car", "Person"]
@@ -132,6 +132,8 @@ class Body:
         self.collision_probability = 0.0
         self.collision_probability_max = 0.0
         self.color = pattern.bounding_box_color
+        self.bounding_3d_box = np.zeros((3,8))
+        self.set_bounding_3d_box()
 
     def add_trace(self, time):
         """
@@ -139,6 +141,46 @@ class Body:
         """
         self.traces.append(Trace(time, self))
     
+    def set_bounding_3d_box(self):
+        self.bounding_3d_box[0,0] = 0.5*self.length # p1x
+        self.bounding_3d_box[1,0] = 0.5*self.height # p1y
+        self.bounding_3d_box[2,0] = -0.5*self.width # p1z
+
+        self.bounding_3d_box[0,1] = 0.5*self.length # p2x
+        self.bounding_3d_box[1,1] = 0.5*self.height # p2y
+        self.bounding_3d_box[2,1] = 0.5*self.width # p2z
+
+        self.bounding_3d_box[0,2] = 0.5*self.length # p3x
+        self.bounding_3d_box[1,2] = -0.5*self.height # 31y
+        self.bounding_3d_box[2,2] = -0.5*self.width # p3z
+
+        self.bounding_3d_box[0,3] = 0.5*self.length # p4x
+        self.bounding_3d_box[1,3] = -0.5*self.height # p4y
+        self.bounding_3d_box[2,3] = 0.5*self.width # p4z
+
+        self.bounding_3d_box[0,4] = -0.5*self.length # p5x
+        self.bounding_3d_box[1,4] = 0.5*self.height # p5y
+        self.bounding_3d_box[2,4] = -0.5*self.width # p5z
+
+        self.bounding_3d_box[0,5] = -0.5*self.length # p6x
+        self.bounding_3d_box[1,5] = 0.5*self.height # p6y
+        self.bounding_3d_box[2,5] = 0.5*self.width # p6z
+
+        self.bounding_3d_box[0,6] = -0.5*self.length # p7x
+        self.bounding_3d_box[1,6] = -0.5*self.height # p7y
+        self.bounding_3d_box[2,6] = -0.5*self.width # p7z
+
+        self.bounding_3d_box[0,7] = -0.5*self.length # p8x
+        self.bounding_3d_box[1,7] = -0.5*self.height # p8y
+        self.bounding_3d_box[2,7] = 0.5*self.width # p8z
+
+        alfa = atan2(self.vx, self.vz) + pi/2
+        rot=np.array([[cos(alfa),0,sin(alfa)],[0,1,0],[-sin(alfa),0,cos(alfa)]])
+        self.bounding_3d_box = rot.dot(self.bounding_3d_box)
+        loc = np.array([self.x, self.y, self.z])
+        for i in range(0,8):
+            self.bounding_3d_box[:,i] = self.bounding_3d_box[:,i]+ loc
+
     def coordinates_from_pattern(self):
         """
         Calculates world coordinates from pattern center point, pattern height,
@@ -232,6 +274,7 @@ class Body:
         self.vy = mu[4, 0]
         self.vz = mu[5, 0]
         self.sigma = (np.eye(6)-k.dot(BODY_C)).dot(self.sigma)
+        self.set_bounding_3d_box()
 
     def detect_collision(self):
         """
@@ -314,6 +357,8 @@ class Body:
 
         self.sigma = a.dot(self.sigma).dot(a.T) + BODY_R
 
+        self.set_bounding_3d_box()
+
     def set_class_attributes(self, class_id):
         """
         Sets class specific attributes
@@ -323,10 +368,16 @@ class Body:
             self.diameter_mu = log(3.6)
             self.diameter_sigma = 0.25
             self.velocity_max = 50.0
+            self.height = 1.5
+            self.length = 4.8
+            self.width = 2.0
         if class_id == 2: # Person
             self.diameter_mu = log(1.67)
             self.diameter_sigma = 0.07
             self.velocity_max = 10.0
+            self.height = 1.8
+            self.length = 0.4
+            self.width = 0.6
 
     def speed(self):
         return sqrt(self.vx**2.0 + self.vy**2.0 + self.vz**2.0)
@@ -1801,7 +1852,7 @@ class World:
     """
     3 dimensional model of the physical world
     """
-    def __init__(self, size, t_cam_from_velo, laserscans):
+    def __init__(self, size, t_cam_from_velo, laserscans, output_videofile):
         """
         Initialization
         """
@@ -1840,6 +1891,9 @@ class World:
 
         cv2.imshow("ShadowWorld", self.frame)
         cv2.moveWindow("ShadowWorld", 10, 10)
+
+        fourcc = cv2.VideoWriter_fourcc(*'XVID')
+        self.output_video = cv2.VideoWriter(output_videofile,fourcc, 10.0, (UI_X3,UI_Y4))        
 
         self.check_keyboard_command()
         if self.mode == "quit":
@@ -1903,6 +1957,16 @@ class World:
                 self.mode = "quit"
             if key_pushed == ord('s'):
                 self.mode = "step"
+
+    def get_current_events(self):
+        """
+        Get list of current events
+        """
+        events = []
+        for event in self.events:
+            if event.time == self.current_time:
+                events.append(event)
+        return events
 
     def match_right_detections_to_left_patterns(self):
         """
@@ -2009,6 +2073,7 @@ class World:
         for presentation in self.presentations:
             presentation.close()
         cv2.destroyWindow("ShadowWorld")
+        self.output_video.release()
 
     def run(self):
         """
@@ -2036,6 +2101,7 @@ class World:
                         body.x = xo
                         body.y = yo
                         body.z = zo
+                        body.set_bounding_3d_box()
 
             # Predict body locations
             for body in self.bodies:
@@ -2192,13 +2258,33 @@ class World:
                     ycc = yc + trace.z * pixels_meter
                     cv2.circle(map_frame, (int(xcc), int(ycc)), 1, body.color, 1)
                 # Current
+                p1x = int(xc+body.bounding_3d_box[0,0]*pixels_meter)
+                p1y = int(yc+body.bounding_3d_box[2,0]*pixels_meter)
+                p2x = int(xc+body.bounding_3d_box[0,1]*pixels_meter)
+                p2y = int(yc+body.bounding_3d_box[2,1]*pixels_meter)
+                p5x = int(xc+body.bounding_3d_box[0,4]*pixels_meter)
+                p5y = int(yc+body.bounding_3d_box[2,4]*pixels_meter)
+                p6x = int(xc+body.bounding_3d_box[0,5]*pixels_meter)
+                p6y = int(yc+body.bounding_3d_box[2,5]*pixels_meter)
+                cv2.line(map_frame, (p1x,p1y), (p2x,p2y), body.color, 1)
+                cv2.line(map_frame, (p2x,p2y), (p6x,p6y), body.color, 1)
+                cv2.line(map_frame, (p6x,p6y), (p5x,p5y), body.color, 1)
+                cv2.line(map_frame, (p5x,p5y), (p1x,p1y), body.color, 1)
+
+#                pts = np.array([
+#                        [p1x,p1y],
+#                        [p2x,p2y],
+#                        [p5x,p5y],
+#                        [p6x,p6y]], np.int32)
+#                pts = pts.reshape((-1,1,2))
+#                cv2.polylines(map_frame,[pts],False,body.color)
                 xcc = xc + body.x * pixels_meter
                 ycc = yc + body.z * pixels_meter
 #                color = (0,255,0) # green
 #                if body.status == "predicted":
 #                    color = (0,0,255) # red
-                radius_pixels = int(body.mean_radius() * pixels_meter)
-                cv2.circle(map_frame, (int(xcc), int(ycc)), radius_pixels, body.color, 1)
+#                radius_pixels = int(body.mean_radius() * pixels_meter)
+#                cv2.circle(map_frame, (int(xcc), int(ycc)), radius_pixels, body.color, 1)
                 color = (100,100,100)
                 sx = int(sqrt(body.sigma[0,0]))
                 sy = int(sqrt(body.sigma[2,2]))
@@ -2247,13 +2333,39 @@ class World:
             cv2.line(map_frame,(0,yc), (2*xc,yc), (200,200,200), 1)
             #Bodies
             for body in self.bodies:
+                ylow = int(yc-body.bounding_3d_box[1,0]*pixels_meter)
+                yhigh = int(yc-body.bounding_3d_box[1,3]*pixels_meter)
+                xmin = min(body.bounding_3d_box[0,0],
+                           body.bounding_3d_box[0,1],
+                           body.bounding_3d_box[0,2],
+                           body.bounding_3d_box[0,3],
+                           body.bounding_3d_box[0,4],
+                           body.bounding_3d_box[0,5],
+                           body.bounding_3d_box[0,6],
+                           body.bounding_3d_box[0,7])
+                xmax = max(body.bounding_3d_box[0,0],
+                           body.bounding_3d_box[0,1],
+                           body.bounding_3d_box[0,2],
+                           body.bounding_3d_box[0,3],
+                           body.bounding_3d_box[0,4],
+                           body.bounding_3d_box[0,5],
+                           body.bounding_3d_box[0,6],
+                           body.bounding_3d_box[0,7])
+                xlow = int(xc+xmin*pixels_meter)
+                xhigh = int(xc+xmax*pixels_meter)
+
+                cv2.line(map_frame, (xlow,ylow), (xlow,yhigh), body.color, 1)
+                cv2.line(map_frame, (xlow,yhigh), (xhigh,yhigh), body.color, 1)
+                cv2.line(map_frame, (xhigh,yhigh), (xhigh,ylow), body.color, 1)
+                cv2.line(map_frame, (xhigh,ylow), (xlow,ylow), body.color, 1)
+
                 xcc = xc + body.x * pixels_meter
                 ycc = yc - body.y * pixels_meter
 #                color = (0,255,0) # green
 #                if body.status == "predicted":
 #                    color = (0,0,255) # red
-                radius_pixels = int(body.mean_radius() * pixels_meter)
-                cv2.circle(map_frame, (int(xcc), int(ycc)), radius_pixels, body.color, 1)
+#                radius_pixels = int(body.mean_radius() * pixels_meter)
+#                cv2.circle(map_frame, (int(xcc), int(ycc)), radius_pixels, body.color, 1)
                 color = (100,100,100)
                 sx = int(sqrt(body.sigma[0,0]))
                 sy = int(sqrt(body.sigma[2,2]))
@@ -2298,14 +2410,22 @@ class World:
                         body.sigma[3][3], body.sigma[4][4], body.sigma[5][5])
                 cv2.putText(rep_frame, label, (10,irow), cv2.FONT_HERSHEY_SIMPLEX, 0.4, col, 1)
                 irow += offset
-                label = "   Distance/stereo: {0:5.1f} Distance/size:{1:5.1f}".format(body.distance_stereo, body.distance_size)
-                cv2.putText(rep_frame, label, (10,irow), cv2.FONT_HERSHEY_SIMPLEX, 0.4, col, 1)
-                irow += offset
                 distance = sqrt(body.x**2.0 + body.y**2.0 + body.z**2.0)
                 speed = sqrt(body.vx**2.0 + body.vy**2.0 + body.vz**2.0)*3.6
-                label = "   Distance: {0:5.1f} Speed{1:5.1f} km/h".format(distance, speed)
+                label = "   Distance: {0:5.1f}/{1:5.1f}/{2:5.1f} Speed: {3:5.1f} km/h".format(
+                        body.distance_stereo, body.distance_size, distance, speed)
                 cv2.putText(rep_frame, label, (10,irow), cv2.FONT_HERSHEY_SIMPLEX, 0.4, col, 1)
                 irow += offset
+            #Events
+            label = "Events:"
+            cv2.putText(rep_frame, label, (10,irow), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255,255,255), 1)
+            irow += offset
+            events = self.get_current_events()
+            for event in events:
+                label = "{0:s} ID={1:s}".format(event.text, str(event.object_id))
+                cv2.putText(rep_frame, label, (10,irow), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255,255,255), 1)
+                irow += offset
+                
             
             self.frame[UI_Y0:UI_Y4, UI_X2:UI_X3, :] = rep_frame
             
@@ -2323,6 +2443,7 @@ class World:
             self.frame[UI_Y0:UI_Y4, UI_X2, :] = line_color
             self.frame[UI_Y0:UI_Y4, UI_X3, :] = line_color
             cv2.imshow("ShadowWorld", self.frame)
+            self.output_video.write(self.frame)
 
             self.check_keyboard_command()
             if self.mode == "quit":
@@ -2338,8 +2459,8 @@ def run_application():
     """
     Example application
     """
-    examples = [['2011_09_28','0119', 31], # 0 = simple one person
-                ['2011_09_28','0016', 71], # 1 = several persons
+    examples = [['2011_09_28','0119', 21], # 0 = simple one person
+                ['2011_09_28','0016', 91], # 1 = several persons
                 ['2011_09_26','0009',101]  # 2 = car
                 ] 
     # Load KITTI data
@@ -2351,12 +2472,12 @@ def run_application():
 #    date = '2011_09_26' # Car 
 #    drive = '0009'
 
-    example = 2
+    example = 1
     dataset = pykitti.raw(basedir, examples[example][0], examples[example][1],
                           imformat='cv2')
 
     world = World(size=examples[example][2], t_cam_from_velo=dataset.calib.T_cam0_velo,
-                  laserscans=dataset.velo)
+                  laserscans=dataset.velo, output_videofile='videos/output.avi')
     
     sensor_width = SENSOR_WIDTH * 4.65 / 1000000 # ICX267
     sensor_height = SENSOR_HEIGHT * 4.65 / 1000000 # ICX267
