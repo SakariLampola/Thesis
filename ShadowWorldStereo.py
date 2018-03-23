@@ -42,6 +42,7 @@ BODY_R = np.array([[0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
                    [0.0, 0.0, 0.0, 0.0, 0.0, 1.0]
                   ]) # Body state equation covariance
 #
+BODY_UNCERTAINTY = 100.0 # Remove body is variance above this value
 BORDER_WIDTH = 30 # Part of video window for special pattern behaviour
 #
 COLLISION_SAMPLES = 1000 # How many samples are drawn for the collision detection
@@ -60,6 +61,7 @@ FORECAST_A = np.array([[1.0, 0.0, 0.0, FORECAST_DELTA,            0.0,          
 FORECAST_COUNT = 500 # How many time steps ahead a body forecast is made
 DISTANCE_SIZE_FACTOR = 1.1*1.32 # How much distance based distance estimation must be adjusted
 DISTANCE_STEREO_FACTOR = 1.1 # How much distance based distance estimation must be adjusted
+GRID_COUNT = 31 # Grid count horizontally and vertically. Must be uneven.
 #FORECAST_INTERVAL = 1.0 # How often forecast is made
 # Path to frozen detection graph. This is the actual model that is used for the object detection.
 PATH_TO_CKPT = r'D:\Thesis\Models\faster_rcnn_resnet101_kitti_2018_01_28' + '/frozen_inference_graph.pb'
@@ -76,7 +78,7 @@ RETENTION_COUNT_MAX = 3 # How many frames pattern is kept untedected
 SIMILARITY_DISTANCE = 0.4 # Max distance for detection-pattern similarity
 #STEREO_MATCH_MEAN = pd.read_pickle("stereo/stereomatch_mean.pkl").as_matrix()
 #STEREO_MATCH_COVARIANCE = pd.read_pickle("stereo/stereomatch_covariance.pkl").as_matrix()
-STEREO_MATCHING_HORIZONTAL = 0.2 # How much horizontal difference is attuanated
+STEREO_MATCHING_HORIZONTAL = 0.4 # How much horizontal difference is attuanated
 STEREO_MATCHING_MAX_DISTANCE = 90 # Maximum allowed distance for stereo matching
 STEREO_MAX_DISTANCE = 20.0 # Max distance to stereo vision to be accurate
 # Other constants--------------------------------------------------------------
@@ -643,6 +645,8 @@ class Camera:
         new_body = Body(self.world, new_pattern)
         new_pattern.body = new_body
         self.world.add_body(new_body)
+        self.world.add_event(Event(self.world, self.world.current_time, 2,
+                                   id(new_body), "Body created"))
 
         return True
     
@@ -744,8 +748,11 @@ class Camera:
                                    id(pattern), "Pattern removed"))
         self.patterns.remove(pattern)
         if pattern.body is not None:
-            pattern.body.pattern_left = None
-            pattern.body.pattern_right = None
+            pattern.body.pattern = None
+        pattern.detection_right = None
+        for detection in self.detections:
+            if detection.pattern is not None and detection.pattern == pattern:
+                detection.pattern = None
 
     def update(self, current_time, delta_time):
         """
@@ -1291,81 +1298,81 @@ class Presentation:
         """
         pass
 
-#------------------------------------------------------------------------------
-class PresentationForecast(Presentation):
-    """
-    2D map presentation for movement and collision forecast
-    """
-    def __init__(self, world, map_id, x_loc, y_loc, height_pixels, 
-                 width_pixels, extent):
-        """
-        Initialization
-        """
-        super().__init__(world)
-        self.map_id =map_id
-        self.x_loc = x_loc
-        self.y_loc = y_loc
-        self.height_pixels = height_pixels
-        self.width_pixels = width_pixels
-        self.extent = extent
-        self.frame = np.zeros((height_pixels, width_pixels, 3), np.uint8)
-        self.window_name = "Map " + str(map_id)
-        cv2.imshow(self.window_name, self.frame)
-        cv2.moveWindow(self.window_name, self.x_loc, self.y_loc)
-        
-    def close(self):
-        """
-        Release resources
-        """
-        cv2.destroyWindow(self.window_name)
-
-    def update(self, current_time):
-        """
-        Update presentation at time t
-        """
-        extension_pixels = min(self.height_pixels, self.width_pixels)
-        pixels_meter = 0.5*extension_pixels / self.extent
-
-        # Empty frame
-        self.frame = np.zeros((self.height_pixels, self.width_pixels, 3), 
-                              np.uint8)
-
-        # No bodies, now update
-        if len(self.world.bodies) == 0:
-            return
-
-        # Observer
-        color = (255, 255, 255)
-        radius_pixels = int((1.63 + sqrt(0.234) )* pixels_meter/2.0)
-        cv2.circle(self.frame, (int(self.width_pixels/2), 
-                                int(self.height_pixels/2)), 
-                                radius_pixels, color, 1)
-
-        # Draw
-        for body in self.world.bodies:
-            xc = self.width_pixels/2.0 + body.x * pixels_meter
-            yc = self.height_pixels/2.0 + body.z * pixels_meter
-            color = body.forecast_color
-            radius_pixels = int(body.mean_radius() * pixels_meter)
-            cv2.circle(self.frame, (int(xc), int(yc)), radius_pixels, color, 1)
-            if body.forecast is not None:
-                for i in range(1, FORECAST_COUNT):
-                    x1 = int(self.width_pixels/2.0 + body.forecast.mu[0,i-1] * pixels_meter)
-                    y1 = int(self.height_pixels/2.0 + body.forecast.mu[2,i-1] * pixels_meter)
-                    x2 = int(self.width_pixels/2.0 + body.forecast.mu[0,i] * pixels_meter)
-                    y2 = int(self.height_pixels/2.0 + body.forecast.mu[2,i] * pixels_meter)
-                    cv2.line(self.frame, (x1,y1), (x2,y2), color, 1)
-                xc = self.width_pixels/2.0 + body.forecast.x_min_distance * pixels_meter
-                yc = self.height_pixels/2.0 + body.forecast.z_min_distance * pixels_meter
-                cv2.circle(self.frame, (int(xc), int(yc)), 3, color, 1)
-                if body.collision_probability > 0.0:
-                    sx = int(sqrt(body.forecast.sigma_min_distance[0,0]))
-                    sy = int(sqrt(body.forecast.sigma_min_distance[2,2]))
-                    cv2.circle(self.frame, (int(xc), int(yc)), 3, color, 1)
-                    cv2.ellipse(self.frame, (int(xc), int(yc)), (sx, sy), 0.0, 0.0, 
-                            360.0, color,1)
-        cv2.imshow(self.window_name, self.frame)
-                
+##------------------------------------------------------------------------------
+#class PresentationForecast(Presentation):
+#    """
+#    2D map presentation for movement and collision forecast
+#    """
+#    def __init__(self, world, map_id, x_loc, y_loc, height_pixels, 
+#                 width_pixels, extent):
+#        """
+#        Initialization
+#        """
+#        super().__init__(world)
+#        self.map_id =map_id
+#        self.x_loc = x_loc
+#        self.y_loc = y_loc
+#        self.height_pixels = height_pixels
+#        self.width_pixels = width_pixels
+#        self.extent = extent
+#        self.frame = np.zeros((height_pixels, width_pixels, 3), np.uint8)
+#        self.window_name = "Map " + str(map_id)
+#        cv2.imshow(self.window_name, self.frame)
+#        cv2.moveWindow(self.window_name, self.x_loc, self.y_loc)
+#        
+#    def close(self):
+#        """
+#        Release resources
+#        """
+#        cv2.destroyWindow(self.window_name)
+#
+#    def update(self, current_time):
+#        """
+#        Update presentation at time t
+#        """
+#        extension_pixels = min(self.height_pixels, self.width_pixels)
+#        pixels_meter = 0.5*extension_pixels / self.extent
+#
+#        # Empty frame
+#        self.frame = np.zeros((self.height_pixels, self.width_pixels, 3), 
+#                              np.uint8)
+#
+#        # No bodies, now update
+#        if len(self.world.bodies) == 0:
+#            return
+#
+#        # Observer
+#        color = (255, 255, 255)
+#        radius_pixels = int((1.63 + sqrt(0.234) )* pixels_meter/2.0)
+#        cv2.circle(self.frame, (int(self.width_pixels/2), 
+#                                int(self.height_pixels/2)), 
+#                                radius_pixels, color, 1)
+#
+#        # Draw
+#        for body in self.world.bodies:
+#            xc = self.width_pixels/2.0 + body.x * pixels_meter
+#            yc = self.height_pixels/2.0 + body.z * pixels_meter
+#            color = body.forecast_color
+#            radius_pixels = int(body.mean_radius() * pixels_meter)
+#            cv2.circle(self.frame, (int(xc), int(yc)), radius_pixels, color, 1)
+#            if body.forecast is not None:
+#                for i in range(1, FORECAST_COUNT):
+#                    x1 = int(self.width_pixels/2.0 + body.forecast.mu[0,i-1] * pixels_meter)
+#                    y1 = int(self.height_pixels/2.0 + body.forecast.mu[2,i-1] * pixels_meter)
+#                    x2 = int(self.width_pixels/2.0 + body.forecast.mu[0,i] * pixels_meter)
+#                    y2 = int(self.height_pixels/2.0 + body.forecast.mu[2,i] * pixels_meter)
+#                    cv2.line(self.frame, (x1,y1), (x2,y2), color, 1)
+#                xc = self.width_pixels/2.0 + body.forecast.x_min_distance * pixels_meter
+#                yc = self.height_pixels/2.0 + body.forecast.z_min_distance * pixels_meter
+#                cv2.circle(self.frame, (int(xc), int(yc)), 3, color, 1)
+#                if body.collision_probability > 0.0:
+#                    sx = int(sqrt(body.forecast.sigma_min_distance[0,0]))
+#                    sy = int(sqrt(body.forecast.sigma_min_distance[2,2]))
+#                    cv2.circle(self.frame, (int(xc), int(yc)), 3, color, 1)
+#                    cv2.ellipse(self.frame, (int(xc), int(yc)), (sx, sy), 0.0, 0.0, 
+#                            360.0, color,1)
+#        cv2.imshow(self.window_name, self.frame)
+#                
 #------------------------------------------------------------------------------
 class PresentationLog(Presentation):
     """
@@ -1846,7 +1853,6 @@ class Trace:
         self.vx = body.vx
         self.vy = body.vy
         self.vz = body.vz
-
 #------------------------------------------------------------------------------
 class World:
     """
@@ -1874,6 +1880,7 @@ class World:
         self.laserscans = laserscans
         self.laserscan_factory = iter(self.laserscans)
         self.size = size
+        self.grid = WorldGrid(self)
 
         self.frame = np.zeros((UI_Y4+1, UI_X3+1, 3), np.uint8)
         label = "Commands:"
@@ -1904,8 +1911,6 @@ class World:
         Add a body
         """
         self.bodies.append(body)
-        self.add_event(Event(self, self.current_time, 1, id(body),
-                             "Body created"))
 
     def add_camera_left(self, camera):
         """
@@ -1958,6 +1963,20 @@ class World:
             if key_pushed == ord('s'):
                 self.mode = "step"
 
+    def close(self):
+        """
+        Release resources
+        """
+        self.object_detector.close()
+        if self.camera_left is not None:
+            self.camera_left.close()
+        if self.camera_right is not None:
+            self.camera_right.close()
+        for presentation in self.presentations:
+            presentation.close()
+        cv2.destroyWindow("ShadowWorld")
+        self.output_video.release()
+
     def get_current_events(self):
         """
         Get list of current events
@@ -1997,6 +2016,8 @@ class World:
                 if (patterns_left[row].class_id == detections_right[col].class_id):
                     c = abs(wl-wr)+abs(hl-hr)+abs(yl-yr)+STEREO_MATCHING_HORIZONTAL*abs(xl-xr)
                 else:
+                    c = 999999.0
+                if xl - xr < 0:
                     c = 999999.0
                 cost[row][col] = c
 
@@ -2063,17 +2084,13 @@ class World:
 #                patterns_left[row_ind[i]].detection_right = detections_right[col_ind[i]]
 #                body.x, body.y, body.z = body.coordinates_from_pattern()
 
-    def close(self):
+    def remove_body(self, body):
         """
-        Release resources
+        Remove body and dependencies
         """
-        self.object_detector.close()
-        for camera in [self.camera_left, self.camera_right]:
-            camera.close()
-        for presentation in self.presentations:
-            presentation.close()
-        cv2.destroyWindow("ShadowWorld")
-        self.output_video.release()
+        if body.pattern is not None:
+            self.camera_left.remove_pattern(body.pattern)
+        self.bodies.remove(body)
 
     def run(self):
         """
@@ -2092,6 +2109,16 @@ class World:
                 return
             # Match right camera detections to left camera patterns
             self.match_right_detections_to_left_patterns()
+
+            # Remove too far behind bodies
+            for body in self.bodies:
+                if body.z > self.size:
+                    self.remove_body(body)
+
+            # Remove too uncertain bodies
+            for body in self.bodies:
+                if body.location_variance() > BODY_UNCERTAINTY:
+                    self.remove_body(body)
 
             # Apply measurements for newly created bodies
             for body in self.bodies:
@@ -2173,17 +2200,18 @@ class World:
             """
             for body in self.bodies:
                 l_pattern = body.pattern
-                r_detection = l_pattern.detection_right
-                if l_pattern is not None and r_detection is not None:
-                    x1,y1 = l_pattern.center_point()
-                    x1 *= UI_VIDEO_SCALE
-                    y1 *= UI_VIDEO_SCALE
-                    x2,y2 = r_detection.center_point()
-                    x2 *= UI_VIDEO_SCALE
-                    y2 *= UI_VIDEO_SCALE
-                    y2 += + UI_Y1
-                    cv2.line(self.frame, (int(x1),int(y1)), (int(x2),int(y2)), 
-                             l_pattern.bounding_box_color,1)
+                if l_pattern is not None:
+                    r_detection = l_pattern.detection_right
+                    if l_pattern is not None and r_detection is not None:
+                        x1,y1 = l_pattern.center_point()
+                        x1 *= UI_VIDEO_SCALE
+                        y1 *= UI_VIDEO_SCALE
+                        x2,y2 = r_detection.center_point()
+                        x2 *= UI_VIDEO_SCALE
+                        y2 *= UI_VIDEO_SCALE
+                        y2 += + UI_Y1
+                        cv2.line(self.frame, (int(x1),int(y1)), (int(x2),int(y2)), 
+                                 l_pattern.bounding_box_color,1)
                     
 
             """
@@ -2226,6 +2254,8 @@ class World:
             """
             # Empty frame
             map_frame = np.zeros((UI_Y3-UI_Y0, UI_X2-UI_X1, 3), np.uint8)
+            # Grid
+            map_frame = self.grid.draw(map_frame)
             xc = int((UI_X2-UI_X1)/2)
             yc = int((UI_Y3-UI_Y0)/2)
             pixels_meter = xc / self.size
@@ -2239,7 +2269,7 @@ class World:
             radius = 10.0
             while radius < self.size:
                 radius_pixels = int(radius * pixels_meter)
-                cv2.circle(map_frame, (xc, yc), radius_pixels, (200,200,200), 1)
+                cv2.circle(map_frame, (xc, yc), radius_pixels, (120,120,120), 1)
                 radius += 10.0
             # Camera field of views
             for camera in [self.camera_left, self.camera_right]:
@@ -2327,7 +2357,7 @@ class World:
             radius = 10.0
             while radius < self.size:
                 radius_pixels = int(radius * pixels_meter)
-                cv2.circle(map_frame, (xc, yc), radius_pixels, (200,200,200), 1)
+                cv2.circle(map_frame, (xc, yc), radius_pixels, (120,120,120), 1)
                 radius += 10.0
             # Ground
             cv2.line(map_frame,(0,yc), (2*xc,yc), (200,200,200), 1)
@@ -2380,7 +2410,9 @@ class World:
             irow = 15
             offset = 15
             # Draw heading
-            label = "Time {0:<.2f}, frame {1:d}".format(self.current_time, self.current_frame)
+            grid_size = 2.0*self.size/GRID_COUNT
+            label = "Time: {0:<.2f} Frame: {1:d} Grid size: {2:<.2f} m".format(self.current_time, 
+                          self.current_frame, grid_size)
             cv2.putText(rep_frame, label, (10,irow), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255,255,255), 1)
             irow += offset
             #Bodies
@@ -2390,12 +2422,12 @@ class World:
             for body in self.bodies:
                 col = body.color
                 conf1 = 0.0
+                conf2 = 0.0
                 if body.pattern is not None:
                     conf1 = body.pattern.confidence
-                conf2 = 0.0
-                if body.pattern.detection_right is not None:
-                    conf2 = body.pattern.detection_right.confidence
-                label = "{0:6s} {1:10s} Confidence: {2:5.2f} {3:5.2f}".format(
+                    if body.pattern.detection_right is not None:
+                        conf2 = body.pattern.detection_right.confidence
+                label = "{0:6s}: {1:10s} Confidence: {2:5.2f} {3:5.2f}".format(
                         CLASS_NAMES[body.class_id], 
                         body.status, conf1, conf2)
                 cv2.putText(rep_frame, label, (10,irow), cv2.FONT_HERSHEY_SIMPLEX, 0.4, col, 1)
@@ -2453,7 +2485,47 @@ class World:
             self.current_time += self.delta_time
             self.current_frame += 1
 
-
+class WorldGrid:
+    """
+    Grid representation of the world
+    """
+    def __init__(self, world):
+        """
+        Initialization
+        """
+        # References
+        self.world = world
+        # Attributes
+    def draw(self, frame):
+        """
+        Draw grid into the top view map        
+        """
+        xc = int((UI_X2-UI_X1)/2)
+        yc = int((UI_Y3-UI_Y0)/2)
+        pixels_meter = xc / self.world.size
+        cell = 2.0 * self.world.size / GRID_COUNT
+        half_count = int(GRID_COUNT/2)
+        # Horizontal lines
+        for i in range(0,GRID_COUNT+1):
+            xmin = -(half_count+0.5)*cell
+            xmax = (half_count+0.5)*cell
+            for j in range(-half_count-1,half_count+1):
+                y = -(j+0.5)*cell
+                xmin_int = int(xc + xmin * pixels_meter)
+                xmax_int = int(xc + xmax * pixels_meter)
+                y_int = int(yc + y * pixels_meter)
+                cv2.line(frame, (xmin_int,y_int), (xmax_int,y_int), (0,100,0), 1)
+        # Vertical lines
+        for i in range(0,GRID_COUNT+1):
+            ymin = -(half_count+0.5)*cell
+            ymax = (half_count+0.5)*cell
+            for j in range(-half_count-1,half_count+1):
+                x = -(j+0.5)*cell
+                ymin_int = int(yc + ymin * pixels_meter)
+                ymax_int = int(yc + ymax * pixels_meter)
+                x_int = int(xc + x * pixels_meter)
+                cv2.line(frame, (x_int,ymin_int), (x_int,ymax_int), (0,100,0), 1)
+        return frame
 #------------------------------------------------------------------------------
 def run_application():
     """
@@ -2472,12 +2544,12 @@ def run_application():
 #    date = '2011_09_26' # Car 
 #    drive = '0009'
 
-    example = 1
+    example = 0
     dataset = pykitti.raw(basedir, examples[example][0], examples[example][1],
                           imformat='cv2')
 
     world = World(size=examples[example][2], t_cam_from_velo=dataset.calib.T_cam0_velo,
-                  laserscans=dataset.velo, output_videofile='videos/output.avi')
+                  laserscans=dataset.velo, output_videofile='../OutputVideos/output.avi')
     
     sensor_width = SENSOR_WIDTH * 4.65 / 1000000 # ICX267
     sensor_height = SENSOR_HEIGHT * 4.65 / 1000000 # ICX267
