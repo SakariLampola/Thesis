@@ -2014,7 +2014,7 @@ class World:
                 xr = 0.5*(det.x_min + det.x_max)
                 yr = 0.5*(det.y_min + det.y_max)
                 if (patterns_left[row].class_id == detections_right[col].class_id):
-                    c = abs(wl-wr)+abs(hl-hr)+abs(yl-yr)+STEREO_MATCHING_HORIZONTAL*abs(xl-xr)
+                    c = abs(wl-wr)+abs(hl-hr)+abs(yl-yr) + STEREO_MATCHING_HORIZONTAL*abs(xl-xr)
                 else:
                     c = 999999.0
                 if xl - xr < 0:
