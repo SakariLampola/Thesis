@@ -99,6 +99,7 @@ UI_Y1 = 410
 UI_Y2 = 820
 UI_Y3 = 923
 UI_Y4 = 1230
+UI_Y5 = 1110
 # Classes----------------------------------------------------------------------
 class Body:
     """
@@ -580,7 +581,8 @@ class Camera:
     def __init__(self, world, name, focal_length, is_primary,
                  sensor_width, sensor_height,
                  sensor_width_pixels, sensor_height_pixels, 
-                 x, y, z, yaw, pitch, roll, frames):
+                 x, y, z, yaw, pitch, roll, frames, oxtsdata,
+                 baseline):
         """
         Initialization
         """
@@ -602,12 +604,34 @@ class Camera:
         self.x = x
         self.y = y
         self.z = z
-        self.yaw = yaw
+        self.yaw = 0
+        self.yaw_ref = 0
         self.pitch = pitch
         self.roll = roll
         self.frames = frames
         self.frame_factory = iter(self.frames)
         self.current_frame = None
+        self.previous_frame = None
+        self.flow = None
+        point_imu = np.array([0,0,0,1])
+        self.oxts_points = []
+        self.yaws = []
+        if is_primary:
+            coord_factory = iter(oxtsdata)
+            exist = True
+            while exist:
+                try:
+                    coord = next(coord_factory)
+                except StopIteration:
+                    exist = False
+                self.oxts_points.append(coord.T_w_imu.dot(point_imu))
+                self.yaws.append(coord.packet.yaw)
+        else:
+            self.oxts_points = None
+            self.yaws = None
+        self.current_frame_count = 0
+        self.baseline = baseline
+        self.speed = 0
 
     def add_pattern(self, detection):
         """
@@ -765,8 +789,48 @@ class Camera:
             frame_video_in = next(self.frame_factory)
         except StopIteration:
             return False # end of video file
+        
+        # Read and update ground truth location
+        if self.is_primary:
+            x_oxts = self.oxts_points[self.current_frame_count][0]
+            y_oxts = self.oxts_points[self.current_frame_count][1]
+            z_oxts = self.oxts_points[self.current_frame_count][2]
+            self.x = -y_oxts
+            self.y = z_oxts
+            self.z = -x_oxts
+            if (self.current_frame_count>0):
+                self.yaw = self.yaws[self.current_frame_count]-self.yaw_ref
+                x_oxts_prev = self.oxts_points[self.current_frame_count-1][0]
+                y_oxts_prev = self.oxts_points[self.current_frame_count-1][1]
+                z_oxts_prev = self.oxts_points[self.current_frame_count-1][2]
+                dx = x_oxts-x_oxts_prev
+                dy = y_oxts-y_oxts_prev
+                dz = z_oxts-z_oxts_prev
+                self.speed = sqrt(dx*dx+dy*dy+dz*dz)
+            else:
+                self.speed = 0
+                self.yaw_ref = self.yaws[0]
+                self.yaw = 0
+        else:
+            self.x = self.world.camera_left.x + self.baseline
+            self.y = self.world.camera_left.y
+            self.z = self.world.camera_left.z
+            self.yaw = self.world.camera_left.yaw
+            self.speed = self.world.camera_left.speed
 
+        self.current_frame_count += 1            
+
+        if (self.current_frame is not None):
+            self.previous_frame = self.current_frame.copy()
+            
         self.current_frame = frame_video_in.copy()
+
+        if (self.previous_frame is not None):
+            self.flow = cv2.calcOpticalFlowFarneback(
+                    cv2.cvtColor(self.previous_frame, cv2.COLOR_BGR2GRAY),
+                    cv2.cvtColor(self.current_frame, cv2.COLOR_BGR2GRAY),
+                    None, 0.5, 3, 15, 3, 5, 1.2, 0)
+            
         self.image_height_pixels, self.image_width_pixels  = self.current_frame.shape[:2]
 
         self.detections = self.detect(self.current_frame, current_time)
@@ -2273,7 +2337,10 @@ class World:
                 radius += 10.0
             # Camera field of views
             for camera in [self.camera_left, self.camera_right]:
-                x_offset = int(camera.x * pixels_meter)
+                if camera is self.camera_left:
+                    x_offset = 0
+                else:
+                    x_offset = int(camera.baseline * pixels_meter)
                 x = xc * tan(camera.field_of_view/2.0)
                 pt1 = (int(xc+x_offset), int(yc))
                 pt2 = (int(xc-x+x_offset),0)
@@ -2402,65 +2469,96 @@ class World:
                 cv2.ellipse(map_frame, (int(xcc), int(ycc)), (sx, sy), 0.0, 0.0, 
                             360.0, body.color,1)
             self.frame[UI_Y3:UI_Y4, UI_X1:UI_X2, :] = map_frame
+
+            """
+            Flow view
+            """
+            if self.camera_left.flow is not None:
+#                minValue = self.camera_left.flow[...,0].min()
+#                maxValue = self.camera_left.flow[...,0].max()
+                minValue = -80
+                maxValue = 80
+                disp = np.uint8(255.0 * (self.camera_left.flow[...,0] - minValue) / (maxValue - minValue))
+                disp_rgb = cv2.applyColorMap(disp, cv2.COLORMAP_JET)
+                cxmin = UI_X2
+                cxmax = UI_X3
+                cymin = UI_Y5
+                cymax = UI_Y4
+                flow_frame = cv2.resize(disp_rgb, (cxmax-cxmin,cymax-cymin))
+                self.frame[cymin:cymax, cxmin:cxmax, :] = flow_frame
+
             """
             Report panel
             """
             # Empty frame
-            rep_frame = np.zeros((UI_Y4-UI_Y0, UI_X3-UI_X2, 3), np.uint8)
+            rep_frame = np.zeros((UI_Y5-UI_Y0, UI_X3-UI_X2, 3), np.uint8)
             irow = 15
             offset = 15
             # Draw heading
             grid_size = 2.0*self.size/GRID_COUNT
-            label = "Time: {0:<.2f} Frame: {1:d} Grid size: {2:<.2f} m".format(self.current_time, 
-                          self.current_frame, grid_size)
-            cv2.putText(rep_frame, label, (10,irow), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255,255,255), 1)
-            irow += offset
+            label = "Time: {0:<.2f} Grid size: {1:<.2f} m".format(self.current_time, grid_size)
+            cv2.putText(rep_frame, label, (10,irow), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,255,255), 1)
+            irow += offset+5
+            # Camera information
+            x_cam = self.camera_left.x
+            y_cam = self.camera_left.y
+            z_cam = self.camera_left.z
+            label = "Camera x/y/z: {0:<.2f}/{1:<.2f}/{2:<.2f}".format(x_cam, y_cam, z_cam)
+            cv2.putText(rep_frame, label, (10,irow), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,255,255), 1)
+            irow += offset+5
+            speed = self.camera_left.speed*3.6/self.delta_time
+            yaw = self.camera_left.yaw*180.0/pi
+            label = "   speed/yaw: {0:<.2f}/{1:<.2f}".format(speed, yaw)
+            cv2.putText(rep_frame, label, (10,irow), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,255,255), 1)
+            irow += offset+5
             #Bodies
             label = "Bodies:"
-            cv2.putText(rep_frame, label, (10,irow), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255,255,255), 1)
-            irow += offset
+            cv2.putText(rep_frame, label, (10,irow), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,255,255), 1)
+            irow += offset+5
             for body in self.bodies:
-                col = body.color
-                conf1 = 0.0
-                conf2 = 0.0
-                if body.pattern is not None:
-                    conf1 = body.pattern.confidence
-                    if body.pattern.detection_right is not None:
-                        conf2 = body.pattern.detection_right.confidence
-                label = "{0:6s}: {1:10s} Confidence: {2:5.2f} {3:5.2f}".format(
-                        CLASS_NAMES[body.class_id], 
-                        body.status, conf1, conf2)
-                cv2.putText(rep_frame, label, (10,irow), cv2.FONT_HERSHEY_SIMPLEX, 0.4, col, 1)
-                irow += offset
-                label = "   Loc: {0:5.1f} {1:5.1f} {2:5.1f} {3:5.1f} {4:5.1f} {5:5.1f}".format(
-                        body.x, body.y, body.z,
-                        body.sigma[0][0], body.sigma[1][1], body.sigma[2][2])
-                cv2.putText(rep_frame, label, (10,irow), cv2.FONT_HERSHEY_SIMPLEX, 0.4, col, 1)
-                irow += offset
-                label = "   Vel: {0:5.1f} {1:5.1f} {2:5.1f} {3:5.1f} {4:5.1f} {5:5.1f}".format(
-                        body.vx, body.vy, body.vz,
-                        body.sigma[3][3], body.sigma[4][4], body.sigma[5][5])
-                cv2.putText(rep_frame, label, (10,irow), cv2.FONT_HERSHEY_SIMPLEX, 0.4, col, 1)
-                irow += offset
-                distance = sqrt(body.x**2.0 + body.y**2.0 + body.z**2.0)
-                speed = sqrt(body.vx**2.0 + body.vy**2.0 + body.vz**2.0)*3.6
-                label = "   Distance: {0:5.1f}/{1:5.1f}/{2:5.1f} Speed: {3:5.1f} km/h".format(
-                        body.distance_stereo, body.distance_size, distance, speed)
-                cv2.putText(rep_frame, label, (10,irow), cv2.FONT_HERSHEY_SIMPLEX, 0.4, col, 1)
-                irow += offset
+                if irow < UI_Y5-20:
+                    col = body.color
+                    conf1 = 0.0
+                    conf2 = 0.0
+                    if body.pattern is not None:
+                        conf1 = body.pattern.confidence
+                        if body.pattern.detection_right is not None:
+                            conf2 = body.pattern.detection_right.confidence
+                    label = "{0:s}: {1:s} Confidence: {2:5.2f} {3:5.2f}".format(
+                            CLASS_NAMES[body.class_id], 
+                            body.status, conf1, conf2)
+                    cv2.putText(rep_frame, label, (10,irow), cv2.FONT_HERSHEY_SIMPLEX, 0.4, col, 1)
+                    irow += offset
+                    label = "   Loc: {0:5.1f} {1:5.1f} {2:5.1f} {3:5.1f} {4:5.1f} {5:5.1f}".format(
+                            body.x, body.y, body.z,
+                            body.sigma[0][0], body.sigma[1][1], body.sigma[2][2])
+                    cv2.putText(rep_frame, label, (10,irow), cv2.FONT_HERSHEY_SIMPLEX, 0.4, col, 1)
+                    irow += offset
+                    label = "   Vel: {0:5.1f} {1:5.1f} {2:5.1f} {3:5.1f} {4:5.1f} {5:5.1f}".format(
+                            body.vx, body.vy, body.vz,
+                            body.sigma[3][3], body.sigma[4][4], body.sigma[5][5])
+                    cv2.putText(rep_frame, label, (10,irow), cv2.FONT_HERSHEY_SIMPLEX, 0.4, col, 1)
+                    irow += offset
+                    distance = sqrt(body.x**2.0 + body.y**2.0 + body.z**2.0)
+                    speed = sqrt(body.vx**2.0 + body.vy**2.0 + body.vz**2.0)*3.6
+                    label = "   Distance: {0:5.1f}/{1:5.1f}/{2:5.1f} Speed: {3:5.1f} km/h".format(
+                            body.distance_stereo, body.distance_size, distance, speed)
+                    cv2.putText(rep_frame, label, (10,irow), cv2.FONT_HERSHEY_SIMPLEX, 0.4, col, 1)
+                    irow += offset
             #Events
-            label = "Events:"
-            cv2.putText(rep_frame, label, (10,irow), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255,255,255), 1)
-            irow += offset
-            events = self.get_current_events()
-            for event in events:
-                label = "{0:s} ID={1:s}".format(event.text, str(event.object_id))
-                cv2.putText(rep_frame, label, (10,irow), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255,255,255), 1)
-                irow += offset
-                
+            irow += 5
+            if irow < UI_Y5-20:
+                label = "Events:"
+                cv2.putText(rep_frame, label, (10,irow), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,255,255), 1)
+                irow += offset+5
+                events = self.get_current_events()
+                for event in events:
+                    if irow < UI_Y5-20:
+                        label = "{0:s} ID={1:s}".format(event.text, str(event.object_id))
+                        cv2.putText(rep_frame, label, (10,irow), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255,255,255), 1)
+                        irow += offset
             
-            self.frame[UI_Y0:UI_Y4, UI_X2:UI_X3, :] = rep_frame
-            
+            self.frame[UI_Y0:UI_Y5, UI_X2:UI_X3, :] = rep_frame
 
             line_color = 60
             # Horizontal lines
@@ -2468,6 +2566,7 @@ class World:
             self.frame[UI_Y1, UI_X0:UI_X1, :] = line_color
             self.frame[UI_Y2, UI_X0:UI_X1, :] = line_color
             self.frame[UI_Y3, UI_X1:UI_X2, :] = line_color
+            self.frame[UI_Y5, UI_X2:UI_X3, :] = line_color
             self.frame[UI_Y4, UI_X0:UI_X3, :] = line_color
             # Vertical lines
             self.frame[UI_Y0:UI_Y4, UI_X0, :] = line_color
@@ -2544,7 +2643,7 @@ def run_application():
 #    date = '2011_09_26' # Car 
 #    drive = '0009'
 
-    example = 0
+    example = 2
     dataset = pykitti.raw(basedir, examples[example][0], examples[example][1],
                           imformat='cv2')
 
@@ -2560,7 +2659,9 @@ def run_application():
                      sensor_height_pixels=SENSOR_HEIGHT,
                      x=0.0, y=0.0, z=0.0, 
                      yaw=0.0, pitch=0.0, roll=0.0, 
-                     frames=dataset.cam2)
+                     frames=dataset.cam2,
+                     oxtsdata=dataset.oxts,
+                     baseline=-0.54)
 #                     x_loc=20, y_loc=20, width_pixels=900, 
 #                     height_pixels=int(900*720/1280))
     world.add_camera_left(camera1)
@@ -2571,7 +2672,9 @@ def run_application():
                      sensor_height_pixels=SENSOR_HEIGHT,
                      x=0.54, y=0.0, z=0.0, 
                      yaw=0.0, pitch=0.0, roll=0.0, 
-                     frames=dataset.cam3)
+                     frames=dataset.cam3,
+                     oxtsdata=None,
+                     baseline=0.54)
 #                     x_loc=20, y_loc=20, width_pixels=900, 
 #                     height_pixels=int(900*720/1280))
     world.add_camera_right(camera2)
