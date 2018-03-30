@@ -245,15 +245,19 @@ class Body:
 
         t = d / sqrt(xc**2.0 + yc**2.0 + zc**2.0)
 
-        xo = t*xc
-        yo = t*yc
-        zo = t*zc
+        x_cam = t*xc
+        y_cam = t*yc
+        z_cam = t*zc
 
-        self.x_projected = xo
-        self.y_projected = yo
-        self.z_projected = zo
+        # From camera coordinates into world coordinates:
+        x_world, y_world, z_world = self.pattern.camera.transform_camera_into_world(x_cam, y_cam, z_cam)
+        
 
-        return xo, yo, zo
+        self.x_projected = x_world
+        self.y_projected = y_world
+        self.z_projected = z_world
+
+        return x_world, y_world, z_world
 
     def correct(self, x, y, z, delta):
         """
@@ -413,7 +417,8 @@ class BoundingBox:
         self.height = y_max - y_min
         patch_hsv = mpl.colors.rgb_to_hsv(patch)
         histo, bins = np.histogram(patch_hsv[:,:,0], 3)
-        histo = histo / sum(histo)
+        if (sum(histo)>0):
+            histo = histo / sum(histo)
         self.hue0 = histo[0]
         self.hue1 = histo[1]
         self.hue2 = histo[2]
@@ -606,6 +611,7 @@ class Camera:
         self.z = z
         self.yaw = 0
         self.yaw_ref = 0
+        self.yaw_estimated = 0
         self.pitch = pitch
         self.roll = roll
         self.frames = frames
@@ -778,6 +784,26 @@ class Camera:
             if detection.pattern is not None and detection.pattern == pattern:
                 detection.pattern = None
 
+    def transform_camera_into_world(self,x,y,z):
+        """
+        Transform camera coordinates into world coordinates:
+        """
+        yaw = self.yaw
+        xw = self.x+cos(yaw)*x+sin(yaw)*z
+        yw = y
+        zw = self.z-sin(yaw)*x+cos(yaw)*z
+        return xw, yw, zw
+
+    def transform_world_into_camera(self,x,y,z):
+        """
+        Transform world coordinates into camera coordinates:
+        """
+        yaw = self.yaw
+        xc = cos(yaw)*(x-self.x)-sin(yaw)*(z-self.z)
+        yc = y
+        zc = sin(yaw)*(x-self.x)+cos(yaw)*(z-self.z)
+        return xc, yc, zc
+
     def update(self, current_time, delta_time):
         """
         Detections are created and matched to previous patterns. New patterns
@@ -830,6 +856,16 @@ class Camera:
                     cv2.cvtColor(self.previous_frame, cv2.COLOR_BGR2GRAY),
                     cv2.cvtColor(self.current_frame, cv2.COLOR_BGR2GRAY),
                     None, 0.5, 3, 15, 3, 5, 1.2, 0)
+            ff = self.flow.flatten()
+            fmean=ff.mean()
+            if fmean > 0:
+                ff2=ff[ff>0]
+            else:
+                ff2=ff[ff<0]
+            fmean2=ff2.mean()
+            ff3=ff2[ff2>fmean2]
+            fmean3=ff3.mean()
+            self.yaw_estimated += atan(fmean3*self.sensor_width/(self.focal_length*self.sensor_width_pixels))
             
         self.image_height_pixels, self.image_width_pixels  = self.current_frame.shape[:2]
 
@@ -1582,6 +1618,14 @@ class PresentationLog(Presentation):
             f = "{0:.3f},{1:d},{2:d},{3:s}" # time,priority,object,text
             f += "\n"
             self.fmt = f
+        elif self.category == "Camera":
+            self.file.write("time,x,y,z,")
+            self.file.write("yaw,yaw_estimated")
+            self.file.write("\n")
+            f = "{0:.3f},{1:.3f},{2:.3f},{3:.3f}," # time,x,y,z
+            f += "{4:.3f},{5:.3f}" # yaw,yaw_estimated
+            f += "\n"
+            self.fmt = f
         else:
             self.file.write("Unsupported category.")
         
@@ -1867,6 +1911,14 @@ class PresentationLog(Presentation):
                                                 body.x_projected,
                                                 body.y_projected,
                                                 body.z_projected))
+        elif self.category == "Camera":
+            for camera in [self.world.camera_left]:
+                self.file.write(self.fmt.format(current_time,
+                                                camera.x,
+                                                camera.y,
+                                                camera.z,
+                                                180.0*camera.yaw/pi,
+                                                180.0*camera.yaw_estimated/pi))
         else:
             pass
                 
@@ -2325,9 +2377,10 @@ class World:
             pixels_meter = xc / self.size
             # Laser scans
             for i in range(0, laser_scans.shape[1]):
-                x = int(xc + laser_scans[0,i] * pixels_meter)
-                y = int(yc + laser_scans[2,i] * pixels_meter)
-                if laser_scans[1,i] < 1.0 and  laser_scans[1,i] > -1.0:
+                x_w, y_w, z_w = self.camera_left.transform_camera_into_world(laser_scans[0,i], laser_scans[1,i], laser_scans[2,i])
+                if y_w < 1.0 and y_w > -1.0:
+                    x = int(xc + x_w * pixels_meter)
+                    y = int(yc + z_w * pixels_meter)
                     cv2.circle(map_frame, (x, y), 1, (256,0,0),1)
             # Radar circles
             radius = 10.0
@@ -2336,17 +2389,32 @@ class World:
                 cv2.circle(map_frame, (xc, yc), radius_pixels, (120,120,120), 1)
                 radius += 10.0
             # Camera field of views
+#            for camera in [self.camera_left, self.camera_right]:
+#                if camera is self.camera_left:
+#                    x_offset = 0
+#                else:
+#                    x_offset = int(camera.baseline * pixels_meter)
+#                x = xc * tan(camera.field_of_view/2.0)
+#                pt1 = (int(xc+x_offset), int(yc))
+#                pt2 = (int(xc-x+x_offset),0)
+#                cv2.line(map_frame, pt1, pt2, (0,0,255), 1)
+#                pt2 = (int(xc+x+x_offset),0)
+#                cv2.line(map_frame, pt1, pt2, (0,0,255), 1)
             for camera in [self.camera_left, self.camera_right]:
-                if camera is self.camera_left:
-                    x_offset = 0
-                else:
-                    x_offset = int(camera.baseline * pixels_meter)
-                x = xc * tan(camera.field_of_view/2.0)
-                pt1 = (int(xc+x_offset), int(yc))
-                pt2 = (int(xc-x+x_offset),0)
-                cv2.line(map_frame, pt1, pt2, (0,0,255), 1)
-                pt2 = (int(xc+x+x_offset),0)
-                cv2.line(map_frame, pt1, pt2, (0,0,255), 1)
+                fii = camera.field_of_view
+                yaw = -self.camera_left.yaw
+                l = 90.0 # lecngt of sector in meters
+                pxcam = camera.x
+                pzcam = camera.z
+                p1x = l*cos(yaw)*sin(fii/2.0)+l*sin(yaw)*cos(fii/2.0)+pxcam
+                p1z = l*sin(yaw)*sin(fii/2.0)-l*cos(yaw)*cos(fii/2.0)+pzcam
+                p2x = -l*cos(yaw)*sin(fii/2.0)+l*sin(yaw)*cos(fii/2.0)+pxcam
+                p2z = -l*sin(yaw)*sin(fii/2.0)-l*cos(yaw)*cos(fii/2.0)+pzcam
+                pt1 = (int(xc+p1x*pixels_meter), int(yc+p1z*pixels_meter))
+                pt2 = (int(xc+p2x*pixels_meter), int(yc+p2z*pixels_meter))
+                ptcam = (int(xc+pxcam*pixels_meter), int(yc+pzcam*pixels_meter))
+                cv2.line(map_frame, ptcam, pt1, (0,0,255), 1)
+                cv2.line(map_frame, ptcam, pt2, (0,0,255), 1)
             # Bodies
             for body in self.bodies:
                 # History
@@ -2355,14 +2423,18 @@ class World:
                     ycc = yc + trace.z * pixels_meter
                     cv2.circle(map_frame, (int(xcc), int(ycc)), 1, body.color, 1)
                 # Current
-                p1x = int(xc+body.bounding_3d_box[0,0]*pixels_meter)
-                p1y = int(yc+body.bounding_3d_box[2,0]*pixels_meter)
-                p2x = int(xc+body.bounding_3d_box[0,1]*pixels_meter)
-                p2y = int(yc+body.bounding_3d_box[2,1]*pixels_meter)
-                p5x = int(xc+body.bounding_3d_box[0,4]*pixels_meter)
-                p5y = int(yc+body.bounding_3d_box[2,4]*pixels_meter)
-                p6x = int(xc+body.bounding_3d_box[0,5]*pixels_meter)
-                p6y = int(yc+body.bounding_3d_box[2,5]*pixels_meter)
+                p1x_cam, p1y_cam, p1z_cam = body.bounding_3d_box[0,0], body.bounding_3d_box[1,0], body.bounding_3d_box[2,0]
+                p2x_cam, p2y_cam, p2z_cam = body.bounding_3d_box[0,1], body.bounding_3d_box[1,1], body.bounding_3d_box[2,1]
+                p5x_cam, p5y_cam, p5z_cam = body.bounding_3d_box[0,4], body.bounding_3d_box[1,4], body.bounding_3d_box[2,4]
+                p6x_cam, p6y_cam, p6z_cam = body.bounding_3d_box[0,5], body.bounding_3d_box[1,5], body.bounding_3d_box[2,5]
+                p1x = int(xc+p1x_cam*pixels_meter)
+                p1y = int(yc+p1z_cam*pixels_meter)
+                p2x = int(xc+p2x_cam*pixels_meter)
+                p2y = int(yc+p2z_cam*pixels_meter)
+                p5x = int(xc+p5x_cam*pixels_meter)
+                p5y = int(yc+p5z_cam*pixels_meter)
+                p6x = int(xc+p6x_cam*pixels_meter)
+                p6y = int(yc+p6z_cam*pixels_meter)
                 cv2.line(map_frame, (p1x,p1y), (p2x,p2y), body.color, 1)
                 cv2.line(map_frame, (p2x,p2y), (p6x,p6y), body.color, 1)
                 cv2.line(map_frame, (p6x,p6y), (p5x,p5y), body.color, 1)
@@ -2375,18 +2447,18 @@ class World:
 #                        [p6x,p6y]], np.int32)
 #                pts = pts.reshape((-1,1,2))
 #                cv2.polylines(map_frame,[pts],False,body.color)
-                xcc = xc + body.x * pixels_meter
-                ycc = yc + body.z * pixels_meter
+#                xcc = xc + body.x * pixels_meter
+#                ycc = yc + body.z * pixels_meter
 #                color = (0,255,0) # green
 #                if body.status == "predicted":
 #                    color = (0,0,255) # red
 #                radius_pixels = int(body.mean_radius() * pixels_meter)
 #                cv2.circle(map_frame, (int(xcc), int(ycc)), radius_pixels, body.color, 1)
-                color = (100,100,100)
-                sx = int(sqrt(body.sigma[0,0]))
-                sy = int(sqrt(body.sigma[2,2]))
-                cv2.ellipse(map_frame, (int(xcc), int(ycc)), (sx, sy), 0.0, 0.0, 
-                            360.0, color,1)
+#                color = (100,100,100)
+#                sx = int(sqrt(body.sigma[0,0]))
+#                sy = int(sqrt(body.sigma[2,2]))
+#                cv2.ellipse(map_frame, (int(xcc), int(ycc)), (sx, sy), 0.0, 0.0, 
+#                            360.0, color,1)
                 # Forecast
 #                xc = xc + body.x * pixels_meter
 #                yc = yc + body.z * pixels_meter
@@ -2395,10 +2467,12 @@ class World:
 #                cv2.circle(self.frame, (int(xc), int(yc)), radius_pixels, color, 1)
                 if body.forecast is not None:
                     for i in range(1, FORECAST_COUNT):
-                        x1 = int(xc + body.forecast.mu[0,i-1] * pixels_meter)
-                        y1 = int(yc + body.forecast.mu[2,i-1] * pixels_meter)
-                        x2 = int(xc + body.forecast.mu[0,i] * pixels_meter)
-                        y2 = int(yc + body.forecast.mu[2,i] * pixels_meter)
+                        px1_cam, py1_cam, pz1_cam = body.forecast.mu[0,i-1], body.forecast.mu[1,i-1], body.forecast.mu[2,i-1]
+                        px2_cam, py2_cam, pz2_cam = body.forecast.mu[0,i], body.forecast.mu[1,i], body.forecast.mu[2,i]
+                        x1 = int(xc + px1_cam * pixels_meter)
+                        y1 = int(yc + pz1_cam * pixels_meter)
+                        x2 = int(xc + px2_cam * pixels_meter)
+                        y2 = int(yc + pz2_cam * pixels_meter)
                         cv2.line(map_frame, (x1,y1), (x2,y2), body.color, 1)
 #                    xc = self.width_pixels/2.0 + body.forecast.x_min_distance * pixels_meter
 #                    yc = self.height_pixels/2.0 + body.forecast.z_min_distance * pixels_meter
@@ -2430,24 +2504,43 @@ class World:
             cv2.line(map_frame,(0,yc), (2*xc,yc), (200,200,200), 1)
             #Bodies
             for body in self.bodies:
-                ylow = int(yc-body.bounding_3d_box[1,0]*pixels_meter)
-                yhigh = int(yc-body.bounding_3d_box[1,3]*pixels_meter)
-                xmin = min(body.bounding_3d_box[0,0],
-                           body.bounding_3d_box[0,1],
-                           body.bounding_3d_box[0,2],
-                           body.bounding_3d_box[0,3],
-                           body.bounding_3d_box[0,4],
-                           body.bounding_3d_box[0,5],
-                           body.bounding_3d_box[0,6],
-                           body.bounding_3d_box[0,7])
-                xmax = max(body.bounding_3d_box[0,0],
-                           body.bounding_3d_box[0,1],
-                           body.bounding_3d_box[0,2],
-                           body.bounding_3d_box[0,3],
-                           body.bounding_3d_box[0,4],
-                           body.bounding_3d_box[0,5],
-                           body.bounding_3d_box[0,6],
-                           body.bounding_3d_box[0,7])
+                p1x_cam, p1y_cam, p1z_cam = self.camera_left.transform_world_into_camera(
+                        body.bounding_3d_box[0,0],
+                        body.bounding_3d_box[1,0],
+                        body.bounding_3d_box[2,0])
+                p2x_cam, p2y_cam, p2z_cam = self.camera_left.transform_world_into_camera(
+                        body.bounding_3d_box[0,1],
+                        body.bounding_3d_box[1,1],
+                        body.bounding_3d_box[2,1])
+                p3x_cam, p3y_cam, p3z_cam = self.camera_left.transform_world_into_camera(
+                        body.bounding_3d_box[0,2],
+                        body.bounding_3d_box[1,2],
+                        body.bounding_3d_box[2,2])
+                p4x_cam, p4y_cam, p4z_cam = self.camera_left.transform_world_into_camera(
+                        body.bounding_3d_box[0,3],
+                        body.bounding_3d_box[1,3],
+                        body.bounding_3d_box[2,3])
+                p5x_cam, p5y_cam, p5z_cam = self.camera_left.transform_world_into_camera(
+                        body.bounding_3d_box[0,4],
+                        body.bounding_3d_box[1,4],
+                        body.bounding_3d_box[2,4])
+                p6x_cam, p6y_cam, p6z_cam = self.camera_left.transform_world_into_camera(
+                        body.bounding_3d_box[0,5],
+                        body.bounding_3d_box[1,5],
+                        body.bounding_3d_box[2,5])
+                p7x_cam, p7y_cam, p7z_cam = self.camera_left.transform_world_into_camera(
+                        body.bounding_3d_box[0,6],
+                        body.bounding_3d_box[1,6],
+                        body.bounding_3d_box[2,6])
+                p8x_cam, p8y_cam, p8z_cam = self.camera_left.transform_world_into_camera(
+                        body.bounding_3d_box[0,7],
+                        body.bounding_3d_box[1,7],
+                        body.bounding_3d_box[2,7])
+
+                ylow = int(yc-p1y_cam*pixels_meter)
+                yhigh = int(yc-p4y_cam*pixels_meter)
+                xmin = min(p1x_cam,p2x_cam,p3x_cam,p4x_cam,p5x_cam,p6x_cam,p7x_cam,p8x_cam)
+                xmax = max(p1x_cam,p2x_cam,p3x_cam,p4x_cam,p5x_cam,p6x_cam,p7x_cam,p8x_cam)
                 xlow = int(xc+xmin*pixels_meter)
                 xhigh = int(xc+xmax*pixels_meter)
 
@@ -2463,11 +2556,11 @@ class World:
 #                    color = (0,0,255) # red
 #                radius_pixels = int(body.mean_radius() * pixels_meter)
 #                cv2.circle(map_frame, (int(xcc), int(ycc)), radius_pixels, body.color, 1)
-                color = (100,100,100)
-                sx = int(sqrt(body.sigma[0,0]))
-                sy = int(sqrt(body.sigma[2,2]))
-                cv2.ellipse(map_frame, (int(xcc), int(ycc)), (sx, sy), 0.0, 0.0, 
-                            360.0, body.color,1)
+#                color = (100,100,100)
+#                sx = int(sqrt(body.sigma[0,0]))
+#                sy = int(sqrt(body.sigma[2,2]))
+#                cv2.ellipse(map_frame, (int(xcc), int(ycc)), (sx, sy), 0.0, 0.0, 
+#                            360.0, body.color,1)
             self.frame[UI_Y3:UI_Y4, UI_X1:UI_X2, :] = map_frame
 
             """
@@ -2508,7 +2601,8 @@ class World:
             irow += offset+5
             speed = self.camera_left.speed*3.6/self.delta_time
             yaw = self.camera_left.yaw*180.0/pi
-            label = "   speed/yaw: {0:<.2f}/{1:<.2f}".format(speed, yaw)
+            yaw_estimated = self.camera_left.yaw_estimated*180.0/pi
+            label = "   speed/yaw: {0:<.2f}/{1:<.2f} ({2:<.2f})".format(speed, yaw, yaw_estimated)
             cv2.putText(rep_frame, label, (10,irow), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,255,255), 1)
             irow += offset+5
             #Bodies
@@ -2632,7 +2726,7 @@ def run_application():
     """
     examples = [['2011_09_28','0119', 21], # 0 = simple one person
                 ['2011_09_28','0016', 91], # 1 = several persons
-                ['2011_09_26','0009',101]  # 2 = car
+                ['2011_09_26','0009',331]  # 2 = car
                 ] 
     # Load KITTI data
     basedir = 'D:\Thesis\Kitti\Raw'
@@ -2683,6 +2777,7 @@ def run_application():
     world.add_presentation(PresentationLog(world, "Pattern", "logs/Pattern.txt"))
     world.add_presentation(PresentationLog(world, "Body", "logs/Body.txt"))
     world.add_presentation(PresentationLog(world, "Event", "logs/Event.txt"))
+    world.add_presentation(PresentationLog(world, "Camera", "logs/Camera.txt"))
 
     world.run()
     
