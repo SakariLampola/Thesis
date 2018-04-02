@@ -13,7 +13,7 @@ import time
 import random as rnd
 import pyttsx3
 import winsound
-from math import atan, cos, sqrt, tan, exp, log, atan2, sin, pi
+from math import atan, cos, sqrt, exp, log, atan2, sin, pi
 from scipy.optimize import linear_sum_assignment
 #from scipy.stats import multivariate_normal
 import pykitti
@@ -58,7 +58,7 @@ FORECAST_A = np.array([[1.0, 0.0, 0.0, FORECAST_DELTA,            0.0,          
                        [0.0, 0.0, 0.0,            1.0,            0.0,            0.0],
                        [0.0, 0.0, 0.0,            0.0,            1.0,            0.0],
                        [0.0, 0.0, 0.0,            0.0,            0.0,           1.0]])
-FORECAST_COUNT = 500 # How many time steps ahead a body forecast is made
+FORECAST_COUNT = 100 # How many time steps ahead a body forecast is made
 DISTANCE_SIZE_FACTOR = 1.1*1.32 # How much distance based distance estimation must be adjusted
 DISTANCE_STEREO_FACTOR = 1.1 # How much distance based distance estimation must be adjusted
 GRID_COUNT = 31 # Grid count horizontally and vertically. Must be uneven.
@@ -2372,8 +2372,10 @@ class World:
             map_frame = np.zeros((UI_Y3-UI_Y0, UI_X2-UI_X1, 3), np.uint8)
             # Grid
             map_frame = self.grid.draw(map_frame)
+#            xc = int((UI_X2-UI_X1)/2)
+#            yc = int((UI_Y3-UI_Y0)/2)
             xc = int((UI_X2-UI_X1)/2)
-            yc = int((UI_Y3-UI_Y0)/2)
+            yc = int(4.0*(UI_Y3-UI_Y0)/5.0)
             pixels_meter = xc / self.size
             # Laser scans
             for i in range(0, laser_scans.shape[1]):
@@ -2384,7 +2386,7 @@ class World:
                     cv2.circle(map_frame, (x, y), 1, (256,0,0),1)
             # Radar circles
             radius = 10.0
-            while radius < self.size:
+            while radius < 2.0*self.size:
                 radius_pixels = int(radius * pixels_meter)
                 cv2.circle(map_frame, (xc, yc), radius_pixels, (120,120,120), 1)
                 radius += 10.0
@@ -2724,9 +2726,10 @@ def run_application():
     """
     Example application
     """
-    examples = [['2011_09_28','0119', 21], # 0 = simple one person
-                ['2011_09_28','0016', 91], # 1 = several persons
-                ['2011_09_26','0009',331]  # 2 = car
+    examples = [['2011_09_28','0119', 11], # 0 = simple one person
+                ['2011_09_28','0016', 71], # 1 = several persons
+                ['2011_09_26','0009',191],  # 2 = car driving
+                ['2011_09_30','0016',191]  # 3 = car driving
                 ] 
     # Load KITTI data
     basedir = 'D:\Thesis\Kitti\Raw'
