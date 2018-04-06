@@ -8,6 +8,7 @@ Created on Wed Apr 04 013:30:48 2018
 # Imports----------------------------------------------------------------------
 
 import sys
+import time
 from pycocotools.coco import COCO
 import numpy as np
 import cv2
@@ -36,6 +37,8 @@ sys.path.append("..")
 #import matplotlib as mpl
 from utils import label_map_util
 from utils import visualization_utils as vis_util
+import speech_recognition as sr
+import pyttsx3
 
 # Hyperparameters--------------------------------------------------------------
 
@@ -325,6 +328,17 @@ def run_inference_for_single_image(image, graph):
   return output_dict
 
 
+#recognizer = sr.Recognizer()
+
+synthesizer = pyttsx3.init()
+
+#voices = engine.getProperty('voices')
+#for voice in voices:
+#   engine.setProperty('voice', voice.id)
+#   engine.say('The quick brown fox jumped over the lazy dog.')
+#engine.runAndWait()
+
+
 np.random.seed(1)
 
 lut1 = np.array([np.random.randint(0,255) for i in np.arange(0, 256)]).astype("uint8")
@@ -332,7 +346,7 @@ lut2 = np.array([np.random.randint(0,255) for i in np.arange(0, 256)]).astype("u
 lut3 = np.array([np.random.randint(0,255) for i in np.arange(0, 256)]).astype("uint8")
 lut = np.dstack((lut1, lut2, lut3))
 
-np.random.seed(5)
+np.random.seed(6)
 
 label_map = label_map_util.load_labelmap(PATH_TO_LABELS)
 categories = label_map_util.convert_label_map_to_categories(label_map, max_num_classes=NUM_CLASSES, use_display_name=True)
@@ -500,9 +514,37 @@ for i in range(100):
 
     cv2.imshow("ShadowWorld", frame)
     mode = check_keyboard_command(mode)
-#    cv2.waitKey(5000)    
+#    cv2.waitKey(5)
+   
+#    command = 'None'
+#    while command not in ['quit']:
+#        # Listen to a sentence
+#        synthesizer.say('Command, please!')
+#        synthesizer.runAndWait()
+#        time.sleep(2)
+#        with sr.Microphone() as source:
+##           print("Say something!")
+#            audio = recognizer.listen(source)
+#        # Recognize speech using Sphinx
+#        try:
+#            command = recognizer.recognize_sphinx(audio)
+#            print("Sphinx thinks you said " + recognizer.recognize_sphinx(audio))
+#        except sr.UnknownValueError:
+##            synthesizer.say('I can not understand you')
+##            synthesizer.runAndWait()
+#            print("Sphinx could not understand audio")
+#        except sr.RequestError as e:
+##            synthesizer.say('Error')
+##            synthesizer.runAndWait()
+#            print("Sphinx error; {0}".format(e))
+#        synthesizer.say(command)
+#        synthesizer.runAndWait()
+    
+#        if command == "quit":
+#            break
     if mode == "quit":
         break
 
+    
 cv2.destroyWindow("ShadowWorld")
 
