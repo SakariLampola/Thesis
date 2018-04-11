@@ -346,7 +346,7 @@ lut2 = np.array([np.random.randint(0,255) for i in np.arange(0, 256)]).astype("u
 lut3 = np.array([np.random.randint(0,255) for i in np.arange(0, 256)]).astype("uint8")
 lut = np.dstack((lut1, lut2, lut3))
 
-np.random.seed(6)
+np.random.seed(11)
 
 label_map = label_map_util.load_labelmap(PATH_TO_LABELS)
 categories = label_map_util.convert_label_map_to_categories(label_map, max_num_classes=NUM_CLASSES, use_display_name=True)
@@ -479,11 +479,16 @@ for i in range(100):
             
 #            disp = np.uint8(255.0 * (frame_color - minValue) / (maxValue - minValue))
             legend_rgb = cv2.LUT(legend_color, lut)
+            print(y_rep)
             frame[y_rep-5:y_rep+5-5, x_rep+20:x_rep+15+20, 2] = legend_rgb[:,:,0]
             frame[y_rep-5:y_rep+5-5, x_rep+20:x_rep+15+20, 1] = legend_rgb[:,:,1]
             frame[y_rep-5:y_rep+5-5, x_rep+20:x_rep+15+20, 0] = legend_rgb[:,:,2]
             cv2.putText(frame, label, (x_rep+25,y_rep), cv2.FONT_HERSHEY_SIMPLEX, font_size, (255,255,255), 1)
             y_rep += offset
+            if (y_rep > 1100):
+                label="   ..."
+                cv2.putText(frame, label, (x_rep+25,y_rep), cv2.FONT_HERSHEY_SIMPLEX, font_size, (255,255,255), 1)
+                break
 
 
     y_rep += offset
