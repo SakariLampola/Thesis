@@ -346,7 +346,7 @@ lut2 = np.array([np.random.randint(0,255) for i in np.arange(0, 256)]).astype("u
 lut3 = np.array([np.random.randint(0,255) for i in np.arange(0, 256)]).astype("uint8")
 lut = np.dstack((lut1, lut2, lut3))
 
-np.random.seed(11)
+np.random.seed(13)
 
 label_map = label_map_util.load_labelmap(PATH_TO_LABELS)
 categories = label_map_util.convert_label_map_to_categories(label_map, max_num_classes=NUM_CLASSES, use_display_name=True)
@@ -377,7 +377,7 @@ cv2.moveWindow("ShadowWorld", 10, 10)
 
 mode = "step"
 
-for i in range(100):
+for i in range(1000):
 
     frame = np.zeros((UI_Y2+1, UI_X4+1, 3), np.uint8)
     line_color = (255,255,255)
@@ -462,6 +462,10 @@ for i in range(100):
             label="  {0:s} {1:.3f}".format(CATEGORY_INDEX[classes[i]]['name'], scores[i])
             cv2.putText(frame, label, (x_rep,y_rep), cv2.FONT_HERSHEY_SIMPLEX, font_size, (255,255,255), 1)
             y_rep += offset
+            if (y_rep > 1000):
+                label="   ..."
+                cv2.putText(frame, label, (x_rep+25,y_rep), cv2.FONT_HERSHEY_SIMPLEX, font_size, (255,255,255), 1)
+                break
 
     y_rep += offset
     label = "Stuff:"
